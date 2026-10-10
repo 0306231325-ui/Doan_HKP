@@ -1,0 +1,36 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Đồ Án HKP API Documentation",
+        "description": "Tài liệu API nội bộ chỉ dùng để test cá nhân (không đưa lên Git).",
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "http://127.0.0.1:8000",
+            "description": "Local API Server"
+        }
+    ],
+    "paths": {
+        "/api/users": {
+            "get": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Lấy danh sách người dùng giả lập",
+                "operationId": "d4eb66d954f05a9c21d4412fb86b2a0a",
+                "responses": {
+                    "200": {
+                        "description": "Lấy danh sách thành công"
+                    }
+                }
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Users",
+            "description": "Users"
+        }
+    ]
+}
