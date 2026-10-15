@@ -15,8 +15,8 @@ export default function Footer() {
               </span>
             </div>
             <span className="text-gray-300 hidden sm:inline text-lg shrink-0">•</span>
-            <span className="text-sm sm:text-base text-gray-600 whitespace-nowrap">
-              © 2024 Lạc Ơi - Hệ thống quản lý tài sản thất lạc Đại học.
+            <span className="text-sm sm:text-base text-gray-600 text-center sm:text-left leading-6">
+              © {new Date().getFullYear()} Lạc Ơi - Hệ thống quản lý tài sản thất lạc Đại học.
             </span>
           </div>
 
