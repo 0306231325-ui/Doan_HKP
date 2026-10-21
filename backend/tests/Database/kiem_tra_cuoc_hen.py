@@ -40,7 +40,7 @@ class KiemTraCuocHen(unittest.TestCase):
             self.db.execute(chuyenDinhNghia(bang))
         for duLieu in re.findall(r'INSERT INTO [\s\S]*?;', self.sql):
             self.db.execute(duLieu)
-        for ma, vaiTro in [(1, 'sinh_vien'), (2, 'sinh_vien'), (3, 'giang_vien'), (4, 'quan_tri')]:
+        for ma, vaiTro in [(1, 'nguoi_dung'), (2, 'nguoi_dung'), (3, 'nguoi_dung'), (4, 'quan_tri')]:
             self.db.execute('INSERT INTO nguoi_dung (id, ho_ten, email, mat_khau, vai_tro, da_xac_minh) VALUES (?, ?, ?, ?, ?, 1)', (ma, f'Nguoi thu {ma}', f'thu{ma}@example.test', 'du-lieu-thu', vaiTro))
         for tin in [100, 101]:
             self.db.execute("INSERT INTO tin_dang (id, nguoi_dung_id, danh_muc_id, loai_tin, tieu_de, slug, mo_ta) VALUES (?, 2, 1, 'nhat_duoc', 'Do thu', ?, 'Mo ta thu')", (tin, f'tin-thu-{tin}'))
