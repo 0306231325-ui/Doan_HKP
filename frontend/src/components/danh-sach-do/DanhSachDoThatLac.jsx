@@ -1,6 +1,7 @@
 import TheDoThatLac from './TheDoThatLac'
+import TrangThaiDanhSachRong from '../shared/TrangThaiDanhSachRong'
 
-export default function DanhSachDoThatLac({ danhSachDo = [], tongTin = danhSachDo.length, loiNgay = '' }) {
+export default function DanhSachDoThatLac({ danhSachDo = [], tongTin = danhSachDo.length, loiNgay = '', coBoLoc = false, xoaBoLoc }) {
   return (
     <section className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
@@ -21,12 +22,11 @@ export default function DanhSachDoThatLac({ danhSachDo = [], tongTin = danhSachD
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      {danhSachDo.length > 0 ? <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {danhSachDo.map((doVat) => (
           <TheDoThatLac key={doVat.id} doVat={doVat} />
         ))}
-      </div>
-      {danhSachDo.length === 0 && <div className="rounded-2xl border border-[#d6e4db] bg-white px-5 py-12 text-center"><h3 className="text-sm font-semibold text-[#243c30]">{loiNgay ? 'Kiểm tra lại khoảng ngày' : 'Chưa tìm thấy đồ phù hợp'}</h3><p className="mt-2 text-sm leading-6 text-[#718276]">{loiNgay || 'Thử từ khóa khác hoặc mở rộng bộ lọc phía trên.'}</p></div>}
+      </div> : <TrangThaiDanhSachRong loi={loiNgay} coBoLoc={coBoLoc} xoaBoLoc={xoaBoLoc} />}
     </section>
   )
 }

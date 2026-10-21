@@ -1,4 +1,4 @@
-import HopThoai from '../../../components/HopThoai'
+import HopThoai from '../../../components/shared/HopThoai'
 
 export default function FormDiaDiem({ bieuMau, loiBieuMau, loiLuu, dongBieuMau, thayDoiBieuMau, luuDiaDiem }) {
   return (

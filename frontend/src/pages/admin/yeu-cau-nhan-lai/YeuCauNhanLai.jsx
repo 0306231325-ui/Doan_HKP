@@ -1,4 +1,4 @@
-import ThongBaoTrong from '../../../components/ThongBaoTrong'
+import ThongBaoTrong from '../../../components/shared/ThongBaoTrong'
 import useYeuCauNhanLai from './hooks/useYeuCauNhanLai'
 
 export default function YeuCauNhanLai() {

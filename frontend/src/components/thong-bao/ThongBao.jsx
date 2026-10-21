@@ -1,6 +1,6 @@
 import { Bell, CheckCheck, Eye, Settings2, Sparkles, X } from 'lucide-react'
 import LoiMoiThongBao from './LoiMoiThongBao'
-import useThongBao from '../pages/thong-bao/hooks/useThongBao'
+import useThongBao from '../../pages/thong-bao/hooks/useThongBao'
 
 export default function ThongBao() {
   const { moBang, moLoiMoi, quyen, dangXinQuyen, loi, thamChieuKhung, thamChieuChuong, thamChieuBang, maBang, maTieuDe,

@@ -1,5 +1,5 @@
 import { CheckCircle2, MapPin, Plus, Search, X } from 'lucide-react'
-import DieuHuongDanhMuc from '../../../components/DieuHuongDanhMuc'
+import DieuHuongDanhMuc from '../../../components/admin/DieuHuongDanhMuc'
 import BangDiaDiem from './BangDiaDiem'
 import FormDiaDiem from './FormDiaDiem'
 import XacNhanTrangThai from './XacNhanTrangThai'

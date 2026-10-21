@@ -1,4 +1,4 @@
-import HopThoai from '../../../components/HopThoai'
+import HopThoai from '../../../components/shared/HopThoai'
 import { cacKieuNhap } from './hooks/xuLyCauHoi.js'
 
 export default function LichSuCauHoi({ lichSu, dongLichSu }) {

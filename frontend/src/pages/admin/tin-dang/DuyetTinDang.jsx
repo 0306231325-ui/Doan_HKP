@@ -1,4 +1,4 @@
-import ThongBaoTrong from '../../../components/ThongBaoTrong'
+import ThongBaoTrong from '../../../components/shared/ThongBaoTrong'
 import useDuyetTinDang from './hooks/useDuyetTinDang'
 
 export default function DuyetTinDang() {

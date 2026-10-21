@@ -1,4 +1,4 @@
-import HopThoai from '../../../components/HopThoai'
+import HopThoai from '../../../components/shared/HopThoai'
 
 export default function XacNhanTrangThai({ cauHoiDoiTrangThai, loiLuu, dongDoiTrangThai, xacNhanDoiTrangThai }) {
   const dangHoatDong = cauHoiDoiTrangThai.dangHoatDong

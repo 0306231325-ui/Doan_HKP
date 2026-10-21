@@ -1,5 +1,5 @@
 import { CheckCircle2, FolderTree, Plus, Search, X } from 'lucide-react'
-import DieuHuongDanhMuc from '../../../components/DieuHuongDanhMuc'
+import DieuHuongDanhMuc from '../../../components/admin/DieuHuongDanhMuc'
 import BangDanhMuc from './BangDanhMuc'
 import FormDanhMuc from './FormDanhMuc'
 import XacNhanTrangThai from './XacNhanTrangThai'

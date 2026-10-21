@@ -1,5 +1,5 @@
 import { CalendarDays, MapPin, Phone, UserRound } from 'lucide-react'
-import HopThoai from '../../components/HopThoai'
+import HopThoai from '../../components/shared/HopThoai'
 import { dinhDangNgay } from './hooks/xuLyDanhSachDo.js'
 
 export default function ChiTietDo({ doVatChon, dongChiTiet }) {

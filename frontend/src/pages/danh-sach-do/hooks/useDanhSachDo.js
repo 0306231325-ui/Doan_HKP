@@ -1,15 +1,17 @@
 import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { CATEGORIES, LOCATIONS, MOCK_ITEMS } from '../../../data/mockData.js'
 import { boLocBanDau, dinhDangNgay, docBoLoc, kiemTraNgay, locDoVat, phanTrangDoVat } from './xuLyDanhSachDo.js'
+
+const danhMuc = [{ id: 'all', name: 'Tất cả danh mục' }]
+const diaDiem = [{ id: 'all', name: 'Tất cả địa điểm' }]
 
 export default function useDanhSachDo() {
   const [thamSo, datThamSo] = useSearchParams()
   const [doVatChon, datDoVatChon] = useState(null)
-  const boLoc = useMemo(() => docBoLoc(thamSo, CATEGORIES, LOCATIONS), [thamSo])
+  const boLoc = useMemo(() => docBoLoc(thamSo, danhMuc, diaDiem), [thamSo])
   const [tuKhoaNhap, datTuKhoaNhap] = useState(boLoc.tuKhoa)
   const [tuKhoaDaNap, datTuKhoaDaNap] = useState(boLoc.tuKhoa)
-  const ketQua = useMemo(() => locDoVat(MOCK_ITEMS, boLoc), [boLoc])
+  const ketQua = useMemo(() => locDoVat([], boLoc), [boLoc])
   const phanTrang = phanTrangDoVat(ketQua, thamSo.get('trang') || 1)
   const loiNgay = kiemTraNgay(boLoc.tuNgay, boLoc.denNgay)
   const coBoLoc = Boolean(tuKhoaNhap) || Object.entries(boLoc).some(([ten, giaTri]) => ten !== 'sapXep' && giaTri !== boLocBanDau[ten])
@@ -66,6 +68,6 @@ export default function useDanhSachDo() {
     datDoVatChon(null)
   }
 
-  return { ...phanTrang, cacDoVat, boLoc, tuKhoaNhap, coBoLoc, loiNgay, doVatChon, danhMuc: CATEGORIES, diaDiem: LOCATIONS,
+  return { ...phanTrang, cacDoVat, boLoc, tuKhoaNhap, coBoLoc, loiNgay, doVatChon, danhMuc, diaDiem,
     doiBoLoc, doiTruongLoc, doiTuKhoaNhap, timKiem, chuyenTrang, xoaBoLoc, moChiTiet, dongChiTiet }
 }

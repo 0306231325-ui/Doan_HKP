@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import HopThoai from '../../../components/HopThoai'
+import HopThoai from '../../../components/shared/HopThoai'
 import { layCauHoiXemTruoc } from './hooks/xuLyCauHoi.js'
 
 export default function XemTruocForm({ danhSach, danhMucChon, dongXemTruoc }) {

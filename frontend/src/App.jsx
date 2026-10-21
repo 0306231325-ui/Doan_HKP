@@ -9,11 +9,14 @@ import QuanLyDanhMuc from './pages/admin/danh-muc/QuanLyDanhMuc'
 import QuanLyDiaDiem from './pages/admin/dia-diem/QuanLyDiaDiem'
 import QuanLyCauHoi from './pages/admin/cau-hoi/QuanLyCauHoi'
 import DanhSachDo from './pages/danh-sach-do/DanhSachDo'
+import AuthPage from './pages/auth/AuthPage'
 
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/dang-nhap" element={<AuthPage key="login" />} />
+        <Route path="/dang-ky" element={<AuthPage key="register" mode="register" />} />
         <Route path="/" element={<MainLayout />}>
           <Route index element={<Home />} />
           <Route path="danh-sach-do" element={<DanhSachDo />} />

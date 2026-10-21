@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { X, Check, HelpCircle, HandHeart, UploadCloud } from 'lucide-react'
-import { CATEGORIES } from '../data/mockData'
+import { CATEGORIES } from '../../data/mockData'
 
 export default function ModalBaoMatDo({ loaiBanDau = 'lost', onClose }) {
   const [loaiTin, setLoaiTin] = useState(loaiBanDau)

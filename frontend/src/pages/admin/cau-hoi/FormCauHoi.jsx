@@ -1,5 +1,5 @@
 import { Plus, Trash2 } from 'lucide-react'
-import HopThoai from '../../../components/HopThoai'
+import HopThoai from '../../../components/shared/HopThoai'
 import CauHinhApDung from './CauHinhApDung'
 import { cacKieuNhap } from './hooks/xuLyCauHoi.js'
 

@@ -1,5 +1,5 @@
 import { Power, RotateCcw } from 'lucide-react'
-import HopThoai from '../../../components/HopThoai'
+import HopThoai from '../../../components/shared/HopThoai'
 
 export default function XacNhanTrangThai({ danhMucDoiTrangThai, loiLuu, dongDoiTrangThai, xacNhanDoiTrangThai }) {
   const dangHoatDong = danhMucDoiTrangThai.dangHoatDong

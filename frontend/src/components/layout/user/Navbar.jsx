@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Menu, Plus, X } from 'lucide-react'
 import { Link, NavLink } from 'react-router-dom'
-import ThongBao from './ThongBao'
+import ThongBao from '../../thong-bao/ThongBao'
 
 export default function Navbar({ adminView = false }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -82,11 +82,13 @@ export default function Navbar({ adminView = false }) {
               <span className="hidden sm:inline">Báo mất đồ</span>
             </button>}
 
-            <div className="flex items-center pl-1">
-              <div title={adminView ? 'Khu vực quản trị' : 'Tài khoản sinh viên'} className="w-10 h-10 rounded-full bg-emerald-800 text-white font-bold text-sm flex items-center justify-center ring-2 ring-emerald-100 select-none shadow-sm">
-                {adminView ? 'QT' : 'SV'}
-              </div>
-            </div>
+            <Link
+              to="/dang-nhap"
+              onClick={dongMenuDiDong}
+              className="rounded-xl bg-emerald-800 px-3 sm:px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-900 transition-colors whitespace-nowrap"
+            >
+              Đăng nhập
+            </Link>
             <button
               type="button"
               onClick={moDongMenuDiDong}

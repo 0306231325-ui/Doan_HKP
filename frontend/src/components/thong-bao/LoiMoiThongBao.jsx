@@ -1,5 +1,5 @@
 import { ArrowRight, Bell, BellOff, Check, LoaderCircle, ShieldCheck, Sparkles } from 'lucide-react'
-import HopThoai from './HopThoai'
+import HopThoai from '../shared/HopThoai'
 
 export default function LoiMoiThongBao({ quyen, dangXinQuyen, loi, dongLoiMoi, batThongBao }) {
   const daBat = quyen === 'granted'
