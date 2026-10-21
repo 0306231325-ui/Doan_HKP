@@ -10,6 +10,7 @@ import QuanLyDiaDiem from './pages/admin/dia-diem/QuanLyDiaDiem'
 import QuanLyCauHoi from './pages/admin/cau-hoi/QuanLyCauHoi'
 import DanhSachDo from './pages/danh-sach-do/DanhSachDo'
 import AuthPage from './pages/auth/AuthPage'
+import YeuCauNhanDo from './pages/yeu-cau-nhan-do/YeuCauNhanDo'
 
 export default function App() {
   return (
@@ -20,6 +21,7 @@ export default function App() {
         <Route path="/" element={<MainLayout />}>
           <Route index element={<Home />} />
           <Route path="danh-sach-do" element={<DanhSachDo />} />
+          <Route path="yeu-cau-nhan-do" element={<YeuCauNhanDo />} />
         </Route>
         <Route path="/admin" element={<BoCucQuanTri />}>
           <Route index element={<TongQuan />} />

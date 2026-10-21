@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { X, Clock, MapPin, Calendar, Package, User, CheckCircle2, ShieldAlert, Send, Check } from 'lucide-react'
 
 export default function ModalChiTietDo({ doVat, onClose }) {
@@ -129,7 +130,11 @@ export default function ModalChiTietDo({ doVat, onClose }) {
           </div>
 
           <div className="pt-2 border-t border-gray-100">
-            {daGui ? (
+            {laDoNhatDuoc ? (
+              <Link to={`/yeu-cau-nhan-do?id=${doVat.id}`} onClick={onClose} className="flex items-center justify-center gap-2 rounded-xl bg-[#254e2d] px-4 py-3 text-sm font-semibold text-white hover:bg-[#1c3e23]">
+                Đây là đồ của tôi — Yêu cầu nhận lại đồ
+              </Link>
+            ) : daGui ? (
               <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-6 text-center space-y-2">
                 <div className="w-10 h-10 bg-emerald-600 text-white rounded-full flex items-center justify-center mx-auto shadow-sm">
                   <Check className="w-5 h-5 stroke-[3]" />
