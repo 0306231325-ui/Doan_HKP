@@ -8,6 +8,7 @@ import YeuCauNhanLai from './pages/admin/yeu-cau-nhan-lai/YeuCauNhanLai'
 import QuanLyDanhMuc from './pages/admin/danh-muc/QuanLyDanhMuc'
 import QuanLyDiaDiem from './pages/admin/dia-diem/QuanLyDiaDiem'
 import QuanLyCauHoi from './pages/admin/cau-hoi/QuanLyCauHoi'
+import DanhSachDo from './pages/danh-sach-do/DanhSachDo'
 
 export default function App() {
   return (
@@ -15,6 +16,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<MainLayout />}>
           <Route index element={<Home />} />
+          <Route path="danh-sach-do" element={<DanhSachDo />} />
         </Route>
         <Route path="/admin" element={<BoCucQuanTri />}>
           <Route index element={<TongQuan />} />

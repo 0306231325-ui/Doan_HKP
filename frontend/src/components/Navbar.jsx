@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { Bell, Menu, Plus, X } from 'lucide-react'
+import { Menu, Plus, X } from 'lucide-react'
 import { Link, NavLink } from 'react-router-dom'
+import ThongBao from './ThongBao'
 
 export default function Navbar({ adminView = false }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -54,12 +55,12 @@ export default function Navbar({ adminView = false }) {
               )}
             </NavLink>
 
-            <button
-              type="button"
-              className="px-4 py-2.5 rounded-xl text-base font-semibold text-gray-700 hover:text-gray-950 hover:bg-gray-50 cursor-pointer"
+            <NavLink
+              to="/danh-sach-do"
+              className={({ isActive }) => `relative rounded-xl px-4 py-2.5 text-base font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-emerald-700 ${isActive ? 'text-emerald-800' : 'text-gray-700 hover:bg-gray-50 hover:text-gray-950'}`}
             >
-              Tra cứu
-            </button>
+              {({ isActive }) => <><span>Tra cứu</span>{isActive && <span className="absolute bottom-0 left-3 right-3 h-0.5 rounded-full bg-emerald-600" />}</>}
+            </NavLink>
 
             <button
               type="button"
@@ -71,17 +72,7 @@ export default function Navbar({ adminView = false }) {
           </nav>
 
           <div className="flex items-center gap-1.5 sm:gap-3">
-            <button
-              type="button"
-              className="w-10 h-10 rounded-full flex items-center justify-center text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors cursor-pointer relative"
-              aria-label="Thông báo"
-            >
-              <Bell className="w-5 h-5" />
-              <span className="absolute top-2.5 right-2.5 w-2.5 h-2.5 bg-emerald-500 rounded-full ring-2 ring-white"></span>
-            </button>
-
-
-
+            <ThongBao />
             {!adminView && <button
               type="button"
               className="inline-flex items-center gap-2 px-2.5 sm:px-5 py-2.5 rounded-xl text-base font-bold bg-[#86efac] text-emerald-950 hover:bg-[#6ee7a0] active:scale-95 transition-all shadow-sm cursor-pointer"
@@ -112,6 +103,7 @@ export default function Navbar({ adminView = false }) {
           <nav id="mobile-navigation" aria-label="Menu chính" className="grid grid-cols-1 gap-2 border-t border-gray-100 py-3 lg:hidden">
             {[
               { to: '/', label: 'Trang chủ', end: true },
+              { to: '/danh-sach-do', label: 'Tra cứu' },
             ].map(({ to, label, end }) => (
               <NavLink
                 key={to}

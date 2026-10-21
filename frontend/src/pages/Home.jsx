@@ -3,15 +3,17 @@ import ThanhTimKiem from '../components/ThanhTimKiem'
 import DanhSachDoThatLac from '../components/DanhSachDoThatLac'
 import PhanTrang from '../components/PhanTrang'
 import BannerHoTro from '../components/BannerHoTro'
-import { MOCK_ITEMS } from '../data/mockData'
+import useDanhSachDo from './danh-sach-do/hooks/useDanhSachDo'
 
 export default function Home() {
+  const danhSach = useDanhSachDo()
+
   return (
     <div className="space-y-8 sm:space-y-12">
       <Hero />
-      <ThanhTimKiem />
-      <DanhSachDoThatLac danhSachDo={MOCK_ITEMS} />
-      <PhanTrang />
+      <ThanhTimKiem {...danhSach} />
+      <DanhSachDoThatLac danhSachDo={danhSach.cacDoVat} tongTin={danhSach.tongTin} loiNgay={danhSach.loiNgay} />
+      <PhanTrang {...danhSach} />
       <BannerHoTro />
     </div>
   )

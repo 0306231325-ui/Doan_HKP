@@ -1,6 +1,6 @@
 import { Clock, MapPin, ArrowRight, MessageSquare, Shield, AlertCircle, Key, BookOpen } from 'lucide-react'
 
-export default function TheDoThatLac({ doVat }) {
+export default function TheDoThatLac({ doVat, khiXemChiTiet }) {
   const laDoNhatDuoc = doVat.type === 'found'
 
   const layIconTrangThai = (loaiTrangThai) => {
@@ -85,18 +85,20 @@ export default function TheDoThatLac({ doVat }) {
         {laDoNhatDuoc ? (
           <button
             type="button"
+            onClick={() => khiXemChiTiet?.(doVat)}
             className="w-full inline-flex items-center justify-center gap-1.5 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-semibold bg-[#eef7f1] text-[#133f32] hover:bg-[#deede3] active:scale-[0.98] transition-all cursor-pointer"
           >
-            <span>Xem chi tiết / Nhận lại đồ</span>
+            <span>{khiXemChiTiet ? 'Xem chi tiết' : 'Xem chi tiết / Nhận lại đồ'}</span>
             <ArrowRight className="w-4 h-4" />
           </button>
         ) : (
           <button
             type="button"
+            onClick={() => khiXemChiTiet?.(doVat)}
             className="w-full inline-flex items-center justify-center gap-1.5 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-semibold bg-[#fdf2f2] text-[#991b1b] hover:bg-[#fae1e1] active:scale-[0.98] transition-all cursor-pointer"
           >
             <MessageSquare className="w-4 h-4" />
-            <span>Báo tin cho chủ nhân</span>
+            <span>{khiXemChiTiet ? 'Xem chi tiết' : 'Báo tin cho chủ nhân'}</span>
           </button>
         )}
       </div>
