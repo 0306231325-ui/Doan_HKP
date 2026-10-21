@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { FileEdit, Search, ShieldCheck, Clock, Building2, ChevronLeft, ChevronRight } from 'lucide-react'
 
 const bannerImages = [
@@ -39,13 +40,13 @@ export default function Hero() {
           </p>
 
           <div className="flex flex-wrap items-center gap-3 sm:gap-4 mb-10 w-full sm:w-auto">
-            <button
-              type="button"
+            <Link
+              to="/dang-tin"
               className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl text-sm font-bold bg-[#a3e635] text-[#12382f] hover:bg-[#bbf758] active:scale-95 transition-all shadow-lg shadow-[#a3e635]/25 cursor-pointer"
             >
               <FileEdit className="w-4.5 h-4.5 stroke-[2.2]" />
               <span>Đăng tin ngay</span>
-            </button>
+            </Link>
 
             <button
               type="button"

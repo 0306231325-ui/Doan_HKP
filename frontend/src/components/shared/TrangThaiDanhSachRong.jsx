@@ -2,7 +2,7 @@ import { SearchX } from 'lucide-react'
 
 export default function TrangThaiDanhSachRong({ loi = '', coBoLoc = false, xoaBoLoc }) {
   return (
-    <div role="status" className="flex min-h-[24rem] flex-col items-center justify-center rounded-2xl border border-[#d6e4db] bg-white px-5 py-12 text-center">
+    <div role="status" className="flex min-h-full flex-col items-center justify-center px-5 py-12 text-center">
       <SearchX className="mb-5 h-12 w-12 text-[#9aafa1]" aria-hidden="true" />
       <h3 className="text-lg font-semibold text-[#243c30]">{loi ? 'Kiểm tra lại khoảng ngày' : 'Chưa có tin đăng nào'}</h3>
       <p className="mt-2 max-w-xl text-sm leading-6 text-[#718276]">

@@ -1,4 +1,5 @@
 import { ClipboardList, Megaphone } from 'lucide-react'
+import { Link } from 'react-router-dom'
 
 export default function BannerHoTro() {
   return (
@@ -19,21 +20,21 @@ export default function BannerHoTro() {
         </div>
 
         <div className="flex flex-col sm:flex-row lg:flex-col gap-3 shrink-0">
-          <button
-            type="button"
+          <Link
+            to="/dang-tin?loaiTin=found"
             className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl text-sm font-bold bg-[#13382c] hover:bg-[#0c2620] text-white active:scale-95 transition-all shadow-md shadow-[#13382c]/10 cursor-pointer"
           >
             <ClipboardList className="w-4.5 h-4.5" />
             <span>Đăng tin nhặt được</span>
-          </button>
+          </Link>
 
-          <button
-            type="button"
+          <Link
+            to="/dang-tin?loaiTin=lost"
             className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl text-sm font-semibold bg-white hover:bg-gray-50 text-gray-800 border border-gray-200 active:scale-95 transition-all shadow-sm cursor-pointer"
           >
             <Megaphone className="w-4.5 h-4.5 text-rose-500" />
             <span>Báo mất đồ của bạn</span>
-          </button>
+          </Link>
         </div>
       </div>
     </section>

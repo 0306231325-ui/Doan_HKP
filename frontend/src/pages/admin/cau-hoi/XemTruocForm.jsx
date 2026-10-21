@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import HopThoai from '../../../components/shared/HopThoai'
+import TruongCauHoi from '../../../components/shared/TruongCauHoi'
 import { layCauHoiXemTruoc } from './hooks/xuLyCauHoi.js'
 
 export default function XemTruocForm({ danhSach, danhMucChon, dongXemTruoc }) {
@@ -18,17 +19,7 @@ export default function XemTruocForm({ danhSach, danhMucChon, dongXemTruoc }) {
         {loaiForm === 'nhan_lai' && <p className="text-xs leading-5 text-[#718276]">Chỉ hiển thị câu hỏi được chọn để xác minh. Đáp án của người nhặt không được hiển thị cho người xin nhận lại.</p>}
         {!cauHoi.length && <p className="rounded-xl bg-[#f5f9f6] px-4 py-5 text-sm leading-6 text-[#718276]">{danhMucChon.dangHoatDong ? 'Chưa có câu hỏi đang hoạt động cho biểu mẫu này.' : 'Danh mục đã ngừng sử dụng.'}</p>}
         <div key={loaiForm} className="space-y-5">
-          {cauHoi.map((muc) => {
-            const batBuoc = loaiForm === 'nhan_lai' ? muc.apDung.nhat.batBuocNhanLai : muc.apDung[loaiForm].batBuoc
-            const ma = `xem-truoc-${muc.id}`
-            return <div key={muc.id}>
-              <label htmlFor={ma} className="mb-2 block text-sm font-semibold leading-6 text-[#243c30]">{loaiForm === 'nhan_lai' ? muc.nhanNhanLai : muc.nhanDangTin} {batBuoc && <span className="text-red-600">*</span>}</label>
-              {muc.kieuNhap === 'chon_mot' ? <select id={ma} defaultValue="" required={batBuoc} className={lopNhap}><option value="" disabled>Chọn một đáp án</option>{muc.luaChon.map((luaChon) => <option key={luaChon.id} value={luaChon.id}>{luaChon.nhan}</option>)}</select>
-                : muc.kieuNhap === 'doan_van' ? <textarea id={ma} required={batBuoc} rows={3} className={lopNhap} placeholder="Nhập câu trả lời…" />
-                  : <input id={ma} required={batBuoc} type={muc.kieuNhap === 'so' ? 'number' : 'text'} step={muc.kieuNhap === 'so' ? 'any' : undefined} className={lopNhap} placeholder="Nhập câu trả lời…" />}
-              {loaiForm !== 'nhan_lai' && !muc.apDung[loaiForm].congKhai && <p className="mt-1.5 text-xs text-[#718276]">Câu trả lời này được giữ kín trên tin đăng.</p>}
-            </div>
-          })}
+          {cauHoi.map((muc) => <TruongCauHoi key={muc.id} cauHoi={muc} loaiForm={loaiForm} />)}
         </div>
       </div>
     </HopThoai>
