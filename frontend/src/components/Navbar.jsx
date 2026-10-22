@@ -1,4 +1,4 @@
-import { Bell, HelpCircle, Plus } from 'lucide-react'
+import { Bell, Plus } from 'lucide-react'
 import { Link, NavLink } from 'react-router-dom'
 
 export default function Navbar() {
@@ -77,14 +77,12 @@ export default function Navbar() {
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-base font-bold bg-[#86efac] text-emerald-950 hover:bg-[#6ee7a0] active:scale-95 transition-all shadow-sm cursor-pointer"
             >
               <Plus className="w-5 h-5 stroke-[2.5]" />
-              <span>Báo mất đồ</span>
+              <span className="hidden sm:inline">Báo mất đồ</span>
             </button>
 
-            <div className="flex items-center pl-1">
-              <div className="w-10 h-10 rounded-full bg-emerald-800 text-white font-bold text-sm flex items-center justify-center ring-2 ring-emerald-100 select-none shadow-sm cursor-pointer">
-                SV
-              </div>
-            </div>
+            <Link to="/dang-nhap" className="rounded-xl bg-emerald-800 px-3 sm:px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-900 transition-colors whitespace-nowrap">
+              Đăng nhập
+            </Link>
           </div>
         </div>
       </div>
