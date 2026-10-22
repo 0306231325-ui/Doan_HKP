@@ -1,6 +1,7 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { Link, NavLink } from 'react-router-dom'
-import AuthField from './AuthField'
+import FormField from '../../components/shared/FormField'
+import Button from '../../components/shared/Button'
 import './auth.css'
 
 export default function AuthPage({ mode = 'login' }) {
@@ -30,13 +31,13 @@ export default function AuthPage({ mode = 'login' }) {
 
           <form onSubmit={handleSubmit} className="auth-form" onChange={() => setMessage('')}>
             {isRegister && <>
-              <AuthField label="Họ và tên" name="name" type="text" autoComplete="name" maxLength={100} />
-              <AuthField label="MSSV / Mã giảng viên" name="schoolId" type="text" autoComplete="off" maxLength={30} />
-              <AuthField label="Số điện thoại" name="phone" type="tel" autoComplete="tel" inputMode="tel" pattern="[+]?[0-9 ]{9,20}" title="Nhập số điện thoại từ 9 đến 20 ký tự, gồm chữ số, dấu + đầu số hoặc dấu cách." />
+              <FormField required label="Họ và tên" name="name" type="text" autoComplete="name" maxLength={100} />
+              <FormField required label="MSSV / Mã giảng viên" name="schoolId" type="text" autoComplete="off" maxLength={30} />
+              <FormField required label="Số điện thoại" name="phone" type="tel" autoComplete="tel" inputMode="tel" pattern="[+]?[0-9 ]{9,20}" title="Nhập số điện thoại từ 9 đến 20 ký tự, gồm chữ số, dấu + đầu số hoặc dấu cách." />
             </>}
-            <AuthField label="Email" name="email" type="email" autoComplete="email" maxLength={254} />
-            <AuthField label={isRegister ? 'Mật khẩu (tối thiểu 6 ký tự)' : 'Mật khẩu'} name="password" type="password" autoComplete={isRegister ? 'new-password' : 'current-password'} minLength={isRegister ? 6 : undefined} />
-            <button className="auth-submit" type="submit">{isRegister ? 'Tạo tài khoản' : 'Đăng nhập'}</button>
+            <FormField required label="Email" name="email" type="email" autoComplete="email" maxLength={254} />
+            <FormField required label={isRegister ? 'Mật khẩu (tối thiểu 6 ký tự)' : 'Mật khẩu'} name="password" type="password" autoComplete={isRegister ? 'new-password' : 'current-password'} minLength={isRegister ? 6 : undefined} />
+            <Button className="auth-submit" type="submit">{isRegister ? 'Tạo tài khoản' : 'Đăng nhập'}</Button>
             {message && <p className="auth-message" role="status">{message}</p>}
           </form>
         </section>
@@ -46,3 +47,4 @@ export default function AuthPage({ mode = 'login' }) {
     </main>
   )
 }
+

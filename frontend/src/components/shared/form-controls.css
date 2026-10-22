@@ -1,0 +1,9 @@
+﻿.form-field { display: flex; flex-direction: column; gap: 6px; }
+.form-field label { font-size: 15px; font-weight: 600; line-height: 1.35; }
+.form-field input { width: 100%; min-width: 0; height: 46px; padding: 10px 14px; border: 1px solid #dedfd9; border-radius: 14px; background: #fff; color: #171b23; font: inherit; font-size: 16px; box-shadow: 0 3px 5px #00000012; outline: none; transition: border-color .15s, box-shadow .15s; }
+.form-field input:focus { border-color: #648d4c; box-shadow: 0 0 0 4px #648d4c20; }
+.form-button { min-height: 46px; padding: 10px 14px; border: 0; border-radius: 14px; background: #254e2d; color: #fff; font-size: 16px; font-weight: 700; cursor: pointer; box-shadow: 0 3px 5px #00000012; transition: background .15s; }
+.form-button:hover { background: #1c3e23; }
+.form-button:focus-visible { outline: 3px solid #648d4c; outline-offset: 4px; }
+.form-button:disabled { opacity: .6; cursor: not-allowed; }
+
