@@ -15,6 +15,7 @@ import AuthPage from './pages/auth/AuthPage'
 import YeuCauNhanDo from './pages/yeu-cau-nhan-do/YeuCauNhanDo'
 import DangTin from './pages/tin-dang/DangTin'
 import ChiTietTinDang from './pages/tin-dang/ChiTietTinDang'
+import TrangCaNhan from './pages/trang-ca-nhan/TrangCaNhan'
 
 export default function App() {
   return (
@@ -28,6 +29,7 @@ export default function App() {
           <Route path="yeu-cau-nhan-do" element={<YeuCauNhanDo />} />
           <Route path="dang-tin" element={<DangTin />} />
           <Route path="chi-tiet-tin-dang" element={<ChiTietTinDang />} />
+          <Route path="trang-ca-nhan" element={<TrangCaNhan />} />
         </Route>
         <Route path="/admin" element={<BoCucQuanTri />}>
           <Route index element={<TongQuan />} />
