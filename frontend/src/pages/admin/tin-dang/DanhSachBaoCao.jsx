@@ -1,0 +1,9 @@
+import KhungThongTin from '../../../components/shared/KhungThongTin'
+import { Flag } from 'lucide-react'
+
+export default function DanhSachBaoCao({ cacBaoCao, moXuLy }) {
+  return <KhungThongTin tieuDe={`Báo cáo vi phạm (${cacBaoCao.length})`} bieuTuong={Flag}>
+    {!cacBaoCao.length && <p className="text-sm text-[#718276]">Chưa có báo cáo vi phạm cho tin này.</p>}
+    <div className="space-y-5">{cacBaoCao.map((bc) => <article key={bc.id} className="rounded-xl border border-[#e1eae4] p-4"><span className={`rounded-full px-2 py-1 text-[11px] ${bc.trangThai === 'cho_xu_ly' ? 'bg-amber-50 text-amber-800' : 'bg-emerald-50 text-emerald-800'}`}>{bc.trangThai === 'cho_xu_ly' ? 'Chưa xử lý' : bc.trangThai === 'bac_bo' ? 'Đã bác bỏ' : 'Đã xác nhận vi phạm'}</span><h3 className="mt-3 text-sm font-bold">{bc.lyDo}</h3><p className="mt-1 text-xs text-[#718276]">{bc.nguoiBaoCao} · {bc.thoiGian}</p><p className="my-3 text-sm leading-6 text-[#526c5b]">{bc.moTa}</p><details><summary className="cursor-pointer text-xs font-semibold text-emerald-800">Xem bằng chứng (ảnh mẫu)</summary><a href={bc.anh} target="_blank" rel="noreferrer"><img src={bc.anh} alt="Bằng chứng minh họa báo cáo" className="mt-3 h-40 w-full rounded-xl object-cover" /></a></details>{bc.ketQua && <p className="mt-3 rounded-lg bg-emerald-50 p-3 text-xs leading-6">Kết quả: {bc.ketQua}</p>}{bc.trangThai === 'cho_xu_ly' && <div className="mt-4 flex flex-wrap gap-3"><button onClick={() => moXuLy({ nhan: 'Bác bỏ báo cáo', maBaoCao: bc.id, ketQua: 'bac_bo' })} className="rounded-lg border border-[#ceded3] px-3 py-2 text-xs font-semibold">Bác bỏ</button><button onClick={() => moXuLy({ nhan: 'Xác nhận vi phạm', maBaoCao: bc.id, ketQua: 'xac_nhan' })} className="rounded-lg bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800">Xác nhận vi phạm</button></div>}</article>)}</div>
+  </KhungThongTin>
+}

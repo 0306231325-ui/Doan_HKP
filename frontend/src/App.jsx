@@ -4,6 +4,8 @@ import Home from './pages/Home'
 import BoCucQuanTri from './layouts/BoCucQuanTri'
 import TongQuan from './pages/admin/tong-quan/TongQuan'
 import DuyetTinDang from './pages/admin/tin-dang/DuyetTinDang'
+import DanhSachTinDang from './pages/admin/tin-dang/DanhSachTinDang'
+import ChiTietKiemDuyet from './pages/admin/tin-dang/ChiTietKiemDuyet'
 import YeuCauNhanLai from './pages/admin/yeu-cau-nhan-lai/YeuCauNhanLai'
 import QuanLyDanhMuc from './pages/admin/danh-muc/QuanLyDanhMuc'
 import QuanLyDiaDiem from './pages/admin/dia-diem/QuanLyDiaDiem'
@@ -29,7 +31,10 @@ export default function App() {
         </Route>
         <Route path="/admin" element={<BoCucQuanTri />}>
           <Route index element={<TongQuan />} />
-          <Route path="tin-dang" element={<DuyetTinDang />} />
+          <Route path="tin-dang" element={<DuyetTinDang />}>
+            <Route index element={<DanhSachTinDang />} />
+            <Route path=":id" element={<ChiTietKiemDuyet />} />
+          </Route>
           <Route path="yeu-cau" element={<YeuCauNhanLai />} />
           <Route path="danh-muc" element={<QuanLyDanhMuc />} />
           <Route path="danh-muc/dia-diem" element={<QuanLyDiaDiem />} />
