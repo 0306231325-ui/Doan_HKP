@@ -1,31 +1,14 @@
-import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { FileEdit, Search, ShieldCheck, Clock, Building2, ChevronLeft, ChevronRight } from 'lucide-react'
+import { FileEdit, Search, ShieldCheck, Clock, Building2 } from 'lucide-react'
+import TrinhChieuAnh from '../shared/TrinhChieuAnh'
 
 const bannerImages = [
-  '/banner/bannr2.png',
-  '/banner/banner3.png',
-  '/banner/banner4.png',
+  { src: '/banner/bannr2.png', alt: 'Banner 1' },
+  { src: '/banner/banner3.png', alt: 'Banner 2' },
+  { src: '/banner/banner4.png', alt: 'Banner 3' },
 ]
 
 export default function Hero() {
-  const [currentSlide, setCurrentSlide] = useState(0)
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % bannerImages.length)
-    }, 3500)
-    return () => clearInterval(timer)
-  }, [])
-
-  const nextSlide = () => {
-    setCurrentSlide((prev) => (prev + 1) % bannerImages.length)
-  }
-
-  const prevSlide = () => {
-    setCurrentSlide((prev) => (prev - 1 + bannerImages.length) % bannerImages.length)
-  }
-
   return (
     <section className="relative overflow-hidden rounded-3xl sm:rounded-[32px] p-6 sm:p-10 lg:p-12 text-white bg-[#153e35]/85 backdrop-blur-xl border border-white/15 shadow-xl shadow-emerald-950/10">
       <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
@@ -75,54 +58,15 @@ export default function Hero() {
 
         <div className="lg:col-span-5 flex justify-center lg:justify-end">
           <div className="w-full max-w-md bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl sm:rounded-3xl p-3 sm:p-4 shadow-2xl relative overflow-hidden group">
-            <div className="relative aspect-[4/3] w-full rounded-xl sm:rounded-2xl overflow-hidden bg-black/20 border border-white/10">
-              {bannerImages.map((src, index) => (
-                <div
-                  key={src}
-                  className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${index === currentSlide ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'
-                    }`}
-                >
-                  <img
-                    src={src}
-                    alt={`Banner ${index + 1}`}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              ))}
-
-              <button
-                type="button"
-                onClick={prevSlide}
-                className="absolute left-2.5 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-black/40 hover:bg-black/60 text-white flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 cursor-pointer"
-                aria-label="Ảnh trước"
-              >
-                <ChevronLeft className="w-5 h-5" />
-              </button>
-
-              <button
-                type="button"
-                onClick={nextSlide}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-black/40 hover:bg-black/60 text-white flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 cursor-pointer"
-                aria-label="Ảnh tiếp theo"
-              >
-                <ChevronRight className="w-5 h-5" />
-              </button>
-
-              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/40 backdrop-blur-sm">
-                {bannerImages.map((_, index) => (
-                  <button
-                    key={index}
-                    type="button"
-                    onClick={() => setCurrentSlide(index)}
-                    className={`h-2 rounded-full transition-all cursor-pointer ${index === currentSlide
-                      ? 'w-6 bg-[#a3e635]'
-                      : 'w-2 bg-white/50 hover:bg-white/80'
-                      }`}
-                    aria-label={`Chuyển tới ảnh ${index + 1}`}
-                  />
-                ))}
-              </div>
-            </div>
+            <TrinhChieuAnh
+              danhSachAnh={bannerImages}
+              chuKy={3500}
+              tocDoChuyen="duration-700"
+              mauCham="bg-[#a3e635]"
+              lapDay
+              nhan="Ảnh nổi bật trên trang chủ"
+              className="aspect-[4/3] rounded-xl border border-white/10 bg-black/20 sm:rounded-2xl"
+            />
           </div>
         </div>
       </div>

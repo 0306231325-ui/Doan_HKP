@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef } from 'react'
 import { X } from 'lucide-react'
 
-export default function HopThoai({ tieuDe, moTa, khiDong, children, noiBat = false }) {
+export default function HopThoai({ tieuDe, moTa, khiDong, children, noiBat = false, rong = false }) {
   const thamChieu = useRef(null)
   const maTieuDe = useId()
   const maMoTa = useId()
@@ -28,7 +28,7 @@ export default function HopThoai({ tieuDe, moTa, khiDong, children, noiBat = fal
   }
 
   return (
-    <dialog ref={thamChieu} onCancel={xuLyHuy} onClick={xuLyNhanNen} aria-labelledby={maTieuDe} aria-describedby={moTa ? maMoTa : undefined} className={`fixed inset-0 m-auto max-h-[calc(100dvh_-_2rem)] w-[calc(100%_-_2rem)] overflow-y-auto p-0 text-gray-800 ${noiBat ? 'max-w-2xl rounded-[2rem] border-[3px] border-emerald-950 bg-gradient-to-br from-white via-white to-emerald-50 shadow-[7px_9px_0_#064e3b] backdrop:bg-emerald-950/35 backdrop:backdrop-blur-sm' : 'max-w-lg rounded-2xl border-0 bg-white shadow-xl backdrop:bg-emerald-950/30'}`}>
+    <dialog ref={thamChieu} onCancel={xuLyHuy} onClick={xuLyNhanNen} aria-labelledby={maTieuDe} aria-describedby={moTa ? maMoTa : undefined} className={`fixed inset-0 m-auto max-h-[calc(100dvh_-_2rem)] w-[calc(100%_-_2rem)] overflow-y-auto p-0 text-gray-800 ${noiBat ? 'max-w-2xl rounded-[2rem] border-[3px] border-emerald-950 bg-gradient-to-br from-white via-white to-emerald-50 shadow-[7px_9px_0_#064e3b] backdrop:bg-emerald-950/35 backdrop:backdrop-blur-sm' : `${rong ? 'max-w-3xl' : 'max-w-lg'} rounded-2xl border-0 bg-white shadow-xl backdrop:bg-emerald-950/30`}`}>
       <div className={noiBat ? '' : 'border-b border-[#e1eae4] px-5 py-5 sm:px-6'}>
         <div className="flex items-start justify-between gap-4">
           <h2 id={maTieuDe} className={noiBat ? 'sr-only' : 'text-xl font-bold text-[#1d3026]'}>{tieuDe}</h2>

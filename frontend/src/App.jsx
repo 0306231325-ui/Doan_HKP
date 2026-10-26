@@ -18,40 +18,44 @@ import ChiTietTinDang from './pages/tin-dang/ChiTietTinDang'
 import TrangCaNhan from './pages/trang-ca-nhan/TrangCaNhan'
 import { AuthProvider, RequireAuth } from './auth/AuthContext'
 import AuthNotice from './auth/AuthNotice'
+import QuanLyNguoiDung from './pages/admin/nguoi-dung/QuanLyNguoiDung'
+import GioiThieu from './pages/gioi-thieu/GioiThieu'
 
 export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-      <AuthNotice />
-      <Routes>
-        <Route path="/dang-nhap" element={<AuthPage key="login" />} />
-        <Route path="/dang-ky" element={<AuthPage key="register" mode="register" />} />
-        <Route path="/" element={<MainLayout />}>
-          <Route index element={<Home />} />
-          <Route path="danh-sach-do" element={<DanhSachDo />} />
-          <Route element={<RequireAuth />}>
-          <Route path="yeu-cau-nhan-do" element={<YeuCauNhanDo />} />
-          <Route path="dang-tin" element={<DangTin />} />
-          <Route path="chi-tiet-tin-dang" element={<ChiTietTinDang />} />
-          <Route path="trang-ca-nhan" element={<TrangCaNhan />} />
+        <AuthNotice />
+        <Routes>
+          <Route path="/dang-nhap" element={<AuthPage key="login" />} />
+          <Route path="/dang-ky" element={<AuthPage key="register" mode="register" />} />
+          <Route path="/" element={<MainLayout />}>
+            <Route index element={<Home />} />
+            <Route path="danh-sach-do" element={<DanhSachDo />} />
+            <Route path="gioi-thieu" element={<GioiThieu />} />
+            <Route element={<RequireAuth />}>
+              <Route path="yeu-cau-nhan-do" element={<YeuCauNhanDo />} />
+              <Route path="dang-tin" element={<DangTin />} />
+              <Route path="chi-tiet-tin-dang" element={<ChiTietTinDang />} />
+              <Route path="trang-ca-nhan" element={<TrangCaNhan />} />
+            </Route>
           </Route>
-        </Route>
-        <Route element={<RequireAuth admin />}>
-        <Route path="/admin" element={<BoCucQuanTri />}>
-          <Route index element={<TongQuan />} />
-          <Route path="tin-dang" element={<DuyetTinDang />}>
-            <Route index element={<DanhSachTinDang />} />
-            <Route path=":id" element={<ChiTietKiemDuyet />} />
+          <Route element={<RequireAuth admin />}>
+            <Route path="/admin" element={<BoCucQuanTri />}>
+              <Route index element={<TongQuan />} />
+              <Route path="tin-dang" element={<DuyetTinDang />}>
+                <Route index element={<DanhSachTinDang />} />
+                <Route path=":id" element={<ChiTietKiemDuyet />} />
+              </Route>
+              <Route path="yeu-cau" element={<YeuCauNhanLai />} />
+              <Route path="nguoi-dung" element={<QuanLyNguoiDung />} />
+              <Route path="danh-muc" element={<QuanLyDanhMuc />} />
+              <Route path="danh-muc/dia-diem" element={<QuanLyDiaDiem />} />
+              <Route path="cau-hoi" element={<QuanLyCauHoi />} />
+              <Route path="danh-muc/cau-hoi" element={<Navigate to="/admin/cau-hoi" replace />} />
+            </Route>
           </Route>
-          <Route path="yeu-cau" element={<YeuCauNhanLai />} />
-          <Route path="danh-muc" element={<QuanLyDanhMuc />} />
-          <Route path="danh-muc/dia-diem" element={<QuanLyDiaDiem />} />
-          <Route path="cau-hoi" element={<QuanLyCauHoi />} />
-          <Route path="danh-muc/cau-hoi" element={<Navigate to="/admin/cau-hoi" replace />} />
-        </Route>
-        </Route>
-      </Routes>
+        </Routes>
       </AuthProvider>
     </BrowserRouter>
   )

@@ -65,12 +65,12 @@ export default function Navbar({ adminView = false }) {
               {({ isActive }) => <><span>Tra cứu</span>{isActive && <span className="absolute bottom-0 left-3 right-3 h-0.5 rounded-full bg-emerald-600" />}</>}
             </NavLink>
 
-            <button
-              type="button"
-              className="px-4 py-2.5 rounded-xl text-base font-semibold text-gray-700 hover:text-gray-950 hover:bg-gray-50 cursor-pointer"
+            <NavLink
+              to="/gioi-thieu"
+              className={({ isActive }) => `relative rounded-xl px-4 py-2.5 text-base font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-emerald-700 ${isActive ? 'text-emerald-800' : 'text-gray-700 hover:bg-gray-50 hover:text-gray-950'}`}
             >
-              Theo dõi đơn
-            </button>
+              {({ isActive }) => <><span>Giới thiệu</span>{isActive && <span className="absolute bottom-0 left-3 right-3 h-0.5 rounded-full bg-emerald-600" />}</>}
+            </NavLink>
 
           </nav>
 
@@ -110,6 +110,7 @@ export default function Navbar({ adminView = false }) {
             {[
               { to: '/', label: 'Trang chủ', end: true },
               { to: '/danh-sach-do', label: 'Tra cứu' },
+              { to: '/gioi-thieu', label: 'Giới thiệu' },
             ].map(({ to, label, end }) => (
               <NavLink
                 key={to}
