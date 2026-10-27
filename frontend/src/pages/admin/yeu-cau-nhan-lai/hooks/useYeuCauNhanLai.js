@@ -1,9 +1,12 @@
-import { HandHeart } from 'lucide-react'
+﻿import { useState } from 'react'
+
 
 export default function useYeuCauNhanLai() {
-  return {
-    bieuTuong: HandHeart,
-    tieuDe: 'Chưa có yêu cầu nhận lại',
-    moTa: 'Các yêu cầu nhận đồ và minh chứng cần xác minh sẽ xuất hiện tại đây.',
+  const [yeuCau, datYeuCau] = useState(null)
+  function xuLy(thaoTac, duLieu) {
+    const thoiGian = new Intl.DateTimeFormat('vi-VN', { timeZone: 'Asia/Bangkok', dateStyle: 'short', timeStyle: 'short' }).format(new Date())
+    datYeuCau((cu) => (cu ? { ...cu, trangThai: thaoTac.trangThai, lichSu: [{ nhan: thaoTac.nhan, thoiGian, ...duLieu }, ...cu.lichSu] } : null))
   }
+  return { yeuCau, xuLy }
 }
+

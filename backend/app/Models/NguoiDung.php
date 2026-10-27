@@ -26,7 +26,6 @@ class NguoiDung extends Authenticatable
         'khoa',
         'lop',
         'vai_tro',
-        'da_xac_minh',
         'trang_thai',
         'ly_do_khoa',
         'khoa_den_ngay',
@@ -40,8 +39,6 @@ class NguoiDung extends Authenticatable
     protected function casts(): array
     {
         return [
-            'mat_khau' => 'hashed',
-            'da_xac_minh' => 'boolean',
             'khoa_den_ngay' => 'datetime',
         ];
     }

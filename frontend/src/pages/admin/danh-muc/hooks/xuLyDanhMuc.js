@@ -1,4 +1,4 @@
-import { CATEGORIES } from '../../../../data/mockData.js'
+const maDanhMucMauCu = new Set(['cards', 'bags', 'personal', 'keys', 'electronics', 'books'])
 
 const khoaLuuTru = 'lacoi.admin.danh-muc.v1'
 
@@ -7,17 +7,7 @@ export function chuanHoaTuKhoa(giaTri) {
 }
 
 export function taoDanhMucBanDau() {
-  const cacMoTa = {
-    cards: 'Thẻ sinh viên, căn cước, giấy phép lái xe và giấy tờ cá nhân.',
-    bags: 'Balo, túi xách, ví và các loại túi đựng cá nhân.',
-    personal: 'Đồng hồ, kính, trang sức, quần áo và đồ dùng cá nhân.',
-    keys: 'Chìa khóa, chùm khóa, thẻ xe và phụ kiện đi kèm.',
-    electronics: 'Điện thoại, máy tính, tai nghe, sạc và các thiết bị điện tử.',
-    books: 'Sách, giáo trình, vở, bút và dụng cụ học tập.',
-  }
-  return CATEGORIES.filter(({ id }) => id !== 'all').map(({ id, name }) => ({
-    id, tenDanhMuc: name, moTa: cacMoTa[id] || '', dangHoatDong: true,
-  }))
+  return []
 }
 
 export function docDanhSachDanhMuc(khoLuu) {
@@ -33,7 +23,7 @@ export function docDanhSachDanhMuc(khoLuu) {
       return typeof muc.tenDanhMuc === 'string' && muc.tenDanhMuc.trim().length > 0 && muc.tenDanhMuc.length <= 100
         && typeof muc.moTa === 'string' && muc.moTa.length <= 500 && typeof muc.dangHoatDong === 'boolean'
     })) return taoDanhMucBanDau()
-    return danhSach
+    return danhSach.filter((muc) => !maDanhMucMauCu.has(muc.id))
   } catch {
     return taoDanhMucBanDau()
   }

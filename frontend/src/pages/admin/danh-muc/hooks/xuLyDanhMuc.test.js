@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { CATEGORIES } from '../../../../data/mockData.js'
+
 import { taoDanhMucBanDau, docDanhSachDanhMuc, luuDanhSachDanhMuc, kiemTraDanhMuc, locDanhSachDanhMuc, phanTrangDanhMuc } from './xuLyDanhMuc.js'
 import { docDanhSachDiaDiem, luuDanhSachDiaDiem } from '../../dia-diem/hooks/xuLyDiaDiem.js'
 
@@ -12,13 +12,13 @@ function taoKhoLuuThu() {
   }
 }
 
-test('Khởi tạo giữ ID danh mục có sẵn và không sửa dữ liệu trang chủ', () => {
-  const danhSach = taoDanhMucBanDau()
-  assert.deepEqual(danhSach.map((muc) => muc.id), CATEGORIES.filter((muc) => muc.id !== 'all').map((muc) => muc.id))
-  assert.ok(danhSach.every((muc) => muc.dangHoatDong && muc.moTa))
-  danhSach[0].tenDanhMuc = 'Tên đã thay đổi'
-  assert.notEqual(taoDanhMucBanDau()[0].tenDanhMuc, 'Tên đã thay đổi')
-  assert.notEqual(CATEGORIES.find((muc) => muc.id === danhSach[0].id).name, 'Tên đã thay đổi')
+test('Khởi tạo danh mục rỗng và bỏ mẫu cũ, giữ danh mục tự thêm', () => {
+  assert.deepEqual(taoDanhMucBanDau(), [])
+  const kho = taoKhoLuuThu()
+  assert.deepEqual(docDanhSachDanhMuc(kho), [])
+  const moi = { id: 'moi', tenDanhMuc: 'Đồ dùng mới', moTa: '', dangHoatDong: true }
+  luuDanhSachDanhMuc([{ ...moi, id: 'cards' }, moi], kho)
+  assert.deepEqual(docDanhSachDanhMuc(kho), [moi])
 })
 
 test('Chặn tên trùng cả danh mục ngừng sử dụng, cho sửa chính danh mục và kiểm tra giới hạn', () => {

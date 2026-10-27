@@ -16,21 +16,28 @@ import YeuCauNhanDo from './pages/yeu-cau-nhan-do/YeuCauNhanDo'
 import DangTin from './pages/tin-dang/DangTin'
 import ChiTietTinDang from './pages/tin-dang/ChiTietTinDang'
 import TrangCaNhan from './pages/trang-ca-nhan/TrangCaNhan'
+import { AuthProvider, RequireAuth } from './auth/AuthContext'
+import AuthNotice from './auth/AuthNotice'
 
 export default function App() {
   return (
     <BrowserRouter>
+      <AuthProvider>
+      <AuthNotice />
       <Routes>
         <Route path="/dang-nhap" element={<AuthPage key="login" />} />
         <Route path="/dang-ky" element={<AuthPage key="register" mode="register" />} />
         <Route path="/" element={<MainLayout />}>
           <Route index element={<Home />} />
           <Route path="danh-sach-do" element={<DanhSachDo />} />
+          <Route element={<RequireAuth />}>
           <Route path="yeu-cau-nhan-do" element={<YeuCauNhanDo />} />
           <Route path="dang-tin" element={<DangTin />} />
           <Route path="chi-tiet-tin-dang" element={<ChiTietTinDang />} />
           <Route path="trang-ca-nhan" element={<TrangCaNhan />} />
+          </Route>
         </Route>
+        <Route element={<RequireAuth admin />}>
         <Route path="/admin" element={<BoCucQuanTri />}>
           <Route index element={<TongQuan />} />
           <Route path="tin-dang" element={<DuyetTinDang />}>
@@ -43,7 +50,9 @@ export default function App() {
           <Route path="cau-hoi" element={<QuanLyCauHoi />} />
           <Route path="danh-muc/cau-hoi" element={<Navigate to="/admin/cau-hoi" replace />} />
         </Route>
+        </Route>
       </Routes>
+      </AuthProvider>
     </BrowserRouter>
   )
 }

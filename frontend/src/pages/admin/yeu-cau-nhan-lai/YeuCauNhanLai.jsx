@@ -1,8 +1,32 @@
+import { useState } from 'react'
+import { HandHeart } from 'lucide-react'
 import ThongBaoTrong from '../../../components/shared/ThongBaoTrong'
+import KhungThongTin from '../../../components/shared/KhungThongTin'
+import HopThoai from '../../../components/shared/HopThoai'
 import useYeuCauNhanLai from './hooks/useYeuCauNhanLai'
 
 export default function YeuCauNhanLai() {
-  const thongBao = useYeuCauNhanLai()
-
-  return <ThongBaoTrong {...thongBao} />
+  const { yeuCau, xuLy } = useYeuCauNhanLai()
+  const [chiTiet, datChiTiet] = useState(false)
+  const [thaoTac, datThaoTac] = useState(null)
+  if (!yeuCau) return <ThongBaoTrong bieuTuong={HandHeart} tieuDe="Chưa có yêu cầu nhận lại" moTa="Các yêu cầu nhận đồ và minh chứng cần xác minh sẽ xuất hiện tại đây." />
+  const nhan = { cho_xac_minh: 'Chờ xác minh', cho_ban_giao: 'Chờ bàn giao', tu_choi: 'Đã từ chối', da_ban_giao: 'Đã bàn giao' }
+  const nut = 'rounded-xl bg-emerald-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-800'
+  const truong = 'mt-2 w-full rounded-xl border border-[#ceded3] p-3 text-sm font-normal'
+  return <div className="space-y-5">
+    <p className="text-xs leading-5 text-[#718276]">Dữ liệu mẫu — 1 yêu cầu nhận lại và bàn giao. Chưa kết nối backend; tải lại trang sẽ đặt lại.</p>
+    <KhungThongTin tieuDe="Yêu cầu nhận lại & bàn giao (1)">
+      <div className="overflow-x-auto"><table className="w-full min-w-[700px] text-left text-sm"><caption className="sr-only">Danh sách yêu cầu nhận lại đồ</caption><thead className="bg-[#f8fbf9] text-xs text-[#687d70]"><tr>{['Yêu cầu / đồ vật', 'Người yêu cầu', 'Ngày gửi', 'Trạng thái', 'Thao tác'].map((ten) => <th scope="col" key={ten} className="p-3">{ten}</th>)}</tr></thead><tbody><tr className="border-t border-[#e1eae4]"><td className="p-3"><p className="font-semibold">{yeuCau.ma}</p><p className="mt-1 max-w-56 text-xs leading-5 text-[#718276]">{yeuCau.tin.title}</p></td><td className="p-3">{yeuCau.hoTen}<p className="mt-1 text-xs text-[#718276]">{yeuCau.maSinhVien}</p></td><td className="p-3 text-xs">{yeuCau.ngayGui}</td><td className="p-3"><span className="whitespace-nowrap rounded-full bg-emerald-50 px-3 py-1 text-xs text-emerald-800">{nhan[yeuCau.trangThai]}</span></td><td className="p-3"><button className="whitespace-nowrap font-semibold text-emerald-800" aria-expanded={chiTiet} onClick={() => datChiTiet(!chiTiet)}>{chiTiet ? 'Đóng chi tiết' : 'Xem chi tiết'}</button></td></tr></tbody></table></div>
+    </KhungThongTin>
+    {chiTiet && <div className="grid items-start gap-5 lg:grid-cols-2">
+      <KhungThongTin tieuDe="Thông tin đồ vật"><img src={yeuCau.tin.imageUrl} alt={yeuCau.tin.fullName} className="mb-4 h-56 w-full rounded-2xl object-cover" /><h3 className="font-bold text-emerald-900">{yeuCau.tin.fullName}</h3><p className="my-3 text-sm leading-7 text-[#526c5b]">{yeuCau.tin.description}</p><p className="text-xs leading-6 text-[#718276]">Mã tin: {yeuCau.tin.referenceCode}<br />Nơi giữ: {yeuCau.tin.storageLocation}<br />Trạng thái đồ: {yeuCau.trangThai === 'da_ban_giao' ? 'Đã trả lại (mô phỏng)' : 'Chưa bàn giao'}</p></KhungThongTin>
+      <div className="space-y-5"><KhungThongTin tieuDe="Thông tin xác minh"><dl className="space-y-3 text-sm">{[['Họ tên', yeuCau.hoTen], ['MSSV', yeuCau.maSinhVien], ['Điện thoại', yeuCau.dienThoai], ['Email', yeuCau.email], ['Đặc điểm nhận dạng', yeuCau.moTa]].map(([ten, giaTri]) => <div key={ten}><dt className="text-xs text-[#718276]">{ten}</dt><dd className="mt-1 break-words leading-6">{giaTri}</dd></div>)}</dl><p className="mt-4 text-xs text-[#718276]">Ảnh chứng minh: chưa cung cấp.</p><div className="mt-5 flex flex-wrap gap-3">{yeuCau.trangThai === 'cho_xac_minh' && <><button className={nut} onClick={() => datThaoTac({ nhan: 'Chấp nhận yêu cầu', trangThai: 'cho_ban_giao' })}>Chấp nhận</button><button className="rounded-xl border border-red-200 px-4 py-2.5 text-sm font-semibold text-red-700" onClick={() => datThaoTac({ nhan: 'Từ chối yêu cầu', trangThai: 'tu_choi' })}>Từ chối</button></>}{yeuCau.trangThai === 'cho_ban_giao' && <button className={nut} onClick={() => datThaoTac({ nhan: 'Xác nhận bàn giao', trangThai: 'da_ban_giao' })}>Xác nhận bàn giao</button>}</div><p className="mt-4 text-xs text-emerald-800" role="status">{nhan[yeuCau.trangThai]}</p></KhungThongTin>
+      <KhungThongTin tieuDe="Lịch sử xử lý">{!yeuCau.lichSu.length ? <p className="text-sm text-[#718276]">Chưa có thao tác xử lý.</p> : <ol className="space-y-4">{yeuCau.lichSu.map((muc, i) => <li key={i} className="border-l-2 border-emerald-100 pl-4 text-sm"><strong>{muc.nhan}</strong><p className="mt-1 text-xs text-[#718276]">{muc.thoiGian} · Quản trị viên mẫu</p><p className="mt-2 break-words leading-6">{muc.ghiChu}</p>{muc.diaDiem && <p className="text-xs leading-6">Địa điểm: {muc.diaDiem}</p>}{muc.nguoiNhan && <p className="text-xs leading-6">Người nhận thực tế: {muc.nguoiNhan}</p>}</li>)}</ol>}</KhungThongTin></div>
+    </div>}
+    {thaoTac && <HopThoai tieuDe={thaoTac.nhan} moTa="Thao tác trên dữ liệu mẫu, chưa gửi đến hệ thống." khiDong={() => datThaoTac(null)}><form className="space-y-4 p-5" onSubmit={(e) => { e.preventDefault(); const duLieu = Object.fromEntries(new FormData(e.currentTarget)); if (duLieu.ghiChu.trim().length < 5) { e.currentTarget.elements.ghiChu.setCustomValidity('Nhập ít nhất 5 ký tự có nội dung.'); e.currentTarget.reportValidity(); return } xuLy(thaoTac, duLieu); datThaoTac(null) }}>
+      {thaoTac.trangThai !== 'tu_choi' && <label className="block text-sm font-semibold">Địa điểm nhận / bàn giao *<input className={truong} name="diaDiem" required maxLength={200} defaultValue={yeuCau.tin.storageLocation} /></label>}
+      {thaoTac.trangThai === 'da_ban_giao' && <><label className="block text-sm font-semibold">Người nhận thực tế *<input name="nguoiNhan" className={truong} required maxLength={100} defaultValue={yeuCau.hoTen} /></label><label className="flex items-start gap-2 text-sm leading-6"><input type="checkbox" required className="mt-1" />Tôi đã đối chiếu thông tin người nhận và bàn giao đồ vật trực tiếp.</label></>}
+      <label className="block text-sm font-semibold">{thaoTac.trangThai === 'tu_choi' ? 'Lý do từ chối' : 'Kết quả xác minh / hướng dẫn nhận đồ'} *<textarea className={truong} name="ghiChu" required minLength={5} maxLength={1000} rows={3} onChange={(e) => e.target.setCustomValidity('')} /></label><div className="flex justify-end gap-3"><button type="button" onClick={() => datThaoTac(null)} className="px-4 py-2 text-sm">Hủy</button><button type="submit" className={nut}>Xác nhận</button></div>
+    </form></HopThoai>}
+  </div>
 }

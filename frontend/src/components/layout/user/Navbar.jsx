@@ -2,8 +2,11 @@ import { useState } from 'react'
 import { Menu, Plus, X } from 'lucide-react'
 import { Link, NavLink } from 'react-router-dom'
 import ThongBao from '../../thong-bao/ThongBao'
+import AccountDropdown from '../../../auth/AccountDropdown'
+import { useAuth } from '../../../auth/useAuth'
 
 export default function Navbar({ adminView = false }) {
+  const { user } = useAuth()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   function moDongMenuDiDong() {
@@ -72,7 +75,7 @@ export default function Navbar({ adminView = false }) {
           </nav>
 
           <div className="flex items-center gap-1.5 sm:gap-3">
-            <ThongBao />
+            {user && <ThongBao />}
             {!adminView && <Link
               to="/dang-tin?loaiTin=lost"
               onClick={dongMenuDiDong}
@@ -83,13 +86,13 @@ export default function Navbar({ adminView = false }) {
               <span className="hidden sm:inline">Báo mất đồ</span>
             </Link>}
 
-            <Link
+            {user ? <AccountDropdown /> : <Link
               to="/dang-nhap"
               onClick={dongMenuDiDong}
               className="rounded-xl bg-emerald-800 px-3 sm:px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-900 transition-colors whitespace-nowrap"
             >
               Đăng nhập
-            </Link>
+            </Link>}
             <button
               type="button"
               onClick={moDongMenuDiDong}

@@ -17,7 +17,6 @@ use App\Models\YeuCauNhanDo;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
@@ -34,13 +33,13 @@ class ModelsTest extends TestCase
         DB::purge('sqlite');
     }
 
-    public function test_mat_khau_duoc_bam_va_khong_lo_khi_chuyen_json(): void
+    public function test_mat_khau_giu_nguyen_va_khong_lo_khi_chuyen_json(): void
     {
         $nguoiDung = new NguoiDung(['mat_khau' => 'MatKhauThu@123']);
         $matKhauDaBam = $nguoiDung->getAuthPassword();
 
         $this->assertSame('mat_khau', $nguoiDung->getAuthPasswordName());
-        $this->assertTrue(Hash::check('MatKhauThu@123', $matKhauDaBam));
+        $this->assertSame('MatKhauThu@123', $matKhauDaBam);
         $this->assertArrayNotHasKey('mat_khau', $nguoiDung->toArray());
 
         $nguoiDung->mat_khau = $matKhauDaBam;

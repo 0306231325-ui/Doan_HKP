@@ -10,14 +10,16 @@ function taoKhoLuuThu() {
   }
 }
 
-test('Khởi tạo từ địa điểm hiện có, bỏ lựa chọn tất cả và giữ các ID riêng', () => {
-  const danhSach = taoDiaDiemBanDau()
-  assert.equal(danhSach.length, 6)
-  assert.equal(danhSach.some((muc) => muc.id === 'all'), false)
-  assert.equal(new Set(danhSach.map((muc) => muc.id)).size, danhSach.length)
-  assert.equal(danhSach.every((muc) => muc.dangHoatDong && muc.moTa), true)
-  danhSach[0].tenDiaDiem = 'Thay đổi bản sao'
-  assert.notEqual(taoDiaDiemBanDau()[0].tenDiaDiem, 'Thay đổi bản sao')
+test('Khởi tạo danh sách rỗng khi chưa có địa điểm', () => {
+  assert.deepEqual(taoDiaDiemBanDau(), [])
+  assert.deepEqual(docDanhSachDiaDiem(taoKhoLuuThu()), [])
+})
+
+test('Bỏ địa điểm mẫu đã lưu nhưng giữ địa điểm người dùng thêm', () => {
+  const kho = taoKhoLuuThu()
+  const moi = { id: 'dia-diem-moi', tenDiaDiem: 'Khu tự học', moTa: '', dangHoatDong: true }
+  luuDanhSachDiaDiem([{ ...moi, id: 'library', tenDiaDiem: 'Thư viện mẫu' }, moi], kho)
+  assert.deepEqual(docDanhSachDiaDiem(kho), [moi])
 })
 
 test('Tìm tên và mô tả không dấu kết hợp trạng thái, không đổi dữ liệu gốc', () => {
@@ -62,12 +64,12 @@ test('Dữ liệu lưu hỏng được xử lý, danh sách rỗng hợp lệ đ
   assert.equal(luuDanhSachDiaDiem([], khoLuu), true)
   assert.deepEqual(docDanhSachDiaDiem(khoLuu), [])
   khoLuu.setItem('lacoi.admin.dia-diem.v1', '{hong')
-  assert.equal(docDanhSachDiaDiem(khoLuu).length, 6)
+  assert.equal(docDanhSachDiaDiem(khoLuu).length, 0)
   khoLuu.setItem('lacoi.admin.dia-diem.v1', JSON.stringify([{ id: '1' }]))
-  assert.equal(docDanhSachDiaDiem(khoLuu).length, 6)
+  assert.equal(docDanhSachDiaDiem(khoLuu).length, 0)
   const muc = { id: '1', tenDiaDiem: 'Phòng đọc', moTa: '', dangHoatDong: true }
   khoLuu.setItem('lacoi.admin.dia-diem.v1', JSON.stringify([muc, muc]))
-  assert.equal(docDanhSachDiaDiem(khoLuu).length, 6)
+  assert.equal(docDanhSachDiaDiem(khoLuu).length, 0)
 })
 
 test('Không báo lưu thành công khi kho lưu bị chặn hoặc hết dung lượng', () => {
@@ -77,7 +79,7 @@ test('Không báo lưu thành công khi kho lưu bị chặn hoặc hết dung l
   }
   const danhSach = taoDiaDiemBanDau()
   assert.equal(luuDanhSachDiaDiem(danhSach, khoLuu), false)
-  assert.equal(docDanhSachDiaDiem(khoLuu).length, 6)
+  assert.equal(docDanhSachDiaDiem(khoLuu).length, 0)
 })
 
 test('Phân trang điều chỉnh đúng khi lọc làm giảm số trang và khi không có kết quả', () => {

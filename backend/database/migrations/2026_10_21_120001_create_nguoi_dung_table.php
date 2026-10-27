@@ -22,7 +22,6 @@ return new class extends Migration
               khoa VARCHAR(100) NULL,
               lop VARCHAR(50) NULL,
               vai_tro ENUM('nguoi_dung', 'quan_tri') NOT NULL DEFAULT 'nguoi_dung',
-              da_xac_minh TINYINT(1) NOT NULL DEFAULT 0,
               trang_thai ENUM('hoat_dong', 'bi_khoa') NOT NULL DEFAULT 'hoat_dong',
               ly_do_khoa TEXT NULL,
               khoa_den_ngay DATETIME NULL,
@@ -30,8 +29,7 @@ return new class extends Migration
               deleted_at DATETIME NULL,
               created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
               updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-              INDEX idx_nguoi_dung_ma_so (ma_so),
-              CONSTRAINT chk_nguoi_dung_xac_minh CHECK (da_xac_minh IN (0,1))
+              INDEX idx_nguoi_dung_ma_so (ma_so)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
             SQL);
     }

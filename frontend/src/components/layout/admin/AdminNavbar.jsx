@@ -1,5 +1,6 @@
 import { Menu, ShieldCheck, X } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import AccountDropdown from '../../../auth/AccountDropdown'
 
 export default function AdminNavbar({ menuOpen, onToggleMenu }) {
   return (
@@ -32,12 +33,7 @@ export default function AdminNavbar({ menuOpen, onToggleMenu }) {
             <span className="sm:hidden">Trang người dùng</span>
             <span className="hidden sm:inline">Xem trang người dùng</span>
           </Link>
-          <div className="flex items-center gap-2.5">
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-800 text-xs font-extrabold text-white ring-2 ring-emerald-100" aria-hidden="true">
-              QT
-            </span>
-            <span className="hidden text-sm font-semibold text-gray-700 sm:inline">Quản trị viên</span>
-          </div>
+          <AccountDropdown showProfile={false} />
         </div>
       </div>
     </header>

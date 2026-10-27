@@ -1,4 +1,4 @@
-import { LOCATIONS } from '../../../../data/mockData.js'
+﻿const maDiaDiemMauCu = new Set(['library', 'canteen_a3', 'lab_hg02', 'parking_gate2', 'lecture_b4', 'exam_room_302'])
 
 const khoaLuuTru = 'lacoi.admin.dia-diem.v1'
 
@@ -7,17 +7,7 @@ export function chuanHoaTuKhoa(giaTri) {
 }
 
 export function taoDiaDiemBanDau() {
-  const cacMoTa = {
-    library: 'Khu vực phòng đọc, quầy mượn sách và các tầng thư viện.',
-    canteen_a3: 'Khu vực bàn ăn, quầy nước và sảnh căn-tin nhà A3.',
-    lab_hg02: 'Phòng máy và khu vực thực hành HG.02.',
-    parking_gate2: 'Bãi giữ xe sinh viên tại Cổng 2, khu B.',
-    lecture_b4: 'Các phòng học, hành lang và sảnh giảng đường B4.',
-    exam_room_302: 'Phòng 302 và hành lang tầng 3, nhà C.',
-  }
-  return LOCATIONS.filter(({ id }) => id !== 'all').map(({ id, name }) => ({
-    id, tenDiaDiem: name, moTa: cacMoTa[id] || '', dangHoatDong: true,
-  }))
+  return []
 }
 
 export function docDanhSachDiaDiem(khoLuu) {
@@ -33,7 +23,7 @@ export function docDanhSachDiaDiem(khoLuu) {
       return typeof muc.tenDiaDiem === 'string' && muc.tenDiaDiem.trim().length > 0 && muc.tenDiaDiem.length <= 150
         && typeof muc.moTa === 'string' && muc.moTa.length <= 500 && typeof muc.dangHoatDong === 'boolean'
     })) return taoDiaDiemBanDau()
-    return danhSach
+    return danhSach.filter((muc) => !maDiaDiemMauCu.has(muc.id))
   } catch {
     return taoDiaDiemBanDau()
   }
@@ -80,3 +70,4 @@ export function phanTrangDiaDiem(danhSach, trang, moiTrang = 8) {
     denViTri: Math.min(batDau + moiTrang, danhSach.length),
   }
 }
+
