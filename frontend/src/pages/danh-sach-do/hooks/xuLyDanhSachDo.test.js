@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { CATEGORIES, LOCATIONS, MOCK_ITEMS } from '../../../data/mockData.js'
-import { boLocBanDau, docBoLoc, kiemTraNgay, locDoVat, phanTrangDoVat } from './xuLyDanhSachDo.js'
+import { boLocBanDau, docBoLoc, kiemTraNgay, locDoVat, phanTrangDoVat, taoThamSoTraCuu } from './xuLyDanhSachDo.js'
 
 test('Tìm không dấu theo đặc điểm, vị trí và mã tin, kết hợp loại tin và các ID bộ lọc', () => {
   assert.deepEqual(locDoVat(MOCK_ITEMS, { ...boLocBanDau, tuKhoa: 'SINH VIEN NGUYEN' }).map((muc) => muc.id), [1])
@@ -48,4 +48,15 @@ test('Khôi phục bộ lọc từ URL, loại bỏ lựa chọn không còn h�
   assert.equal(boLoc.tuKhoa, 'Tai nghe')
   assert.deepEqual(locDoVat(MOCK_ITEMS, boLoc).map((muc) => muc.id), [5])
   assert.deepEqual(docBoLoc(new URLSearchParams('loaiTin=sai&danhMuc=xoa&diaDiem=xoa&sapXep=sai'), CATEGORIES, LOCATIONS), boLocBanDau)
+})
+
+test('Tham số API bỏ giá trị tất cả và giữ từ khóa, ID, phân trang hợp lệ', () => {
+  assert.equal(taoThamSoTraCuu(boLocBanDau, 'sai'), '')
+  const thamSo = new URLSearchParams(taoThamSoTraCuu({ ...boLocBanDau, tuKhoa: 'điện thoại', loaiTin: 'found', danhMuc: '2', diaDiem: '3' }, 2))
+  assert.equal(thamSo.get('tuKhoa'), 'điện thoại')
+  assert.equal(thamSo.get('danhMuc'), '2')
+  assert.equal(thamSo.get('diaDiem'), '3')
+  assert.equal(thamSo.get('trang'), '2')
+  assert.equal(thamSo.has('tuNgay'), false)
+  assert.equal(taoThamSoTraCuu(boLocBanDau, -1), '')
 })

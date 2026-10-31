@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowRight, Heart, HeartHandshake, MessageCircle, Search, ShieldCheck, UsersRound } from 'lucide-react'
+import { ArrowDown, ArrowRight, HeartHandshake, MessageCircle, Search, ShieldCheck, UsersRound } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import KhungThongTin from '../../components/shared/KhungThongTin'
 import TrinhChieuAnh from '../../components/shared/TrinhChieuAnh'
@@ -29,8 +29,7 @@ export default function GioiThieu() {
         <div className="pointer-events-none absolute -top-28 -right-24 h-96 w-96 rounded-full bg-emerald-50 blur-3xl" aria-hidden="true" />
         <div className="relative grid items-center gap-10 lg:grid-cols-[1.15fr_0.85fr] lg:gap-12">
           <div>
-            <p className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-bold tracking-wide text-emerald-800"><Heart className="h-3.5 w-3.5" aria-hidden="true" />VỀ LẠC ƠI</p>
-            <h1 id="tieu-de-gioi-thieu" className="mt-6 text-4xl leading-tight font-black tracking-tight text-emerald-950 sm:text-5xl">Để những món đồ lạc <span className="text-emerald-700">tìm được đường về.</span></h1>
+            <h1 id="tieu-de-gioi-thieu" className="text-4xl leading-tight font-black tracking-tight text-black sm:text-5xl">Để những món đồ lạc tìm được đường về.</h1>
             <p className="mt-5 max-w-xl text-sm leading-7 text-[#607568] sm:text-base sm:leading-8">Có những món đồ nhỏ nhưng mang theo rất nhiều kỷ niệm. Lạc Ơi là nơi kết nối người làm mất với người nhặt được, để sự tử tế trong trường trở thành những cuộc gặp gỡ ý nghĩa.</p>
             <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
               <Link to="/danh-sach-do" className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-900 px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-emerald-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700"><Search className="h-4 w-4" aria-hidden="true" />Tra cứu đồ thất lạc<ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>

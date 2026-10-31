@@ -1,106 +1,52 @@
-import { Clock, MapPin, ArrowRight, MessageSquare, Shield, AlertCircle, Key, BookOpen } from 'lucide-react'
+import { Link, useLocation } from 'react-router-dom'
+import { CalendarDays, MapPin, ArrowRight } from 'lucide-react'
 
-export default function TheDoThatLac({ doVat, khiXemChiTiet }) {
+export default function TheDoThatLac({ doVat }) {
+  const viTri = useLocation()
   const laDoNhatDuoc = doVat.type === 'found'
 
-  const layIconTrangThai = (loaiTrangThai) => {
-    switch (loaiTrangThai) {
-      case 'safe':
-        return <Shield className="w-3 h-3 text-emerald-600" />
-      case 'urgent':
-        return <AlertCircle className="w-3 h-3 text-rose-500" />
-      case 'secure':
-        return <Key className="w-3 h-3 text-amber-600" />
-      default:
-        return <BookOpen className="w-3 h-3 text-gray-500" />
-    }
-  }
-
   return (
-    <article className="group bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
-      <div>
-        <div className="relative aspect-[16/10] w-full overflow-hidden bg-gray-100">
-          <img
-            src={doVat.imageUrl}
-            alt={doVat.title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-            loading="lazy"
-            onError={(e) => {
-              e.currentTarget.src = 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=800&q=80'
-            }}
-          />
-
-          <div className="absolute top-3 left-3">
-            <span
-              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold shadow-sm ${
-                laDoNhatDuoc
-                  ? 'bg-emerald-50 text-emerald-800 border border-emerald-200/80'
-                  : 'bg-rose-50 text-rose-800 border border-rose-200/80'
-              }`}
-            >
-              <span
-                className={`w-2 h-2 rounded-full ${
-                  laDoNhatDuoc ? 'bg-emerald-500' : 'bg-rose-500'
-                }`}
-              />
-              {doVat.typeName}
-            </span>
-          </div>
-
-          <div className="absolute top-3 right-3">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-white/90 backdrop-blur-md text-gray-700 shadow-sm border border-white/50">
-              <Clock className="w-3 h-3 text-gray-400" />
-              {doVat.time}
-            </span>
-          </div>
-        </div>
-
-        <div className="p-4 sm:p-5">
-          <div className="flex items-center gap-2 mb-2.5 flex-wrap">
-            <span className="px-2 py-0.5 rounded text-[11px] font-medium bg-gray-100 text-gray-600">
-              {doVat.category}
-            </span>
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-gray-50 text-gray-600 border border-gray-100">
-              {layIconTrangThai(doVat.statusType)}
-              {doVat.statusBadge}
-            </span>
-          </div>
-
-          <h3 className="text-base font-bold text-gray-900 group-hover:text-emerald-800 transition-colors line-clamp-1 mb-2">
-            {doVat.title}
-          </h3>
-
-          <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed mb-4">
-            {doVat.description}
-          </p>
-
-          <div className="flex items-center gap-1.5 text-xs text-gray-500 pt-2 border-t border-gray-50">
-            <MapPin className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-            <span className="truncate">{doVat.location}</span>
-          </div>
-        </div>
+    <article className="group flex flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm transition-shadow hover:shadow-md">
+      <div className="aspect-[16/10] w-full overflow-hidden bg-gray-100">
+        <img
+          src={doVat.imageUrl}
+          alt={doVat.title}
+          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+          loading="lazy"
+          onError={(suKien) => {
+            suKien.currentTarget.onerror = null
+            suKien.currentTarget.src = '/do-vat-trong.svg'
+          }}
+        />
       </div>
 
-      <div className="p-4 sm:p-5 pt-0">
-        {laDoNhatDuoc ? (
-          <button
-            type="button"
-            onClick={() => khiXemChiTiet?.(doVat)}
-            className="w-full inline-flex items-center justify-center gap-1.5 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-semibold bg-[#eef7f1] text-[#133f32] hover:bg-[#deede3] active:scale-[0.98] transition-all cursor-pointer"
-          >
-            <span>{khiXemChiTiet ? 'Xem chi tiết' : 'Xem chi tiết / Nhận lại đồ'}</span>
-            <ArrowRight className="w-4 h-4" />
-          </button>
-        ) : (
-          <button
-            type="button"
-            onClick={() => khiXemChiTiet?.(doVat)}
-            className="w-full inline-flex items-center justify-center gap-1.5 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-semibold bg-[#fdf2f2] text-[#991b1b] hover:bg-[#fae1e1] active:scale-[0.98] transition-all cursor-pointer"
-          >
-            <MessageSquare className="w-4 h-4" />
-            <span>{khiXemChiTiet ? 'Xem chi tiết' : 'Báo tin cho chủ nhân'}</span>
-          </button>
-        )}
+      <div className="flex flex-1 flex-col gap-3 p-4 sm:p-5">
+        <h3 className="line-clamp-2 text-base font-bold text-gray-900">{doVat.title}</h3>
+
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${laDoNhatDuoc ? 'bg-emerald-50 text-emerald-800' : 'bg-rose-50 text-rose-800'}`}>
+            <span className={`h-1.5 w-1.5 rounded-full ${laDoNhatDuoc ? 'bg-emerald-500' : 'bg-rose-500'}`} aria-hidden="true" />
+            {doVat.typeName}
+          </span>
+          <span className="inline-flex items-center gap-1.5 text-xs text-gray-500">
+            <CalendarDays className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+            <time dateTime={doVat.date}>{doVat.time}</time>
+          </span>
+        </div>
+
+        <div className="flex items-center gap-1.5 text-xs text-gray-500">
+          <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+          <span className="truncate">{doVat.location}</span>
+        </div>
+
+        <Link
+          to={`/chi-tiet-tin-dang?id=${doVat.id}`}
+          state={{ quayLai: viTri.pathname + viTri.search }}
+          className="mt-auto inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-[#eef7f1] px-4 py-2.5 text-xs font-semibold text-[#133f32] transition-colors hover:bg-[#deede3] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 sm:text-sm"
+        >
+          <span>Xem chi tiết</span>
+          <ArrowRight className="h-4 w-4" aria-hidden="true" />
+        </Link>
       </div>
     </article>
   )

@@ -43,7 +43,10 @@ export function AuthProvider({ children }) {
     await sessionApi.post('/logout')
     setUser(null)
   }
-  return <AuthContext.Provider value={{ user, loading, error, refresh, login, logout }}>{children}</AuthContext.Provider>
+  function capNhatTaiKhoan(taiKhoan) {
+    setUser(taiKhoan)
+  }
+  return <AuthContext.Provider value={{ user, loading, error, refresh, login, logout, capNhatTaiKhoan }}>{children}</AuthContext.Provider>
 }
 
 export function RequireAuth({ admin = false }) {

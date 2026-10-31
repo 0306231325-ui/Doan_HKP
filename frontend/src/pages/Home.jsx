@@ -12,7 +12,7 @@ export default function Home() {
     <div className="space-y-8 sm:space-y-12">
       <Hero />
       <ThanhTimKiem {...danhSach} />
-      <DanhSachDoThatLac danhSachDo={danhSach.cacDoVat} tongTin={danhSach.tongTin} trangHienTai={danhSach.trangHienTai} loiNgay={danhSach.loiNgay} coBoLoc={danhSach.coBoLoc} xoaBoLoc={danhSach.xoaBoLoc} />
+      <DanhSachDoThatLac danhSachDo={danhSach.cacDoVat} tongTin={danhSach.tongTin} dangTai={danhSach.dangTai} loiTai={danhSach.loiTai} taiLai={danhSach.taiLai} loiNgay={danhSach.loiNgay} coBoLoc={danhSach.coBoLoc} xoaBoLoc={danhSach.xoaBoLoc} />
       {danhSach.tongTin > 0 && <PhanTrang {...danhSach} />}
       <BannerHoTro />
     </div>

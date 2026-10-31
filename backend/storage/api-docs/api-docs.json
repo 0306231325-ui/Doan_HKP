@@ -2,7 +2,7 @@
     "openapi": "3.0.0",
     "info": {
         "title": "Đồ Án HKP API Documentation",
-        "description": "Tài liệu API nội bộ chỉ dùng để test cá nhân (không đưa lên Git).",
+        "description": "Tài liệu API nội bộ. Các thao tác hồ sơ dùng phiên đăng nhập Sanctum và CSRF. Gọi /sanctum/csrf-cookie, đăng nhập rồi truyền giá trị cookie XSRF-TOKEN đã URL-decode vào X-XSRF-TOKEN khi ghi dữ liệu.",
         "version": "1.0.0"
     },
     "servers": [
@@ -12,12 +12,312 @@
         }
     ],
     "paths": {
+        "/sanctum/csrf-cookie": {
+            "get": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Khởi tạo cookie CSRF",
+                "operationId": "5a112393458c5f610ea5ca4ab0ffb393",
+                "responses": {
+                    "204": {
+                        "description": "Cookie CSRF đã được gửi"
+                    }
+                }
+            }
+        },
+        "/login": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Đăng nhập bằng phiên cookie",
+                "operationId": "4c72e998fc609fc8d6ac09991d375623",
+                "parameters": [
+                    {
+                        "name": "X-XSRF-TOKEN",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Đăng nhập thành công, trả hồ sơ và giữ nguyên mật khẩu đã băm"
+                    },
+                    "422": {
+                        "description": "Thông tin đăng nhập không đúng"
+                    }
+                }
+            }
+        },
+        "/api/me": {
+            "get": {
+                "tags": [
+                    "Profile"
+                ],
+                "summary": "Đọc hồ sơ tài khoản đang đăng nhập",
+                "operationId": "aacbcfc38e46c39c0c9807f03b7ca5d9",
+                "responses": {
+                    "200": {
+                        "description": "user gồm id, ho_ten, email, ma_so, so_dien_thoai, khoa, lop, anh_dai_dien, vai_tro, trang_thai, created_at; không có mật khẩu"
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Tài khoản bị khóa"
+                    }
+                }
+            },
+            "patch": {
+                "tags": [
+                    "Profile"
+                ],
+                "summary": "Lưu hồ sơ của chính mình",
+                "operationId": "118b732fd4d6b88ecb294b2e33753adc",
+                "parameters": [
+                    {
+                        "name": "X-XSRF-TOKEN",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "ho_ten",
+                                    "email"
+                                ],
+                                "properties": {
+                                    "ho_ten": {
+                                        "type": "string",
+                                        "maxLength": 150
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "maxLength": 191
+                                    },
+                                    "ma_so": {
+                                        "type": "string",
+                                        "nullable": true,
+                                        "maxLength": 50
+                                    },
+                                    "so_dien_thoai": {
+                                        "type": "string",
+                                        "nullable": true,
+                                        "maxLength": 20
+                                    },
+                                    "khoa": {
+                                        "type": "string",
+                                        "nullable": true,
+                                        "maxLength": 100
+                                    },
+                                    "lop": {
+                                        "type": "string",
+                                        "nullable": true,
+                                        "maxLength": 50
+                                    },
+                                    "current_password": {
+                                        "description": "Bắt buộc đúng mật khẩu hiện tại khi đổi email",
+                                        "type": "string",
+                                        "format": "password"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Trả user và updated; updated=true khi có thay đổi, updated=false và thông báo chưa thay đổi khi dữ liệu giữ nguyên"
+                    },
+                    "422": {
+                        "description": "Dữ liệu không hợp lệ, email trùng hoặc mật khẩu hiện tại sai"
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Tài khoản bị khóa"
+                    }
+                }
+            }
+        },
+        "/api/me/mat-khau": {
+            "put": {
+                "tags": [
+                    "Profile"
+                ],
+                "summary": "Đổi mật khẩu của chính mình",
+                "operationId": "f80a132fe358e140fb463502c589327d",
+                "parameters": [
+                    {
+                        "name": "X-XSRF-TOKEN",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "current_password",
+                                    "password",
+                                    "password_confirmation"
+                                ],
+                                "properties": {
+                                    "current_password": {
+                                        "type": "string",
+                                        "format": "password"
+                                    },
+                                    "password": {
+                                        "description": "Ít nhất 8 ký tự, tối đa 72 byte, khác mật khẩu hiện tại",
+                                        "type": "string",
+                                        "format": "password"
+                                    },
+                                    "password_confirmation": {
+                                        "type": "string",
+                                        "format": "password"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Mật khẩu mới được băm, không trả mật khẩu trong response"
+                    },
+                    "422": {
+                        "description": "Mật khẩu hiện tại sai hoặc mật khẩu mới không hợp lệ"
+                    },
+                    "429": {
+                        "description": "Giới hạn 5 lần mỗi phút"
+                    }
+                }
+            }
+        },
+        "/api/me/anh-dai-dien": {
+            "post": {
+                "tags": [
+                    "Profile"
+                ],
+                "summary": "Thay ảnh đại diện",
+                "operationId": "cad966cb9810e55f8118cedc650b07e5",
+                "parameters": [
+                    {
+                        "name": "X-XSRF-TOKEN",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "anh_dai_dien"
+                                ],
+                                "properties": {
+                                    "anh_dai_dien": {
+                                        "description": "JPG/PNG/WebP, tối đa 2 MB, tối đa 4096 × 4096 pixel",
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Đã lưu ảnh mới, xóa ảnh đại diện cũ do hệ thống quản lý, trả user mới"
+                    },
+                    "422": {
+                        "description": "Ảnh không hợp lệ"
+                    }
+                }
+            }
+        },
+        "/api/anh-dai-dien/{tenAnh}": {
+            "get": {
+                "tags": [
+                    "Profile"
+                ],
+                "summary": "Đọc ảnh đại diện theo tên ngẫu nhiên do server tạo",
+                "operationId": "225dfc5b527dd6b9f800bbefe765b810",
+                "parameters": [
+                    {
+                        "name": "tenAnh",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Nội dung ảnh, có cache và nosniff"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy ảnh"
+                    }
+                }
+            }
+        },
         "/api/users": {
             "get": {
                 "tags": [
                     "Users"
                 ],
-                "summary": "Lấy danh sách người dùng giả lập",
+                "summary": "Lấy danh sách người dùng giả lập (quản trị)",
                 "operationId": "d4eb66d954f05a9c21d4412fb86b2a0a",
                 "responses": {
                     "200": {
@@ -25,12 +325,132 @@
                     }
                 }
             }
+        },
+        "/api/tra-cuu/bo-loc": {
+            "get": {
+                "tags": [
+                    "Tra cứu"
+                ],
+                "summary": "Danh mục và địa điểm đang hoạt động cho bộ lọc công khai",
+                "operationId": "5372962e583e5ef1a626180738226568",
+                "responses": {
+                    "200": {
+                        "description": "danhMuc và diaDiem gồm id dạng chuỗi, name; lấy từ DB, không cần đăng nhập"
+                    }
+                }
+            }
+        },
+        "/api/tra-cuu": {
+            "get": {
+                "tags": [
+                    "Tra cứu"
+                ],
+                "summary": "Tìm tin báo mất/nhặt được công khai, 6 tin mỗi trang",
+                "operationId": "09f3acbcb1f19f5337ddd748782615af",
+                "parameters": [
+                    {
+                        "name": "tuKhoa",
+                        "in": "query",
+                        "description": "Tên, mô tả, địa điểm, danh mục hoặc mã TIN-000001; khớp từng từ đầy đủ, hỗ trợ tìm không dấu trên MySQL Unicode collation",
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 200
+                        }
+                    },
+                    {
+                        "name": "loaiTin",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "all",
+                                "lost",
+                                "found"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "danhMuc",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "diaDiem",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "tuNgay",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "denNgay",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "sapXep",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "moi_nhat",
+                                "cu_nhat"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "trang",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "data gồm các trường công khai cho card/modal; meta gồm trangHienTai, tongTrang, tongTin, tuViTri, denViTri. Không trả tin ẩn, xóa mềm, ảnh riêng tư hoặc mật khẩu/số điện thoại hồ sơ người đăng. Ngày lọc là ngày xảy ra, dự phòng ngày đăng; trang vượt biên về trang cuối."
+                    },
+                    "422": {
+                        "description": "Bộ lọc hoặc khoảng ngày không hợp lệ"
+                    },
+                    "429": {
+                        "description": "Giới hạn 120 lần mỗi phút"
+                    }
+                }
+            }
         }
     },
     "tags": [
         {
+            "name": "Auth",
+            "description": "Auth"
+        },
+        {
+            "name": "Profile",
+            "description": "Profile"
+        },
+        {
             "name": "Users",
             "description": "Users"
+        },
+        {
+            "name": "Tra cứu",
+            "description": "Tra cứu"
         }
     ]
 }

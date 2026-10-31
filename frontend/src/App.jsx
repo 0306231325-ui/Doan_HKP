@@ -32,11 +32,11 @@ export default function App() {
           <Route path="/" element={<MainLayout />}>
             <Route index element={<Home />} />
             <Route path="danh-sach-do" element={<DanhSachDo />} />
+            <Route path="chi-tiet-tin-dang" element={<ChiTietTinDang />} />
             <Route path="gioi-thieu" element={<GioiThieu />} />
             <Route element={<RequireAuth />}>
               <Route path="yeu-cau-nhan-do" element={<YeuCauNhanDo />} />
               <Route path="dang-tin" element={<DangTin />} />
-              <Route path="chi-tiet-tin-dang" element={<ChiTietTinDang />} />
               <Route path="trang-ca-nhan" element={<TrangCaNhan />} />
             </Route>
           </Route>

@@ -43,6 +43,18 @@ class NguoiDung extends Authenticatable
         ];
     }
 
+    public function thongTinCaNhan(): array
+    {
+        return $this->only(['id', 'ho_ten', 'email', 'ma_so', 'so_dien_thoai', 'khoa', 'lop', 'anh_dai_dien', 'vai_tro', 'trang_thai', 'created_at']);
+    }
+
+    public function kiemTraMatKhau(string $matKhau): bool
+    {
+        return password_get_info($this->mat_khau)['algoName'] !== 'unknown'
+            ? password_verify($matKhau, $this->mat_khau)
+            : hash_equals($this->mat_khau, $matKhau);
+    }
+
     public function tinDang(): HasMany
     {
         return $this->hasMany(TinDang::class, 'nguoi_dung_id');

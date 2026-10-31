@@ -3,9 +3,11 @@ import { Link } from 'react-router-dom'
 import ThongBaoTrong from '../../components/shared/ThongBaoTrong'
 import ThongTinCaNhan from './ThongTinCaNhan'
 import useTrangCaNhan from './hooks/useTrangCaNhan'
+import useAnhDaiDien from './hooks/useAnhDaiDien'
 
 export default function TrangCaNhan() {
   const { cacMuc, mucHienTai, chonMuc } = useTrangCaNhan()
+  const { user, oChonAnh, dangTai, moChonAnh, chonAnh } = useAnhDaiDien()
   const laTinDang = mucHienTai === 'tin-dang'
 
   return (
@@ -24,15 +26,20 @@ export default function TrangCaNhan() {
         <div className="relative flex flex-col gap-4 px-6 pb-6 sm:flex-row sm:items-end sm:justify-between sm:px-8">
           <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-end sm:gap-5">
             <div className="relative -mt-8 w-fit shrink-0">
-              <div className="flex h-24 w-24 items-center justify-center rounded-3xl border-4 border-white bg-[#e8f4ec] text-[#6d9480] shadow-sm"><UserRound className="h-11 w-11" strokeWidth={1.5} aria-label="Chưa có ảnh đại diện" role="img" /></div>
-              <button type="button" disabled title="Chưa kết nối tài khoản" aria-label="Đổi ảnh đại diện" className="absolute -bottom-1 -right-1 flex h-9 w-9 items-center justify-center rounded-xl border-2 border-white bg-[#e8f4ec] text-[#607568] shadow-sm disabled:cursor-not-allowed"><Camera className="h-4 w-4" aria-hidden="true" /></button>
+              <div className="flex h-24 w-24 items-center justify-center rounded-3xl border-4 border-white bg-[#e8f4ec] text-[#6d9480] shadow-sm">{user?.anh_dai_dien ? <img src={user.anh_dai_dien} alt="Ảnh đại diện của bạn" className="h-full w-full rounded-[1.25rem] object-cover" /> : <UserRound className="h-11 w-11" strokeWidth={1.5} aria-label="Chưa có ảnh đại diện" role="img" />}</div>
+              <button type="button" onClick={moChonAnh} disabled={dangTai} title="Ảnh JPG, PNG hoặc WebP, tối đa 2 MB" aria-label={dangTai ? 'Đang tải ảnh đại diện' : 'Đổi ảnh đại diện'} className="absolute -bottom-1 -right-1 flex h-9 w-9 items-center justify-center rounded-xl border-2 border-white bg-[#e8f4ec] text-[#607568] shadow-sm disabled:cursor-not-allowed"><Camera className="h-4 w-4" aria-hidden="true" /></button>
+              <input ref={oChonAnh} type="file" accept="image/jpeg,image/png,image/webp" onChange={chonAnh} disabled={dangTai} className="hidden" aria-label="Chọn ảnh đại diện" />
             </div>
             <div className="min-w-0 sm:pb-1">
-              <h2 className="text-lg font-bold text-[#243c30]">Thông tin người dùng</h2>
-              <p className="mt-1 text-sm text-[#718276]">Chưa có thông tin tài khoản</p>
+              <h2 className="text-lg font-bold text-[#243c30]">{user?.ho_ten}</h2>
+              <p className="mt-1 text-sm text-[#718276]">{user?.email}</p>
             </div>
           </div>
           <Link to="/dang-tin" className="inline-flex items-center justify-center gap-2 self-start rounded-xl bg-[#86efac] px-5 py-3 text-sm font-bold text-emerald-950 transition-colors hover:bg-[#6ee7a0] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-700 sm:self-auto"><Plus className="h-4 w-4" aria-hidden="true" />Đăng tin mới</Link>
+        </div>
+        <div className="px-6 pb-5 text-sm sm:px-8">
+          {dangTai && <p role="status" className="text-[#607568]">Đang tải ảnh đại diện…</p>}
+          <p className="mt-1 text-xs text-[#718276]">Ảnh JPG, PNG hoặc WebP, tối đa 2 MB.</p>
         </div>
       </header>
 

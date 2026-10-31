@@ -50,3 +50,13 @@ export function phanTrangDoVat(danhSach, trang, moiTrang = 6) {
 export function dinhDangNgay(ngay) {
   return /^\d{4}-\d{2}-\d{2}$/.test(ngay || '') ? ngay.split('-').reverse().join('/') : 'Chưa rõ ngày'
 }
+
+export function taoThamSoTraCuu(boLoc, trang) {
+  const thamSo = new URLSearchParams()
+  for (const [ten, giaTri] of Object.entries(boLoc)) {
+    if (giaTri && giaTri !== boLocBanDau[ten]) thamSo.set(ten, giaTri)
+  }
+  const soTrang = Number(trang)
+  if (Number.isSafeInteger(soTrang) && soTrang > 1) thamSo.set('trang', String(Math.min(soTrang, 1000000)))
+  return thamSo.toString()
+}

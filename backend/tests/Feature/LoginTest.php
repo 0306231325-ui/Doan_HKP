@@ -72,7 +72,7 @@ class LoginTest extends RegisterTest
         $this->postJson('/login', ['email' => 'none@example.test', 'password' => 'wrong'])->assertStatus(429);
     }
 
-    public function test_old_hash_requires_original_password_and_converts_after_login(): void
+    public function test_old_hash_requires_original_password_and_is_preserved_after_login(): void
     {
         $user = $this->account();
         $hash = password_hash('Password@123', PASSWORD_BCRYPT, ['cost' => 4]);
@@ -80,6 +80,6 @@ class LoginTest extends RegisterTest
         $this->postJson('/login', ['email' => $user->email, 'password' => $hash])->assertUnprocessable();
         $this->assertSame($hash, $user->fresh()->mat_khau);
         $this->postJson('/login', ['email' => $user->email, 'password' => 'Password@123'])->assertOk();
-        $this->assertSame('Password@123', $user->fresh()->mat_khau);
+        $this->assertSame($hash, $user->fresh()->mat_khau);
     }
 }

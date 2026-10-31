@@ -15,7 +15,7 @@ export default function Hero() {
         <div className="lg:col-span-7 flex flex-col items-start">
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight leading-[1.15] mb-5">
             Mất Gì Hay Nhặt Được Gì
-            <span className="text-[#a3e635] block">Báo Ngay Tại Đây Nhen.</span>
+            <span className="text-white block">Báo Ngay Tại Đây Nhen.</span>
           </h1>
 
           <p className="text-emerald-100/90 text-sm sm:text-base leading-relaxed max-w-xl mb-8">
@@ -31,13 +31,13 @@ export default function Hero() {
               <span>Đăng tin ngay</span>
             </Link>
 
-            <button
-              type="button"
+            <Link
+              to="/danh-sach-do"
               className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl text-sm font-semibold bg-white/10 hover:bg-white/20 active:scale-95 text-white border border-white/20 backdrop-blur-md transition-all cursor-pointer"
             >
               <Search className="w-4.5 h-4.5" />
               <span>Tra cứu đồ thất lạc</span>
-            </button>
+            </Link>
           </div>
 
           <div className="flex flex-wrap items-center gap-6 sm:gap-8 pt-4 border-t border-white/15 w-full text-xs sm:text-sm text-emerald-200/90">

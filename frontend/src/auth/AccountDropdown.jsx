@@ -48,7 +48,7 @@ export default function AccountDropdown({ showProfile = true }) {
     <button ref={trigger} type="button" onClick={() => setOpen(value => !value)}
       aria-expanded={open} aria-controls={panelId}
       className="inline-flex items-center gap-2 rounded-xl px-2 py-2 text-sm font-semibold text-emerald-950 transition-colors hover:bg-emerald-50 focus-visible:outline-2 focus-visible:outline-emerald-700 sm:px-3">
-      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-800"><UserRound size={18} aria-hidden="true" /></span>
+      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-800">{user.anh_dai_dien ? <img src={user.anh_dai_dien} alt="" className="h-full w-full rounded-full object-cover" /> : <UserRound size={18} aria-hidden="true" />}</span>
       <span className="max-w-20 truncate sm:max-w-36">{user.ho_ten}</span>
       <ChevronDown size={16} aria-hidden="true" className={`shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} />
     </button>

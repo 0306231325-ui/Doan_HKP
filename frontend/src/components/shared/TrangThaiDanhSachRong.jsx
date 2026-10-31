@@ -4,9 +4,9 @@ export default function TrangThaiDanhSachRong({ loi = '', coBoLoc = false, xoaBo
   return (
     <div role="status" className="flex min-h-full flex-col items-center justify-center px-5 py-12 text-center">
       <SearchX className="mb-5 h-12 w-12 text-[#9aafa1]" aria-hidden="true" />
-      <h3 className="text-lg font-semibold text-[#243c30]">{loi ? 'Kiểm tra lại khoảng ngày' : 'Chưa có tin đăng nào'}</h3>
+      <h3 className="text-lg font-semibold text-[#243c30]">{loi ? 'Kiểm tra lại khoảng ngày' : coBoLoc ? 'Không tìm thấy tin phù hợp' : 'Chưa có tin đăng nào'}</h3>
       <p className="mt-2 max-w-xl text-sm leading-6 text-[#718276]">
-        {loi || 'Tin báo mất và nhặt được sẽ hiển thị tại đây khi có dữ liệu.'}
+        {loi || (coBoLoc ? 'Thử thay đổi từ khóa hoặc xóa bớt điều kiện lọc.' : 'Tin báo mất và nhặt được sẽ hiển thị tại đây khi có dữ liệu.')}
       </p>
       {coBoLoc && xoaBoLoc && (
         <button

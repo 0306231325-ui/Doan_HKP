@@ -20,22 +20,15 @@ class AuthController extends Controller
         ]);
         $data['email'] = mb_strtolower(trim($data['email']));
         $user = NguoiDung::where('email', $data['email'])->first();
-        $legacyHash = $user && password_get_info($user->mat_khau)['algoName'] !== 'unknown';
-        $validPassword = $user && ($legacyHash
-            ? password_verify($data['password'], $user->mat_khau)
-            : hash_equals($user->mat_khau, $data['password']));
-        if (!$validPassword) {
+        if (! $user || ! $user->kiemTraMatKhau($data['password'])) {
             throw ValidationException::withMessages(['email' => 'Email hoặc mật khẩu không đúng. Vui lòng thử lại.']);
         }
         if ($user->trang_thai !== 'hoat_dong') {
             Auth::guard('web')->logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();
+
             return response()->json(['message' => 'Tài khoản đã bị khóa.'], 403);
-        }
-        if ($legacyHash) {
-            $user->mat_khau = $data['password'];
-            $user->save();
         }
         Auth::guard('web')->login($user);
         $request->session()->regenerate();
@@ -59,7 +52,7 @@ class AuthController extends Controller
 
     private function userData(Request $request): array
     {
-        return $request->user()->only(['id', 'ho_ten', 'email', 'vai_tro', 'trang_thai']);
+        return $request->user()->thongTinCaNhan();
     }
 
     public function register(RegisterRequest $request): JsonResponse
