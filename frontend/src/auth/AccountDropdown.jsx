@@ -2,15 +2,22 @@ import { useEffect, useId, useRef, useState } from 'react'
 import { ChevronDown, LogOut, UserRound } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useAuth } from './useAuth'
+import useDangXuat from './hooks/useDangXuat'
+import XacNhanDangXuat from './XacNhanDangXuat'
 
 export default function AccountDropdown({ showProfile = true }) {
-  const { user, logout } = useAuth()
+  const { user } = useAuth()
+  const dangXuat = useDangXuat()
   const [open, setOpen] = useState(false)
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState('')
   const container = useRef(null)
   const trigger = useRef(null)
+  const daMoXacNhan = useRef(false)
   const panelId = useId()
+
+  useEffect(function khoiPhucFocus() {
+    if (!dangXuat.moXacNhan && daMoXacNhan.current) trigger.current?.focus()
+    daMoXacNhan.current = dangXuat.moXacNhan
+  }, [dangXuat.moXacNhan])
 
   useEffect(() => {
     if (!open) return
@@ -31,13 +38,10 @@ export default function AccountDropdown({ showProfile = true }) {
     }
   }, [open])
 
-  async function handleLogout() {
-    if (busy) return
-    setBusy(true)
-    setError('')
-    try { await logout() }
-    catch { setError('Chưa thể đăng xuất. Vui lòng thử lại.') }
-    finally { setBusy(false) }
+  function moXacNhanDangXuat() {
+    setOpen(false)
+    trigger.current?.focus()
+    dangXuat.moHopThoai()
   }
 
   if (!user) return null
@@ -59,9 +63,9 @@ export default function AccountDropdown({ showProfile = true }) {
       </div>
       {showProfile && <Link to="/trang-ca-nhan" onClick={() => setOpen(false)} className={itemClass}><UserRound size={18} aria-hidden="true" />Trang cá nhân</Link>}
       <div className="mt-1 border-t border-gray-100 pt-1">
-        <button type="button" disabled={busy} onClick={handleLogout} className={`${itemClass} text-red-600 hover:bg-red-50 disabled:opacity-60`}><LogOut size={18} aria-hidden="true" />{busy ? 'Đang đăng xuất…' : 'Đăng xuất'}</button>
+        <button type="button" onClick={moXacNhanDangXuat} className={`${itemClass} text-red-600 hover:bg-red-50`}><LogOut size={18} aria-hidden="true" />Đăng xuất</button>
       </div>
-      {error && <p role="alert" className="px-3 py-2 text-xs text-red-600">{error}</p>}
     </div>}
+    {dangXuat.moXacNhan && <XacNhanDangXuat {...dangXuat} />}
   </div>
 }

@@ -11,9 +11,6 @@ export default function useThongTinCaNhan() {
   const [dangLuu, datDangLuu] = useState(false)
   const hienThongBao = useThongBaoThaoTac()
   const [matKhauEmail, datMatKhauEmail] = useState('')
-  const [moDoiMatKhau, datMoDoiMatKhau] = useState(false)
-  const [dangDoiMatKhau, datDangDoiMatKhau] = useState(false)
-  const [loiMatKhau, datLoiMatKhau] = useState('')
 
   function batDauSua() {
     datDuLieu(layDuLieuHoSo(user))
@@ -54,41 +51,9 @@ export default function useThongTinCaNhan() {
     }
   }
 
-  function moHopThoaiMatKhau() {
-    datLoiMatKhau('')
-    datMoDoiMatKhau(true)
-  }
-
-  function dongHopThoaiMatKhau() {
-    if (!dangDoiMatKhau) datMoDoiMatKhau(false)
-  }
-
-  async function doiMatKhau(suKien) {
-    suKien.preventDefault()
-    if (dangDoiMatKhau) return
-    const bieuMau = new FormData(suKien.currentTarget)
-    if (bieuMau.get('password') !== bieuMau.get('password_confirmation')) {
-      datLoiMatKhau('Mật khẩu xác nhận không khớp.')
-      return
-    }
-    datDangDoiMatKhau(true)
-    datLoiMatKhau('')
-    try {
-      await prepareCsrf()
-      const { data } = await api.put('/me/mat-khau', Object.fromEntries(bieuMau))
-      datMoDoiMatKhau(false)
-      hienThongBao(data.message || 'Đổi mật khẩu thành công.')
-    } catch (loiGui) {
-      datLoiMatKhau(layLoiHoSo(loiGui))
-    } finally {
-      datDangDoiMatKhau(false)
-    }
-  }
-
   return {
     user, dangSua, duLieu, dangLuu, matKhauEmail, datMatKhauEmail,
     emailThayDoi: duLieu.email.trim().toLowerCase() !== user?.email,
-    batDauSua, huySua, doiTruong, luuHoSo, moDoiMatKhau, dangDoiMatKhau,
-    loiMatKhau, moHopThoaiMatKhau, dongHopThoaiMatKhau, doiMatKhau,
+    batDauSua, huySua, doiTruong, luuHoSo,
   }
 }

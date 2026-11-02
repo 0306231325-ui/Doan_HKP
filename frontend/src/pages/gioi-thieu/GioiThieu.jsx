@@ -42,7 +42,7 @@ export default function GioiThieu() {
       </section>
 
       <section aria-labelledby="ly-do-lac-oi">
-        <div className="mx-auto max-w-2xl text-center"><p className="text-xs font-bold tracking-widest text-emerald-700 uppercase">Một cộng đồng, nhiều sự sẻ chia</p><h2 id="ly-do-lac-oi" className="mt-3 text-2xl font-extrabold tracking-tight text-emerald-950 sm:text-3xl">Lạc một món đồ, đừng lạc mất hy vọng.</h2><p className="mt-4 text-sm leading-7 text-[#607568]">Thay vì để thông tin trôi qua trong những cuộc trò chuyện rời rạc, Lạc Ơi mang mọi người đến gần nhau qua một nơi tìm kiếm và chia sẻ chung.</p></div>
+        <div className="mx-auto max-w-2xl text-center"><h2 id="ly-do-lac-oi" className="text-2xl font-extrabold tracking-tight text-emerald-950 sm:text-3xl">Tìm lại đồ thất lạc</h2><p className="mt-4 text-sm leading-7 text-[#607568]">Lạc Ơi giúp người mất đồ và người nhặt được dễ dàng tìm thấy nhau.</p></div>
         <div className="mt-7 grid gap-4 lg:grid-cols-3">
           {CAC_GIA_TRI.map(({ tieuDe, bieuTuong, noiDung }) => <KhungThongTin key={tieuDe} tieuDe={tieuDe} bieuTuong={bieuTuong}><p className="text-sm leading-7 text-[#607568]">{noiDung}</p></KhungThongTin>)}
         </div>

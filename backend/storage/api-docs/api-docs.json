@@ -317,7 +317,7 @@
                 "tags": [
                     "Users"
                 ],
-                "summary": "Lấy danh sách người dùng giả lập (quản trị)",
+                "summary": "Danh sách tài khoản DB cho quản trị (alias)",
                 "operationId": "d4eb66d954f05a9c21d4412fb86b2a0a",
                 "responses": {
                     "200": {
@@ -430,6 +430,112 @@
                     },
                     "429": {
                         "description": "Giới hạn 120 lần mỗi phút"
+                    }
+                }
+            }
+        },
+        "/api/admin/nguoi-dung": {
+            "get": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Danh sách và thông tin tài khoản cho quản trị đang hoạt động",
+                "operationId": "ecf86bb1e6913b57d1af60fb267181c2",
+                "responses": {
+                    "200": {
+                        "description": "data gồm hồ sơ, vai trò, trạng thái, lý do/hạn khóa, ngày tạo/cập nhật và co_the_doi_trang_thai. Không trả mật khẩu, tài khoản xóa mềm hoặc chính tài khoản đang đăng nhập; thống kê/lọc/phân trang chỉ tính các tài khoản còn lại. Frontend tìm kiếm/lọc trạng thái/phân trang 8 tài khoản từ danh sách này."
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Không phải quản trị đang hoạt động"
+                    }
+                }
+            }
+        },
+        "/api/admin/nguoi-dung/{id}/trang-thai": {
+            "patch": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Khóa hoặc mở khóa tài khoản",
+                "operationId": "c851430f7741c4f56c7eaa7d734daaee",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "X-XSRF-TOKEN",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "trang_thai",
+                                    "trang_thai_hien_tai"
+                                ],
+                                "properties": {
+                                    "trang_thai": {
+                                        "type": "string",
+                                        "enum": [
+                                            "hoat_dong",
+                                            "bi_khoa"
+                                        ]
+                                    },
+                                    "trang_thai_hien_tai": {
+                                        "type": "string",
+                                        "enum": [
+                                            "hoat_dong",
+                                            "bi_khoa"
+                                        ]
+                                    },
+                                    "ly_do_khoa": {
+                                        "description": "Bắt buộc khi khóa",
+                                        "type": "string",
+                                        "maxLength": 1000
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "user mới, updated và message; khóa không thời hạn, mở khóa xóa lý do/hạn khóa; không sửa vai trò hoặc mật khẩu"
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Thiếu quyền, tài khoản quản trị bị khóa hoặc tự đổi trạng thái"
+                    },
+                    "404": {
+                        "description": "Tài khoản không tồn tại hoặc đã xóa mềm"
+                    },
+                    "409": {
+                        "description": "Trạng thái đã thay đổi, cần tải lại danh sách"
+                    },
+                    "422": {
+                        "description": "Dữ liệu không hợp lệ"
+                    },
+                    "429": {
+                        "description": "Giới hạn 20 lần/phút"
                     }
                 }
             }
