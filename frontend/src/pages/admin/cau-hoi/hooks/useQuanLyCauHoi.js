@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { docDanhSachDanhMuc } from '../../danh-muc/hooks/xuLyDanhMuc.js'
+import useDanhMuc from '../../../../components/shared/hooks/useDanhMuc'
 import { docDanhSachCauHoi, kiemTraCauHoi, locCauHoi, luuDanhSachCauHoi, taoBieuMau, taoCauHinh, taoPhienBanCauHoi } from './xuLyCauHoi.js'
 
 export default function useQuanLyCauHoi() {
-  const [danhMuc] = useState(docDanhSachDanhMuc)
+  const { danhSach: danhMuc, dangTai: dangTaiDanhMuc, loiTai: loiTaiDanhMuc, taiLai: taiLaiDanhMuc } = useDanhMuc(true)
   const [danhSach, datDanhSach] = useState(docDanhSachCauHoi)
   const [thamSo, datThamSo] = useSearchParams()
   const danhMucChon = danhMuc.find((muc) => muc.id === thamSo.get('danh_muc')) || danhMuc[0]
@@ -150,7 +150,7 @@ export default function useQuanLyCauHoi() {
     datThongBao('')
   }
 
-  return { danhMuc, danhMucChon, danhSach, cacCauHoi, tongCauHoi, tuKhoa, trangThai, bieuMau, loi, loiLuu, thongBao, cauHoiDoiTrangThai, lichSu, xemTruoc,
+  return { danhMuc, dangTaiDanhMuc, loiTaiDanhMuc, taiLaiDanhMuc, danhMucChon, danhSach, cacCauHoi, tongCauHoi, tuKhoa, trangThai, bieuMau, loi, loiLuu, thongBao, cauHoiDoiTrangThai, lichSu, xemTruoc,
     doiDanhMuc, doiTuKhoa, doiTrangThai, moThem, moSua, dongBieuMau, doiBieuMau, doiCauHinh, themLuaChon, doiLuaChon, xoaLuaChon, luuCauHoi,
     moDoiTrangThai, dongDoiTrangThai, xacNhanDoiTrangThai, moLichSu, dongLichSu, moXemTruoc, dongXemTruoc, dongThongBao }
 }

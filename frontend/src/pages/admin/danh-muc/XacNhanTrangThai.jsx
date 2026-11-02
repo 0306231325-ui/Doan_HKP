@@ -1,7 +1,7 @@
 import { Power, RotateCcw } from 'lucide-react'
 import HopThoai from '../../../components/shared/HopThoai'
 
-export default function XacNhanTrangThai({ danhMucDoiTrangThai, loiLuu, dongDoiTrangThai, xacNhanDoiTrangThai }) {
+export default function XacNhanTrangThai({ dangLuu, danhMucDoiTrangThai, loiLuu, dongDoiTrangThai, xacNhanDoiTrangThai }) {
   const dangHoatDong = danhMucDoiTrangThai.dangHoatDong
   const BieuTuong = dangHoatDong ? Power : RotateCcw
 
@@ -14,14 +14,14 @@ export default function XacNhanTrangThai({ danhMucDoiTrangThai, loiLuu, dongDoiT
           </div>
           <div className="min-w-0">
             <p className="break-words text-sm font-semibold leading-6 text-[#243c30]">{danhMucDoiTrangThai.tenDanhMuc}</p>
-            <p className="mt-2 text-sm leading-6 text-[#687d70]">{dangHoatDong ? 'Bạn có thể mở lại danh mục bất cứ lúc nào. Danh mục sẽ được giữ trong danh sách ngừng sử dụng.' : 'Danh mục sẽ được chuyển về danh sách đang hoạt động.'}</p>
+            <p className="mt-2 text-sm leading-6 text-[#687d70]">{dangHoatDong ? 'Danh mục sẽ không còn được chọn khi đăng tin mới. Các tin đã có được giữ nguyên. Bạn có thể mở lại danh mục bất cứ lúc nào.' : 'Danh mục sẽ được hoạt động trở lại và có thể chọn khi đăng tin mới.'}</p>
           </div>
         </div>
         {loiLuu && <p role="alert" className="mt-4 rounded-xl bg-red-50 px-3 py-2 text-sm leading-6 text-red-700">{loiLuu}</p>}
       </div>
       <div className="flex justify-end gap-3 border-t border-[#e1eae4] bg-[#f9fbfa] px-5 py-4 sm:px-6">
-        <button type="button" onClick={dongDoiTrangThai} className="rounded-xl border border-[#ceded3] bg-white px-5 py-2.5 text-sm font-semibold text-[#526c5b] hover:bg-[#f0f6f2] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700">Hủy</button>
-        <button type="button" onClick={xacNhanDoiTrangThai} className={`rounded-xl px-5 py-2.5 text-sm font-semibold text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 ${dangHoatDong ? 'bg-amber-700 hover:bg-amber-800' : 'bg-emerald-900 hover:bg-emerald-800'}`}>{dangHoatDong ? 'Ngừng sử dụng' : 'Mở lại danh mục'}</button>
+        <button type="button" disabled={dangLuu} onClick={dongDoiTrangThai} className="rounded-xl border border-[#ceded3] bg-white px-5 py-2.5 text-sm font-semibold text-[#526c5b] hover:bg-[#f0f6f2] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700">Hủy</button>
+        <button type="button" disabled={dangLuu} onClick={xacNhanDoiTrangThai} className={`rounded-xl px-5 py-2.5 text-sm font-semibold text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 ${dangHoatDong ? 'bg-amber-700 hover:bg-amber-800' : 'bg-emerald-900 hover:bg-emerald-800'}`}>{dangLuu ? 'Đang lưu…' : dangHoatDong ? 'Ngừng sử dụng' : 'Mở lại danh mục'}</button>
       </div>
     </HopThoai>
   )

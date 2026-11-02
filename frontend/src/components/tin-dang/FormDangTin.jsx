@@ -35,10 +35,11 @@ export default function FormDangTin({ loaiBanDau = 'lost', danhSachCauHoi = [] }
         </fieldset>
 
         <div className="border-t border-[#e4ece7] pt-6">
-          <FormField as="select" label={<>Danh mục <span className="text-rose-600" aria-hidden="true">*</span></>} name="danhMucId" value={duLieu.danhMucId} onChange={doiTruong} required className={lopNhap}>
-            <option value="" disabled>Chọn danh mục đồ vật</option>
+          <FormField as="select" label={<>Danh mục <span className="text-rose-600" aria-hidden="true">*</span></>} name="danhMucId" disabled={tin.dangTaiDanhMuc || Boolean(tin.loiTaiDanhMuc)} value={duLieu.danhMucId} onChange={doiTruong} required className={lopNhap}>
+            <option value="" disabled>{tin.dangTaiDanhMuc ? 'Đang tải danh mục…' : !danhMuc.length ? 'Chưa có danh mục' : 'Chọn danh mục đồ vật'}</option>
             {danhMuc.map((muc) => <option key={muc.id} value={muc.id}>{muc.tenDanhMuc}</option>)}
           </FormField>
+          {tin.loiTaiDanhMuc && <div role="alert" className="mt-3 text-sm text-rose-700">{tin.loiTaiDanhMuc} <button type="button" onClick={tin.taiLaiDanhMuc} className="font-semibold underline">Thử lại</button></div>}
         </div>
 
         <fieldset className="space-y-5 border-t border-[#e4ece7] pt-6">

@@ -12,17 +12,7 @@ export function taoBieuMau(danhMucId) {
 }
 
 export function taoCauHoiBanDau() {
-  const cauRieng = {
-    cards: 'Đó là loại giấy tờ hoặc thẻ gì?', bags: 'Túi hoặc ví thuộc thương hiệu nào?',
-    personal: 'Đó là loại tư trang gì?', keys: 'Chùm chìa khóa có bao nhiêu chìa?',
-    electronics: 'Thiết bị thuộc hãng nào?', books: 'Tên sách hoặc môn học là gì?',
-  }
-  return Object.entries(cauRieng).flatMap(([danhMucId, nhanDangTin]) => [
-    { ...taoBieuMau(danhMucId), id: `${danhMucId}-loai-1`, maCauHoi: `${danhMucId}-loai`, phienBan: 1, nhanDangTin, kieuNhap: danhMucId === 'keys' ? 'so' : 'van_ban' },
-    { ...taoBieuMau(danhMucId), id: `${danhMucId}-dac-diem-1`, maCauHoi: `${danhMucId}-dac-diem`, phienBan: 1, thuTu: 2,
-      nhanDangTin: 'Đồ vật có đặc điểm riêng nào để nhận biết?', nhanNhanLai: 'Hãy mô tả đặc điểm riêng của đồ vật để chứng minh quyền sở hữu.',
-      apDung: { mat: taoCauHinh(), nhat: { ...taoCauHinh(), congKhai: false, dungXacMinh: true, batBuocNhanLai: true } } },
-  ])
+  return []
 }
 
 export function layCauHoiHienHanh(danhSach) {
@@ -76,7 +66,7 @@ export function docDanhSachCauHoi(khoLuu) {
       if (!muc.apDung || !['mat', 'nhat'].every((loai) => muc.apDung[loai] && ['suDung', 'batBuoc', 'congKhai', 'dungXacMinh', 'batBuocNhanLai'].every((co) => typeof muc.apDung[loai][co] === 'boolean'))) return false
       return Object.keys(kiemTraCauHoi(muc, [], [{ id: muc.danhMucId }])).length === 0
     })) return taoCauHoiBanDau()
-    return danhSach
+    return danhSach.filter((muc) => !/^(cards|bags|personal|keys|electronics|books)-(loai|dac-diem)$/.test(muc.maCauHoi))
   } catch {
     return taoCauHoiBanDau()
   }
