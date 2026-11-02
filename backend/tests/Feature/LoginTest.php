@@ -72,6 +72,40 @@ class LoginTest extends RegisterTest
         $this->postJson('/login', ['email' => 'none@example.test', 'password' => 'wrong'])->assertStatus(429);
     }
 
+    public function test_failed_attempts_for_another_email_do_not_block_admin(): void
+    {
+        $admin = $this->account('quan_tri');
+        for ($i = 0; $i < 5; $i++) {
+            $this->postJson('/login', ['email' => 'none@example.test', 'password' => 'wrong'])->assertUnprocessable();
+        }
+        $this->postJson('/login', ['email' => $admin->email, 'password' => 'Password@123'])
+            ->assertOk()->assertJsonPath('user.vai_tro', 'quan_tri');
+    }
+
+    public function test_successful_login_resets_failed_attempts(): void
+    {
+        $user = $this->account();
+        for ($round = 0; $round < 2; $round++) {
+            for ($i = 0; $i < 4; $i++) {
+                $this->postJson('/login', ['email' => $user->email, 'password' => 'wrong'])->assertUnprocessable();
+            }
+            $this->postJson('/login', ['email' => $user->email, 'password' => 'Password@123'])->assertOk();
+            $this->postJson('/logout')->assertOk();
+        }
+    }
+
+    public function test_correct_password_is_blocked_until_failed_attempts_expire(): void
+    {
+        $user = $this->account('quan_tri');
+        for ($i = 0; $i < 5; $i++) {
+            $this->postJson('/login', ['email' => strtoupper($user->email), 'password' => 'wrong'])->assertUnprocessable();
+        }
+        $this->postJson('/login', ['email' => $user->email, 'password' => 'Password@123'])
+            ->assertStatus(429)->assertHeader('Retry-After');
+        $this->travel(61)->seconds();
+        $this->postJson('/login', ['email' => $user->email, 'password' => 'Password@123'])->assertOk();
+    }
+
     public function test_old_hash_requires_original_password_and_is_preserved_after_login(): void
     {
         $user = $this->account();
