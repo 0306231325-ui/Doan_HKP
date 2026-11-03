@@ -93,11 +93,27 @@ export default function AuthPage({ mode = 'login' }) {
           <form onSubmit={handleSubmit} className="auth-form" aria-busy={isSubmitting}>
             <fieldset className="auth-fields" disabled={isSubmitting || loading}>
             {isRegister && <>
-              <FormField required label="Họ và tên" name="name" type="text" autoComplete="name" maxLength={100} />
-              <FormField required label="MSSV / Mã giảng viên" name="schoolId" type="text" autoComplete="off" maxLength={30} />
-              <FormField required label="Số điện thoại" name="phone" type="tel" autoComplete="tel" inputMode="tel" pattern="[+]?[0-9 ]{9,20}" title="Nhập số điện thoại từ 9 đến 20 ký tự, gồm chữ số, dấu + đầu số hoặc dấu cách." />
+              <FormField required label="Họ và tên" name="name" type="text" autoComplete="name" maxLength={100}
+                onChange={(event) => {
+                  const value = event.target.value
+                  event.target.setCustomValidity(!value.trim()
+                    ? 'Vui lòng nhập họ và tên, không được chỉ chứa khoảng trắng.'
+                    : !/^[\p{L}\p{M} ]+$/u.test(value)
+                      ? 'Họ và tên chỉ được chứa chữ cái và khoảng trắng.'
+                      : '')
+                }} />
+              <FormField required label="MSSV / Mã giảng viên" name="schoolId" type="text" autoComplete="off" minLength={6} maxLength={20}
+                pattern="[A-Za-z0-9]{6,20}"
+                title="Nhập từ 6 đến 20 ký tự, chỉ gồm chữ cái không dấu và số; không chứa khoảng trắng hoặc ký tự đặc biệt." />
+              <FormField required label="Số điện thoại" name="phone" type="tel" autoComplete="tel" inputMode="numeric" maxLength={10} pattern="0[0-9]{0,9}" title="Số điện thoại phải bắt đầu bằng số 0 và chỉ chứa chữ số, tối đa 10 số." />
             </>}
-            <FormField required label="Email" name="email" type="email" autoComplete="email" maxLength={191} />
+            <FormField required label="Email" name="email" type={isRegister ? 'text' : 'email'} inputMode="email" autoComplete="email" maxLength={191}
+              pattern={isRegister ? '[A-Za-z0-9]+@gmail\\.com' : undefined}
+              title={isRegister ? 'Email phải có đuôi @gmail.com; phần tên chỉ gồm chữ cái không dấu và số, không chứa khoảng trắng hoặc ký tự đặc biệt.' : undefined}
+              onInput={isRegister ? (event) => {
+                const value = event.currentTarget.validity.badInput || /\s/.test(event.currentTarget.value)
+                event.currentTarget.setCustomValidity(value ? 'Email không được chứa khoảng trắng.' : '')
+              } : undefined} />
             <FormField required label={isRegister ? 'Mật khẩu (tối thiểu 8 ký tự)' : 'Mật khẩu'} name="password" type="password" autoComplete={isRegister ? 'new-password' : 'current-password'} minLength={isRegister ? 8 : undefined} maxLength={isRegister ? 72 : undefined} />
             {isRegister && <FormField required label="Nhập lại mật khẩu" name="password_confirmation" type="password" autoComplete="new-password" minLength={8} maxLength={72} />}
             <Button className="auth-submit" type="submit">{isSubmitting ? (isRegister ? 'Đang đăng ký…' : 'Đang đăng nhập…') : isRegister ? 'Tạo tài khoản' : 'Đăng nhập'}</Button>

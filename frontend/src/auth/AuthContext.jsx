@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
-import { Navigate, Outlet, useLocation } from 'react-router-dom'
+import { Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import api, { prepareCsrf, sessionApi } from '../services/api'
 import { AuthContext, useAuth } from './useAuth'
 import useDangXuat from './hooks/useDangXuat'
 import XacNhanDangXuat from './XacNhanDangXuat'
 
 export function AuthProvider({ children }) {
+  const navigate = useNavigate()
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -44,6 +45,10 @@ export function AuthProvider({ children }) {
     await prepareCsrf()
     await sessionApi.post('/logout')
     setUser(null)
+    navigate('/', {
+      replace: true,
+      state: { authMessage: 'Đăng xuất thành công.', authType: 'success' },
+    })
   }
   function capNhatTaiKhoan(taiKhoan) {
     setUser(taiKhoan)

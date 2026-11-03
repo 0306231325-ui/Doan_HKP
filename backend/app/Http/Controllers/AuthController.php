@@ -8,6 +8,7 @@ use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
@@ -19,8 +20,17 @@ class AuthController extends Controller
             'password' => ['required', 'string', 'max:72'],
         ]);
         $data['email'] = mb_strtolower(trim($data['email']));
+        $throttleKey = 'login:'.hash('sha256', $data['email'].'|'.$request->ip());
+        if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
+            $retryAfter = RateLimiter::availableIn($throttleKey);
+
+            return response()->json([
+                'message' => "Bạn đã thử quá nhiều lần. Vui lòng đợi {$retryAfter} giây rồi thử lại.",
+            ], 429)->header('Retry-After', (string) $retryAfter);
+        }
         $user = NguoiDung::where('email', $data['email'])->first();
         if (! $user || ! $user->kiemTraMatKhau($data['password'])) {
+            RateLimiter::hit($throttleKey, 60);
             throw ValidationException::withMessages(['email' => 'Email hoặc mật khẩu không đúng. Vui lòng thử lại.']);
         }
         if ($user->trang_thai !== 'hoat_dong') {
@@ -32,6 +42,7 @@ class AuthController extends Controller
         }
         Auth::guard('web')->login($user);
         $request->session()->regenerate();
+        RateLimiter::clear($throttleKey);
 
         return response()->json(['message' => 'Đăng nhập thành công.', 'user' => $this->userData($request)]);
     }

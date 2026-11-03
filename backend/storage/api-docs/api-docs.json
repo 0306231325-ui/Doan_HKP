@@ -12,6 +12,146 @@
         }
     ],
     "paths": {
+        "/api/admin/tin-dang": {
+            "get": {
+                "tags": [
+                    "Kiểm duyệt"
+                ],
+                "summary": "Danh sách tin và dữ liệu kiểm duyệt cho quản trị",
+                "operationId": "fdfb75cb2d9ef3213618b1bf3714463a",
+                "responses": {
+                    "200": {
+                        "description": "data gồm tin chưa xóa mềm, báo cáo và lịch sử; chỉ ảnh công khai. Frontend tìm/lọc ngày và chia 5 tin mỗi trang"
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Không phải quản trị hoạt động"
+                    }
+                }
+            }
+        },
+        "/api/admin/tin-dang/{tin}": {
+            "get": {
+                "tags": [
+                    "Kiểm duyệt"
+                ],
+                "summary": "Chi tiết kiểm duyệt tin đăng",
+                "operationId": "e6a6b29b4c7b48e40a09d7a01969dbf2",
+                "parameters": [
+                    {
+                        "name": "tin",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "data là tin kèm báo cáo, lịch sử và người thực hiện"
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Không phải quản trị hoạt động"
+                    },
+                    "404": {
+                        "description": "Tin không tồn tại hoặc đã xóa mềm"
+                    }
+                }
+            },
+            "patch": {
+                "tags": [
+                    "Kiểm duyệt"
+                ],
+                "summary": "Ẩn, khôi phục tin hoặc xử lý báo cáo",
+                "operationId": "cdec31cf0ac9fe84aa0ca8cefc533d67",
+                "parameters": [
+                    {
+                        "name": "tin",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "X-XSRF-TOKEN",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "hanh_dong"
+                                ],
+                                "properties": {
+                                    "hanh_dong": {
+                                        "type": "string",
+                                        "enum": [
+                                            "an_tin",
+                                            "khoi_phuc",
+                                            "chap_nhan_bao_cao",
+                                            "tu_choi_bao_cao"
+                                        ]
+                                    },
+                                    "ly_do": {
+                                        "description": "Bắt buộc ít nhất 5 ký tự có nội dung, trừ khôi phục",
+                                        "type": "string",
+                                        "nullable": true,
+                                        "maxLength": 2000,
+                                        "minLength": 5
+                                    },
+                                    "bao_cao_id": {
+                                        "description": "Bắt buộc khi xử lý báo cáo thuộc tin này",
+                                        "type": "integer",
+                                        "nullable": true,
+                                        "minimum": 1
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "data là tin sau xử lý, lưu lịch sử trong transaction; xử lý báo cáo không tự ẩn tin"
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Không phải quản trị hoạt động"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy tin hoặc báo cáo thuộc tin"
+                    },
+                    "409": {
+                        "description": "Tin đã ở trạng thái yêu cầu hoặc báo cáo đã xử lý"
+                    },
+                    "422": {
+                        "description": "Hành động, lý do hoặc báo cáo không hợp lệ"
+                    },
+                    "429": {
+                        "description": "Tối đa 30 lần/phút"
+                    }
+                }
+            }
+        },
         "/api/admin/danh-muc": {
             "get": {
                 "tags": [
@@ -271,6 +411,12 @@
                     },
                     "422": {
                         "description": "Thông tin đăng nhập không đúng"
+                    },
+                    "403": {
+                        "description": "Tài khoản bị khóa"
+                    },
+                    "429": {
+                        "description": "Tối đa 5 lần sai mỗi phút theo email và IP; đăng nhập thành công xóa bộ đếm"
                     }
                 }
             }
@@ -740,6 +886,10 @@
         }
     },
     "tags": [
+        {
+            "name": "Kiểm duyệt",
+            "description": "Kiểm duyệt"
+        },
         {
             "name": "Danh mục",
             "description": "Danh mục"
