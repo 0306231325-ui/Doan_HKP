@@ -2,18 +2,23 @@ import { useEffect, useId, useRef, useState } from 'react'
 import { ChevronDown, LogOut, ShieldCheck, UserRound } from 'lucide-react'
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from './useAuth'
-import HopThoai from '../components/shared/HopThoai'
+import useDangXuat from './hooks/useDangXuat'
+import XacNhanDangXuat from './XacNhanDangXuat'
 
 export default function AccountDropdown({ showProfile = true }) {
-  const { user, logout } = useAuth()
+  const { user } = useAuth()
+  const dangXuat = useDangXuat()
   const { pathname } = useLocation()
   const [open, setOpen] = useState(false)
-  const [busy, setBusy] = useState(false)
-  const [confirmLogout, setConfirmLogout] = useState(false)
-  const [error, setError] = useState('')
   const container = useRef(null)
   const trigger = useRef(null)
+  const daMoXacNhan = useRef(false)
   const panelId = useId()
+
+  useEffect(function khoiPhucFocus() {
+    if (!dangXuat.moXacNhan && daMoXacNhan.current) trigger.current?.focus()
+    daMoXacNhan.current = dangXuat.moXacNhan
+  }, [dangXuat.moXacNhan])
 
   useEffect(() => {
     if (!open) return
@@ -34,26 +39,10 @@ export default function AccountDropdown({ showProfile = true }) {
     }
   }, [open])
 
-  function requestLogout() {
+  function moXacNhanDangXuat() {
     setOpen(false)
-    setError('')
-    setConfirmLogout(true)
-  }
-
-  function cancelLogout() {
-    if (busy) return
-    setConfirmLogout(false)
-    setError('')
     trigger.current?.focus()
-  }
-
-  async function handleLogout() {
-    if (busy) return
-    setBusy(true)
-    setError('')
-    try { await logout() }
-    catch { setError('Chưa thể đăng xuất. Vui lòng thử lại.') }
-    finally { setBusy(false) }
+    dangXuat.moHopThoai()
   }
 
   if (!user) return null
@@ -76,19 +65,9 @@ export default function AccountDropdown({ showProfile = true }) {
       {showProfile && <Link to="/trang-ca-nhan" onClick={() => setOpen(false)} className={itemClass}><UserRound size={18} aria-hidden="true" />Trang cá nhân</Link>}
       {user.vai_tro === 'quan_tri' && !/^\/admin(?:\/|$)/.test(pathname) && <Link to="/admin" onClick={() => setOpen(false)} className={itemClass}><ShieldCheck size={18} aria-hidden="true" />Về trang quản trị</Link>}
       <div className="mt-1 border-t border-gray-100 pt-1">
-        <button type="button" disabled={busy} onClick={requestLogout} className={`${itemClass} text-red-600 hover:bg-red-50 disabled:opacity-60`}><LogOut size={18} aria-hidden="true" />Đăng xuất</button>
+        <button type="button" onClick={moXacNhanDangXuat} className={`${itemClass} text-red-600 hover:bg-red-50`}><LogOut size={18} aria-hidden="true" />Đăng xuất</button>
       </div>
     </div>}
-    {confirmLogout && <HopThoai
-      tieuDe="Xác nhận đăng xuất"
-      moTa="Bạn có chắc muốn đăng xuất khỏi tài khoản này?"
-      khiDong={cancelLogout}
-    >
-      {error && <p role="alert" className="mx-5 my-4 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700 sm:mx-6">{error}</p>}
-      <div className="flex justify-end gap-3 px-5 py-4 sm:px-6" aria-busy={busy}>
-        <button type="button" disabled={busy} onClick={cancelLogout} className="rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 focus-visible:outline-2 focus-visible:outline-emerald-700 disabled:opacity-60">Hủy</button>
-        <button type="button" disabled={busy} onClick={handleLogout} className="inline-flex items-center gap-2 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-700 disabled:opacity-60"><LogOut size={18} aria-hidden="true" />{busy ? 'Đang đăng xuất…' : 'Đăng xuất'}</button>
-      </div>
-    </HopThoai>}
+    {dangXuat.moXacNhan && <XacNhanDangXuat {...dangXuat} />}
   </div>
 }

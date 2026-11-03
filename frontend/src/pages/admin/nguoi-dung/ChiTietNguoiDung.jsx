@@ -1,10 +1,13 @@
-import { CalendarDays, ContactRound, LockKeyhole, ShieldCheck, UnlockKeyhole } from 'lucide-react'
+import { useState } from 'react'
+import { CalendarDays, ChevronDown, ContactRound, LockKeyhole, ShieldCheck, UnlockKeyhole } from 'lucide-react'
 import HopThoai from '../../../components/shared/HopThoai'
 import NhanTaiKhoan from './NhanTaiKhoan'
-import { dinhDangThoiGian, layChuVietTat } from './hooks/xuLyNguoiDung.js'
+import { dinhDangThoiGian } from './hooks/xuLyNguoiDung.js'
 
 export default function ChiTietNguoiDung({ nguoiDungChon, dongChiTiet, moDoiTrangThai }) {
   const nguoiDung = nguoiDungChon
+  const [anhLoi, datAnhLoi] = useState(null)
+  const coAnh = nguoiDung.anh_dai_dien && nguoiDung.anh_dai_dien !== anhLoi
   const biKhoa = nguoiDung.trang_thai === 'bi_khoa'
   const cacThongTin = [
     ['Họ và tên', nguoiDung.ho_ten],
@@ -18,8 +21,10 @@ export default function ChiTietNguoiDung({ nguoiDungChon, dongChiTiet, moDoiTran
   return (
     <HopThoai tieuDe="Thông tin tài khoản" moTa="Xem hồ sơ và trạng thái tài khoản người dùng." khiDong={dongChiTiet} rong>
       <div className="space-y-6 p-5 sm:p-6">
-        <div className="flex flex-col gap-4 rounded-2xl border border-emerald-100 bg-emerald-50/60 p-5 sm:flex-row sm:items-center">
-          <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-emerald-800 text-xl font-bold text-white" aria-hidden="true">{layChuVietTat(nguoiDung.ho_ten)}</span>
+        <div className="flex items-start gap-4 sm:items-center sm:gap-5">
+          <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[#d6e4db] bg-[#f8fbf9] sm:h-24 sm:w-24">
+            {coAnh ? <img src={nguoiDung.anh_dai_dien} alt={`Ảnh đại diện của ${nguoiDung.ho_ten || 'người dùng'}`} onError={() => datAnhLoi(nguoiDung.anh_dai_dien)} className="h-full w-full object-cover" /> : <span className="px-2 text-center text-xs leading-5 text-[#718276]">Chưa có ảnh</span>}
+          </div>
           <div className="min-w-0 flex-1">
             <h3 className="break-words text-xl font-bold text-emerald-950">{nguoiDung.ho_ten || 'Chưa có họ tên'}</h3>
             <p className="mt-1 break-all text-sm text-[#607568]">{nguoiDung.email || 'Chưa có email'}</p>
@@ -36,14 +41,17 @@ export default function ChiTietNguoiDung({ nguoiDungChon, dongChiTiet, moDoiTran
           </dl>
         </section>
 
-        <section aria-labelledby="trang-thai-tai-khoan-nguoi-dung">
-          <h3 id="trang-thai-tai-khoan-nguoi-dung" className="flex items-center gap-2 text-sm font-bold text-[#243c30]"><ShieldCheck className="h-4 w-4 text-emerald-700" aria-hidden="true" />Thông tin tài khoản</h3>
+        <details className="group" aria-labelledby="trang-thai-tai-khoan-nguoi-dung">
+          <summary className="flex cursor-pointer list-none items-center gap-2 rounded-lg py-1 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-700 [&::-webkit-details-marker]:hidden">
+            <h3 id="trang-thai-tai-khoan-nguoi-dung" className="flex items-center gap-2 text-sm font-bold text-[#243c30]"><ShieldCheck className="h-4 w-4 text-emerald-700" aria-hidden="true" />Thông tin tài khoản</h3>
+            <ChevronDown className="h-4 w-4 shrink-0 text-emerald-800 transition-transform group-open:rotate-180" aria-hidden="true" />
+          </summary>
           <dl className="mt-4 grid gap-x-6 gap-y-5 rounded-2xl border border-[#e1eae4] p-5 sm:grid-cols-2">
             <div className="sm:col-span-2"><dt className="text-xs text-[#718276]">Mã tài khoản</dt><dd className="mt-2 text-sm font-medium text-[#243c30]">{nguoiDung.id ?? '—'}</dd></div>
             <div><dt className="flex items-center gap-1.5 text-xs text-[#718276]"><CalendarDays className="h-3.5 w-3.5" aria-hidden="true" />Ngày tham gia</dt><dd className="mt-2 text-sm font-medium text-[#243c30]">{dinhDangThoiGian(nguoiDung.created_at)}</dd></div>
             <div><dt className="text-xs text-[#718276]">Cập nhật gần nhất</dt><dd className="mt-2 text-sm font-medium text-[#243c30]">{dinhDangThoiGian(nguoiDung.updated_at)}</dd></div>
           </dl>
-        </section>
+        </details>
 
         {biKhoa && (
           <section aria-label="Thông tin khóa tài khoản" className="rounded-2xl border border-rose-100 bg-rose-50/70 p-5">
@@ -53,7 +61,7 @@ export default function ChiTietNguoiDung({ nguoiDungChon, dongChiTiet, moDoiTran
         )}
       </div>
       <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[#e1eae4] bg-[#f9fbfa] px-5 py-4 sm:px-6">
-        <button type="button" disabled={!['hoat_dong', 'bi_khoa'].includes(nguoiDung.trang_thai)} onClick={() => moDoiTrangThai(nguoiDung)} className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 disabled:cursor-not-allowed disabled:opacity-40 ${biKhoa ? 'bg-emerald-100 text-emerald-900 hover:bg-emerald-200' : 'bg-rose-50 text-rose-700 hover:bg-rose-100'}`}>{biKhoa ? <UnlockKeyhole className="h-4 w-4" aria-hidden="true" /> : <LockKeyhole className="h-4 w-4" aria-hidden="true" />}{biKhoa ? 'Mở khóa tài khoản' : 'Khóa tài khoản'}</button>
+        <button type="button" disabled={!nguoiDung.co_the_doi_trang_thai || !['hoat_dong', 'bi_khoa'].includes(nguoiDung.trang_thai)} onClick={() => moDoiTrangThai(nguoiDung)} className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 disabled:cursor-not-allowed disabled:opacity-40 ${biKhoa ? 'bg-emerald-100 text-emerald-900 hover:bg-emerald-200' : 'bg-rose-50 text-rose-700 hover:bg-rose-100'}`}>{biKhoa ? <UnlockKeyhole className="h-4 w-4" aria-hidden="true" /> : <LockKeyhole className="h-4 w-4" aria-hidden="true" />}{biKhoa ? 'Mở khóa tài khoản' : 'Khóa tài khoản'}</button>
         <button type="button" onClick={dongChiTiet} className="rounded-xl border border-[#ceded3] bg-white px-5 py-2.5 text-sm font-semibold text-[#526c5b] hover:bg-[#f0f6f2] focus-visible:outline-2 focus-visible:outline-emerald-700">Đóng</button>
       </div>
     </HopThoai>

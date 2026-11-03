@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import api, { prepareCsrf, sessionApi } from '../services/api'
 import { AuthContext, useAuth } from './useAuth'
+import useDangXuat from './hooks/useDangXuat'
+import XacNhanDangXuat from './XacNhanDangXuat'
 
 export function AuthProvider({ children }) {
   const navigate = useNavigate()
@@ -65,14 +67,9 @@ export function RequireAuth({ admin = false }) {
 }
 
 export function LogoutButton() {
-  const { logout } = useAuth()
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState('')
-  async function handleLogout() {
-    setBusy(true)
-    setError('')
-    try { await logout() } catch { setError('Chưa thể đăng xuất. Vui lòng thử lại.') }
-    finally { setBusy(false) }
-  }
-  return <span><button type="button" onClick={handleLogout} disabled={busy} className="rounded-xl px-3 py-2 text-sm font-semibold">{busy ? 'Đang đăng xuất…' : 'Đăng xuất'}</button>{error && <span role="alert">{error}</span>}</span>
+  const dangXuat = useDangXuat()
+  return <>
+    <button type="button" onClick={dangXuat.moHopThoai} disabled={dangXuat.dangXuLy} className="rounded-xl px-3 py-2 text-sm font-semibold">{dangXuat.dangXuLy ? 'Đang đăng xuất…' : 'Đăng xuất'}</button>
+    {dangXuat.moXacNhan && <XacNhanDangXuat {...dangXuat} />}
+  </>
 }

@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { layNgayVietNam, laNgayHopLe, taoKhoangThoiGian, kiemTraKhoangNgay, locTinTheoNgay, tinhPhanBo, taoThongKe } from './xuLyThongKe.js'
+import { layNgayVietNam, laNgayHopLe, taoKhoangThoiGian, kiemTraKhoangNgay, locTinTheoNgay, taoThongKe } from './xuLyThongKe.js'
 
 test('Mốc nhanh tính đủ ngày và vượt qua ranh giới tháng, năm', () => {
   assert.deepEqual(taoKhoangThoiGian('7_ngay', '2026-01-03'), { tuNgay: '2025-12-28', denNgay: '2026-01-03' })
@@ -32,39 +32,21 @@ test('Khoảng tự chọn từ chối ngày không tồn tại, đảo ngược
   assert.equal(kiemTraKhoangNgay('2026-10-15', '2026-10-15', '2026-10-15'), '')
 })
 
-test('Cùng khoảng ngày được áp dụng cho chỉ số, hàng chờ, phân bố và tin gần đây', () => {
+test('Khoảng ngày và xóa mềm được áp dụng cho các chỉ số tình hình chung', () => {
   const danhSach = [
     { id: 1, created_at: '2026-10-15T01:00:00Z', loai_tin: 'bao_mat', trang_thai_kiem_duyet: 'cho_duyet', danh_muc: { ten_danh_muc: 'Ví' } },
     { id: 2, created_at: '2026-10-15T02:00:00Z', loai_tin: 'nhat_duoc', trang_thai: 'da_hoan_tat', danh_muc: { ten_danh_muc: 'Ví' } },
     { id: 3, created_at: '2026-10-01T02:00:00Z', loai_tin: 'nhat_duoc', trang_thai: 'da_hoan_tat' },
     { id: 4, created_at: '2026-10-15T03:00:00Z', loai_tin: 'nhat_duoc', deleted_at: '2026-10-15T04:00:00Z' },
   ]
-  const ketQua = taoThongKe(danhSach, { tuNgay: '2026-10-15', denNgay: '2026-10-15' }, 'danh_muc')
+  const ketQua = taoThongKe(danhSach, { tuNgay: '2026-10-15', denNgay: '2026-10-15' })
   assert.equal(ketQua.tongTin, 2)
   assert.equal(ketQua.soBaoMat, 1)
   assert.equal(ketQua.soNhatDuoc, 1)
   assert.equal(ketQua.soDaTra, 1)
-  assert.equal(ketQua.soChoDuyet, 1)
-  assert.equal(ketQua.tyLeTimLai, 50)
-  assert.deepEqual(ketQua.tinGanDay.map((tin) => tin.id), [2, 1])
-  assert.deepEqual(ketQua.phanBo.map(({ ten, soLuong }) => ({ ten, soLuong })), [{ ten: 'Ví', soLuong: 2 }])
   assert.equal(danhSach.length, 4)
 })
 
-test('Biểu đồ nhóm các mục ít tin và giữ đủ tổng số lượng, tỷ lệ', () => {
-  const danhSach = Array.from({ length: 8 }, (_, id) => ({ id, danh_muc: { ten_danh_muc: `Nhóm ${id}` } }))
-  const ketQua = tinhPhanBo(danhSach, 'danh_muc')
-  assert.equal(ketQua.length, 6)
-  assert.equal(ketQua.at(-1).ten, 'Các nhóm khác')
-  assert.equal(ketQua.reduce((tong, muc) => tong + muc.soLuong, 0), 8)
-  assert.equal(ketQua.reduce((tong, muc) => tong + muc.tyLe, 0), 100)
-  assert.equal(tinhPhanBo([{}], 'dia_diem')[0].ten, 'Chưa rõ địa điểm')
-})
-
-test('Trạng thái rỗng không sinh NaN và tin gần đây chỉ lấy năm tin mới nhất', () => {
-  const ketQuaRong = taoThongKe([], { tuNgay: '', denNgay: '' }, 'dia_diem')
-  assert.equal(ketQuaRong.tyLeTimLai, 0)
-  assert.deepEqual(ketQuaRong.phanBo, [])
-  const danhSach = Array.from({ length: 8 }, (_, id) => ({ id, created_at: `2026-10-${String(id + 1).padStart(2, '0')}T01:00:00Z`, loai_tin: 'bao_mat' }))
-  assert.deepEqual(taoThongKe(danhSach, { tuNgay: '', denNgay: '' }, 'danh_muc').tinGanDay.map((tin) => tin.id), [7, 6, 5, 4, 3])
+test('Không có tin thì các chỉ số tình hình chung đều bằng không', () => {
+  assert.deepEqual(taoThongKe([], { tuNgay: '', denNgay: '' }), { tongTin: 0, soBaoMat: 0, soNhatDuoc: 0, soDaTra: 0 })
 })

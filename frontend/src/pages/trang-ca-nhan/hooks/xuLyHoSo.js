@@ -3,8 +3,6 @@ export const CAC_TRUONG_HO_SO = [
   { name: 'ma_so', label: 'Mã sinh viên / giảng viên', maxLength: 50 },
   { name: 'email', label: 'Email', type: 'email', required: true, maxLength: 191, autoComplete: 'email' },
   { name: 'so_dien_thoai', label: 'Số điện thoại', type: 'tel', maxLength: 20, pattern: '[+]?[0-9 ]{9,20}', autoComplete: 'tel', title: 'Nhập số điện thoại hợp lệ từ 9 đến 20 ký tự.' },
-  { name: 'khoa', label: 'Khoa', maxLength: 100 },
-  { name: 'lop', label: 'Lớp', maxLength: 50 },
 ]
 
 export function layDuLieuHoSo(nguoiDung) {

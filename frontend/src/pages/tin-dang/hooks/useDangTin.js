@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
-import { docDanhSachDanhMuc } from '../../admin/danh-muc/hooks/xuLyDanhMuc.js'
+import useDanhMuc from '../../../components/shared/hooks/useDanhMuc'
 import { layCauHoiXemTruoc } from '../../admin/cau-hoi/hooks/xuLyCauHoi.js'
 import { kiemTraAnhDangTin, kiemTraTinDang } from './xuLyDangTin.js'
 
 export default function useDangTin(loaiBanDau = 'lost', danhSachCauHoi = []) {
   const [duLieu, datDuLieu] = useState({ loaiTin: loaiBanDau === 'found' ? 'found' : 'lost', danhMucId: '', soDienThoai: '' })
-  const [danhMuc] = useState(() => docDanhSachDanhMuc().filter((muc) => muc.dangHoatDong))
+  const { danhSach: danhMuc, dangTai: dangTaiDanhMuc, loiTai: loiTaiDanhMuc, taiLai: taiLaiDanhMuc } = useDanhMuc()
   const [cauTraLoi, datCauTraLoi] = useState({})
   const [anh, datAnh] = useState([])
   const [loiAnh, datLoiAnh] = useState('')
@@ -76,5 +76,5 @@ export default function useDangTin(loaiBanDau = 'lost', danhSachCauHoi = []) {
     datMoXemTruoc(false)
   }
 
-  return { duLieu, danhMuc, cauHoi, cauTraLoi, loaiForm, anh, loiAnh, loi, moXemTruoc, doiTruong, doiCauTraLoi, chonAnh, xoaAnh, xuLyGuiBieuMau, dongXemTruoc }
+  return { dangTaiDanhMuc, loiTaiDanhMuc, taiLaiDanhMuc, duLieu, danhMuc, cauHoi, cauTraLoi, loaiForm, anh, loiAnh, loi, moXemTruoc, doiTruong, doiCauTraLoi, chonAnh, xoaAnh, xuLyGuiBieuMau, dongXemTruoc }
 }

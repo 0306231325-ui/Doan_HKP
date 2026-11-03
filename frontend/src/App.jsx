@@ -50,7 +50,8 @@ export default function App() {
               <Route path="yeu-cau" element={<YeuCauNhanLai />} />
               <Route path="nguoi-dung" element={<QuanLyNguoiDung />} />
               <Route path="danh-muc" element={<QuanLyDanhMuc />} />
-              <Route path="danh-muc/dia-diem" element={<QuanLyDiaDiem />} />
+              <Route path="dia-diem" element={<QuanLyDiaDiem />} />
+              <Route path="danh-muc/dia-diem" element={<Navigate to="/admin/dia-diem" replace />} />
               <Route path="cau-hoi" element={<QuanLyCauHoi />} />
               <Route path="danh-muc/cau-hoi" element={<Navigate to="/admin/cau-hoi" replace />} />
             </Route>

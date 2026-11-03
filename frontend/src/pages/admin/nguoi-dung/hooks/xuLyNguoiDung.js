@@ -3,12 +3,11 @@ import { chuanHoaTimKiem } from '../../../danh-sach-do/hooks/xuLyDanhSachDo.js'
 export const cacVaiTro = { nguoi_dung: 'Người dùng', quan_tri: 'Quản trị viên' }
 export const cacTrangThai = { hoat_dong: 'Đang hoạt động', bi_khoa: 'Đã khóa' }
 
-export function locNguoiDung(danhSach, { tuKhoa, vaiTro, trangThai }) {
+export function locNguoiDung(danhSach, { tuKhoa, trangThai }) {
   const cacTu = chuanHoaTimKiem(tuKhoa).split(' ').filter(Boolean)
   return danhSach.filter((nguoiDung) => {
     const noiDung = chuanHoaTimKiem([nguoiDung.ho_ten, nguoiDung.email, nguoiDung.ma_so, nguoiDung.so_dien_thoai].filter(Boolean).join(' '))
     return !nguoiDung.deleted_at && cacTu.every((tu) => noiDung.includes(tu))
-      && (vaiTro === 'tat_ca' || nguoiDung.vai_tro === vaiTro)
       && (trangThai === 'tat_ca' || nguoiDung.trang_thai === trangThai)
   })
 }

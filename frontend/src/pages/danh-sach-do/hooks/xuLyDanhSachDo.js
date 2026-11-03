@@ -39,14 +39,6 @@ export function locDoVat(danhSach, boLoc) {
   }).sort((a, b) => (boLoc.sapXep === 'cu_nhat' ? a.date.localeCompare(b.date) : b.date.localeCompare(a.date)) || String(a.id).localeCompare(String(b.id), 'vi', { numeric: true }))
 }
 
-export function phanTrangDoVat(danhSach, trang, moiTrang = 6) {
-  const tongTrang = Math.max(1, Math.ceil(danhSach.length / moiTrang))
-  const trangHienTai = Math.max(1, Math.min(Number.isSafeInteger(Number(trang)) ? Number(trang) : 1, tongTrang))
-  const batDau = (trangHienTai - 1) * moiTrang
-  return { cacDoVat: danhSach.slice(batDau, batDau + moiTrang), trangHienTai, tongTrang, tongTin: danhSach.length,
-    tuViTri: danhSach.length ? batDau + 1 : 0, denViTri: Math.min(batDau + moiTrang, danhSach.length) }
-}
-
 export function dinhDangNgay(ngay) {
   return /^\d{4}-\d{2}-\d{2}$/.test(ngay || '') ? ngay.split('-').reverse().join('/') : 'Chưa rõ ngày'
 }

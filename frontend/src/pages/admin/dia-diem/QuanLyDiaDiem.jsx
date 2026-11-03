@@ -1,5 +1,4 @@
 import { CheckCircle2, MapPin, Plus, Search, X } from 'lucide-react'
-import DieuHuongDanhMuc from '../../../components/admin/DieuHuongDanhMuc'
 import BangDiaDiem from './BangDiaDiem'
 import FormDiaDiem from './FormDiaDiem'
 import XacNhanTrangThai from './XacNhanTrangThai'
@@ -10,7 +9,6 @@ export default function QuanLyDiaDiem() {
 
   return (
     <div className="space-y-5">
-      <DieuHuongDanhMuc />
       {diaDiem.thongBao && (
         <div role="status" className="flex items-start gap-2.5 rounded-xl border border-[#c6e2cf] bg-[#f0fbf3] px-4 py-3 text-sm text-emerald-900">
           <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />

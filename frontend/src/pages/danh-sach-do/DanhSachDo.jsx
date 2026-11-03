@@ -1,7 +1,7 @@
 import { PackageSearch } from 'lucide-react'
 import DanhSachDoThatLac from '../../components/danh-sach-do/DanhSachDoThatLac'
 import ThanhTimKiem from '../../components/danh-sach-do/ThanhTimKiem'
-import PhanTrang from '../../components/shared/PhanTrang'
+import PhanTrang from '../../components/shared/PhanTrang.jsx'
 import useDanhSachDo from './hooks/useDanhSachDo'
 
 export default function DanhSachDo() {
@@ -20,9 +20,8 @@ export default function DanhSachDo() {
         coBoLoc={danhSach.coBoLoc}
         xoaBoLoc={danhSach.xoaBoLoc}
         tieuDe="Các tin đăng"
-        tuyChon={<div className="flex shrink-0 items-center gap-2"><label htmlFor="sap-xep-do-vat" className="text-xs text-[#687d70]">Sắp xếp</label><select id="sap-xep-do-vat" name="sapXep" value={danhSach.boLoc.sapXep} onChange={danhSach.doiTruongLoc} className="rounded-xl border border-[#ceded3] bg-white px-3 py-2.5 text-sm text-[#243c30] outline-none focus-visible:ring-2 focus-visible:ring-emerald-700"><option value="moi_nhat">Mới nhất</option><option value="cu_nhat">Cũ nhất</option></select></div>}
       />
-      {danhSach.tongTin > 0 && <PhanTrang {...danhSach} />}
+      {danhSach.tongTin > 0 && <PhanTrang {...danhSach} hienThongKe={false} />}
     </div>
   )
 }

@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { CATEGORIES, LOCATIONS, MOCK_ITEMS } from '../../../data/mockData.js'
-import { boLocBanDau, docBoLoc, kiemTraNgay, locDoVat, phanTrangDoVat, taoThamSoTraCuu } from './xuLyDanhSachDo.js'
+import { boLocBanDau, docBoLoc, kiemTraNgay, locDoVat, taoThamSoTraCuu } from './xuLyDanhSachDo.js'
 
 test('Tìm không dấu theo đặc điểm, vị trí và mã tin, kết hợp loại tin và các ID bộ lọc', () => {
   assert.deepEqual(locDoVat(MOCK_ITEMS, { ...boLocBanDau, tuKhoa: 'SINH VIEN NGUYEN' }).map((muc) => muc.id), [1])
@@ -27,19 +27,6 @@ test('Sắp xếp mới nhất, cũ nhất nhất quán và không thay đổi d
   assert.deepEqual(locDoVat(MOCK_ITEMS, boLocBanDau).map((muc) => muc.id), [1, 3, 6, 2, 5, 4])
   assert.deepEqual(locDoVat(MOCK_ITEMS, { ...boLocBanDau, sapXep: 'cu_nhat' }).map((muc) => muc.id), [4, 2, 5, 1, 3, 6])
   assert.deepEqual(MOCK_ITEMS, banDau)
-})
-
-test('Phân trang đúng biên và tự điều chỉnh khi lọc làm giảm kết quả', () => {
-  const danhSach = Array.from({ length: 17 }, (_, id) => ({ id }))
-  assert.deepEqual(phanTrangDoVat(danhSach, 2).cacDoVat.map((muc) => muc.id), [6, 7, 8, 9, 10, 11])
-  const trangCuoi = phanTrangDoVat(danhSach, 99)
-  assert.equal(trangCuoi.trangHienTai, 3)
-  assert.equal(trangCuoi.tuViTri, 13)
-  assert.equal(trangCuoi.denViTri, 17)
-  assert.equal(phanTrangDoVat(danhSach.slice(0, 2), 3).trangHienTai, 1)
-  assert.equal(phanTrangDoVat(danhSach, 'NaN').trangHienTai, 1)
-  assert.equal(phanTrangDoVat(danhSach, -3).trangHienTai, 1)
-  assert.deepEqual(phanTrangDoVat([], 8), { cacDoVat: [], trangHienTai: 1, tongTrang: 1, tongTin: 0, tuViTri: 0, denViTri: 0 })
 })
 
 test('Khôi phục bộ lọc từ URL, loại bỏ lựa chọn không còn hợp lệ', () => {

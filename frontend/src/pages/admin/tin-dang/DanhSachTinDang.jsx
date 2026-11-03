@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useOutletContext } from 'react-router-dom'
 import { Files, Clock, EyeOff } from 'lucide-react'
 import PhanTrang from '../../../components/shared/PhanTrang'
+import { phanTrangDanhSach } from '../../../components/shared/xuLyPhanTrang.js'
 import BoLocTinDang from './BoLocTinDang'
 import BangTinDang from './BangTinDang'
 
@@ -16,17 +17,15 @@ export default function DanhSachTinDang() {
   const [denNgay, datDenNgay] = useState('')
   const loiNgay = Boolean(tuNgay && denNgay && tuNgay > denNgay)
   const ketQua = loiNgay ? [] : cacTin.filter((tin) => (trangThai === 'tat_ca' || tin.trangThai === trangThai) && (loai === 'tat_ca' || tin.type === loai) && (!coBaoCao || tin.baoCao.length > 0) && (!tuNgay || tin.date >= tuNgay) && (!denNgay || tin.date <= denNgay) && `${tin.fullName} ${tin.referenceCode} ${tin.nguoiDang}`.toLocaleLowerCase('vi').includes(tuKhoa.trim().toLocaleLowerCase('vi')))
-  const tongTrang = Math.max(1, Math.ceil(ketQua.length / 5))
-  const trangHienTai = Math.min(trang, tongTrang)
-  const tu = (trangHienTai - 1) * 5
+  const phanTrang = phanTrangDanhSach(ketQua, trang, 5)
   function doiBoLoc(ham, giaTri) { ham(giaTri); datTrang(1) }
   const thongKe = [ ['Tổng tin đăng', cacTin.length, Files], ['Đang hiển thị', cacTin.filter((tin) => tin.trangThai === 'hien_thi').length, Clock], ['Đã ẩn', cacTin.filter((tin) => tin.trangThai === 'da_an').length, EyeOff] ]
   return <>
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">{thongKe.map(([nhan, so, BieuTuong]) => <div key={nhan} className="rounded-2xl border border-[#d6e4db] bg-white p-5"><div className="flex items-center justify-between"><strong className="text-3xl font-bold text-emerald-900">{so}</strong><BieuTuong className="h-5 w-5 text-emerald-700" aria-hidden="true" /></div><p className="mt-2 text-xs text-[#718276]">{nhan}</p></div>)}</div>
     <section className="rounded-2xl border border-[#d6e4db] bg-white"><div className="px-5 py-6 sm:px-6"><h2 className="text-lg font-bold text-[#1d3026]">Danh sách & kiểm duyệt tin đăng</h2><p className="mt-1 text-sm text-[#718276]">Đối chiếu báo cáo và quản lý trạng thái hiển thị của tin.</p></div>
       <BoLocTinDang {...{ tuKhoa, trangThai, loai, coBaoCao, tuNgay, denNgay, loiNgay }} doiTuNgay={(v) => doiBoLoc(datTuNgay, v)} doiDenNgay={(v) => doiBoLoc(datDenNgay, v)} doiTuKhoa={(v) => doiBoLoc(datTuKhoa, v)} doiTrangThai={(v) => doiBoLoc(datTrangThai, v)} doiLoai={(v) => doiBoLoc(datLoai, v)} doiBaoCao={(v) => doiBoLoc(datCoBaoCao, v)} />
-      <BangTinDang cacTin={ketQua.slice(tu, tu + 5)} />
-      <div className="px-5"><PhanTrang trangHienTai={trangHienTai} tongTrang={tongTrang} tongTin={ketQua.length} tuViTri={ketQua.length ? tu + 1 : 0} denViTri={Math.min(tu + 5, ketQua.length)} chuyenTrang={datTrang} /></div>
+      <BangTinDang cacTin={phanTrang.cacMuc} />
+      <div className="px-5"><PhanTrang {...phanTrang} chuyenTrang={datTrang} nhanDieuHuong="Ph?n trang tin ??ng" /></div>
     </section>
   </>
 }
