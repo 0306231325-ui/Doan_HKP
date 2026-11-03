@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { chuanHoaTuKhoa, taoDiaDiemBanDau, docDanhSachDiaDiem, luuDanhSachDiaDiem, kiemTraDiaDiem, locDanhSachDiaDiem, phanTrangDiaDiem } from './xuLyDiaDiem.js'
+import { chuanHoaTuKhoa, taoDiaDiemBanDau, docDanhSachDiaDiem, luuDanhSachDiaDiem, kiemTraDiaDiem, locDanhSachDiaDiem } from './xuLyDiaDiem.js'
 
 function taoKhoLuuThu() {
   const duLieu = new Map()
@@ -80,19 +80,4 @@ test('Không báo lưu thành công khi kho lưu bị chặn hoặc hết dung l
   const danhSach = taoDiaDiemBanDau()
   assert.equal(luuDanhSachDiaDiem(danhSach, khoLuu), false)
   assert.equal(docDanhSachDiaDiem(khoLuu).length, 0)
-})
-
-test('Phân trang điều chỉnh đúng khi lọc làm giảm số trang và khi không có kết quả', () => {
-  const danhSach = Array.from({ length: 17 }, (_, id) => ({ id }))
-  assert.deepEqual(phanTrangDiaDiem(danhSach, 2).cacDiaDiem.map((muc) => muc.id), [8, 9, 10, 11, 12, 13, 14, 15])
-  const trangCuoi = phanTrangDiaDiem(danhSach, 99)
-  assert.equal(trangCuoi.trangHienTai, 3)
-  assert.equal(trangCuoi.tuViTri, 17)
-  assert.equal(trangCuoi.denViTri, 17)
-  assert.equal(phanTrangDiaDiem(danhSach.slice(0, 2), 3).trangHienTai, 1)
-  const rong = phanTrangDiaDiem([], 8)
-  assert.equal(rong.trangHienTai, 1)
-  assert.equal(rong.tuViTri, 0)
-  assert.equal(rong.denViTri, 0)
-  assert.deepEqual(rong.cacDiaDiem, [])
 })

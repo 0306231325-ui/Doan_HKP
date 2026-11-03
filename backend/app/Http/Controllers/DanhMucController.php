@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\DanhMucDoVat;
+use Illuminate\Database\QueryException;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -14,7 +15,7 @@ class DanhMucController extends Controller
 {
     public function danhSach(): JsonResponse
     {
-        return response()->json(['data' => DanhMucDoVat::withCount('tinDang')->orderBy('ten_danh_muc')->get()->map(fn ($muc) => $this->duLieuDanhMuc($muc))]);
+        return response()->json(['data' => DanhMucDoVat::orderByDesc('id')->get()->map(fn ($muc) => $this->duLieuDanhMuc($muc))]);
     }
 
     public function them(Request $request): JsonResponse
@@ -22,36 +23,46 @@ class DanhMucController extends Controller
         $duLieu = $this->kiemTraDuLieu($request);
         $muc = $this->ghiDanhMuc(fn () => DanhMucDoVat::create([...$duLieu, 'trang_thai' => true]));
 
-        return response()->json(['data' => $this->duLieuDanhMuc($muc->loadCount('tinDang'))], 201);
-    }
-
-    public function capNhat(Request $request, string $id): JsonResponse
-    {
-        $muc = DanhMucDoVat::findOrFail($id);
-        $duLieu = $this->kiemTraDuLieu($request, $id);
-        $this->ghiDanhMuc(function () use ($muc, $duLieu) {
-            $muc->update($duLieu);
-
-            return $muc;
-        });
-
-        return response()->json(['data' => $this->duLieuDanhMuc($muc->fresh()->loadCount('tinDang'))]);
+        return response()->json(['data' => $this->duLieuDanhMuc($muc)], 201);
     }
 
     public function doiTrangThai(Request $request, string $id): JsonResponse
     {
-        $duLieu = $request->validate(['dangHoatDong' => ['required', 'boolean'], 'trangThaiHienTai' => ['required', 'boolean']]);
+        $duLieu = $request->validate([
+            'dangHoatDong' => ['required', 'boolean'],
+            'trangThaiHienTai' => ['required', 'boolean'],
+        ]);
 
         return DB::transaction(function () use ($id, $duLieu) {
             $muc = DanhMucDoVat::lockForUpdate()->findOrFail($id);
-            abort_if($muc->trang_thai !== (bool) $duLieu['trangThaiHienTai'], 409, 'Trạng thái đã thay đổi. Vui lòng đóng hộp thoại và tải lại danh sách.');
-            $muc->update(['trang_thai' => (bool) $duLieu['dangHoatDong']]);
+            if ($muc->trang_thai !== (bool) $duLieu['dangHoatDong']) {
+                abort_if($muc->trang_thai !== (bool) $duLieu['trangThaiHienTai'], 409, 'Trạng thái danh mục đã thay đổi. Vui lòng thử lại sau khi danh sách được tải lại.');
+                $muc->update(['trang_thai' => (bool) $duLieu['dangHoatDong']]);
+            }
 
-            return response()->json(['data' => $this->duLieuDanhMuc($muc->loadCount('tinDang'))]);
+            return response()->json(['data' => $this->duLieuDanhMuc($muc)]);
         });
     }
 
-    private function kiemTraDuLieu(Request $request, ?string $id = null): array
+    public function xoa(string $id): JsonResponse
+    {
+        try {
+            return DB::transaction(function () use ($id) {
+                $muc = DanhMucDoVat::lockForUpdate()->findOrFail($id);
+                abort_if($muc->tinDang()->withTrashed()->exists() || $muc->cauHoi()->exists(), 409, 'Danh mục đang có tin đăng hoặc câu hỏi nên không thể xóa. Bạn có thể ẩn danh mục này.');
+                $muc->delete();
+
+                return response()->json(['message' => 'Đã xóa danh mục.']);
+            });
+        } catch (QueryException $loi) {
+            if (in_array((int) ($loi->errorInfo[1] ?? 0), [1451, 787], true)) {
+                abort(409, 'Danh mục đang được sử dụng nên không thể xóa. Bạn có thể ẩn danh mục này.');
+            }
+            throw $loi;
+        }
+    }
+
+    private function kiemTraDuLieu(Request $request): array
     {
         if (is_string($request->input('tenDanhMuc'))) {
             $request->merge(['tenDanhMuc' => Str::squish($request->input('tenDanhMuc'))]);
@@ -60,7 +71,7 @@ class DanhMucController extends Controller
             'tenDanhMuc.required' => 'Vui lòng nhập tên danh mục.', 'tenDanhMuc.max' => 'Tên danh mục tối đa 100 ký tự.', 'moTa.max' => 'Mô tả tối đa 500 ký tự.',
         ]);
         $tenChuan = Str::lower(Str::ascii($duLieu['tenDanhMuc']));
-        $trung = DanhMucDoVat::query()->when($id, fn ($query) => $query->whereKeyNot($id))->pluck('ten_danh_muc')
+        $trung = DanhMucDoVat::pluck('ten_danh_muc')
             ->contains(fn ($ten) => Str::lower(Str::ascii(Str::squish($ten))) === $tenChuan);
         if ($trung) {
             throw ValidationException::withMessages(['tenDanhMuc' => 'Tên danh mục đã tồn tại, kể cả trong danh sách ngừng sử dụng.']);
@@ -80,6 +91,6 @@ class DanhMucController extends Controller
 
     private function duLieuDanhMuc(DanhMucDoVat $muc): array
     {
-        return ['id' => (string) $muc->id, 'tenDanhMuc' => $muc->ten_danh_muc, 'moTa' => $muc->mo_ta ?? '', 'dangHoatDong' => $muc->trang_thai, 'soTin' => $muc->tin_dang_count];
+        return ['id' => (string) $muc->id, 'tenDanhMuc' => $muc->ten_danh_muc, 'moTa' => $muc->mo_ta ?? '', 'dangHoatDong' => $muc->trang_thai];
     }
 }

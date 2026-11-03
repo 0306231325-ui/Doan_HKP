@@ -59,15 +59,3 @@ export function locDanhSachDiaDiem(danhSach, tuKhoa, trangThai) {
     return khopTuKhoa && khopTrangThai
   }).sort((a, b) => a.tenDiaDiem.localeCompare(b.tenDiaDiem, 'vi'))
 }
-
-export function phanTrangDiaDiem(danhSach, trang, moiTrang = 8) {
-  const tongTrang = Math.max(1, Math.ceil(danhSach.length / moiTrang))
-  const trangHienTai = Math.max(1, Math.min(trang, tongTrang))
-  const batDau = (trangHienTai - 1) * moiTrang
-  return {
-    cacDiaDiem: danhSach.slice(batDau, batDau + moiTrang), trangHienTai, tongTrang,
-    tongKetQua: danhSach.length, tuViTri: danhSach.length ? batDau + 1 : 0,
-    denViTri: Math.min(batDau + moiTrang, danhSach.length),
-  }
-}
-

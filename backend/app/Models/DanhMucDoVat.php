@@ -11,7 +11,6 @@ class DanhMucDoVat extends Model
 
     protected $fillable = [
         'ten_danh_muc',
-        'bieu_tuong',
         'mo_ta',
         'trang_thai',
     ];

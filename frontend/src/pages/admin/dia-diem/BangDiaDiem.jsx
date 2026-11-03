@@ -1,6 +1,7 @@
-import { ChevronLeft, ChevronRight, MapPin, Pencil, Power, RotateCcw, SearchX } from 'lucide-react'
+import { MapPin, Pencil, Power, RotateCcw, SearchX } from 'lucide-react'
+import PhanTrang from '../../../components/shared/PhanTrang.jsx'
 
-export default function BangDiaDiem({ cacDiaDiem, trangHienTai, tongTrang, tongKetQua, tuViTri, denViTri, chuyenTrang, moSuaDiaDiem, moDoiTrangThai, xoaBoLoc }) {
+export default function BangDiaDiem({ cacDiaDiem, moSuaDiaDiem, moDoiTrangThai, xoaBoLoc, ...phanTrang }) {
   return (
     <>
       <div className="overflow-x-auto">
@@ -44,14 +45,7 @@ export default function BangDiaDiem({ cacDiaDiem, trangHienTai, tongTrang, tongK
           <button type="button" onClick={xoaBoLoc} className="mt-4 rounded-lg px-3 py-2 text-sm font-semibold text-emerald-900 hover:bg-emerald-50 focus-visible:outline-2 focus-visible:outline-emerald-700">Xóa bộ lọc</button>
         </div>
       )}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[#e1eae4] px-5 py-4 sm:px-6">
-        <p aria-live="polite" className="text-xs text-[#718276]">{tongKetQua ? `Hiển thị ${tuViTri}–${denViTri} trong ${tongKetQua} địa điểm` : 'Không có kết quả'}</p>
-        <nav aria-label="Phân trang địa điểm" className="flex items-center gap-2">
-          <button type="button" onClick={() => chuyenTrang(trangHienTai - 1)} disabled={trangHienTai === 1} aria-label="Trang trước" className="rounded-lg border border-[#d6e4db] p-1.5 text-[#526c5b] hover:bg-[#f0f6f2] focus-visible:outline-2 focus-visible:outline-emerald-700 disabled:cursor-not-allowed disabled:opacity-35"><ChevronLeft className="h-4 w-4" aria-hidden="true" /></button>
-          <span className="min-w-12 text-center text-xs font-medium text-[#526c5b]">{trangHienTai} / {tongTrang}</span>
-          <button type="button" onClick={() => chuyenTrang(trangHienTai + 1)} disabled={trangHienTai === tongTrang} aria-label="Trang sau" className="rounded-lg border border-[#d6e4db] p-1.5 text-[#526c5b] hover:bg-[#f0f6f2] focus-visible:outline-2 focus-visible:outline-emerald-700 disabled:cursor-not-allowed disabled:opacity-35"><ChevronRight className="h-4 w-4" aria-hidden="true" /></button>
-        </nav>
-      </div>
+      <div className="px-5 sm:px-6"><PhanTrang {...phanTrang} donVi="địa điểm" nhanDieuHuong="Phân trang địa điểm" /></div>
     </>
   )
 }

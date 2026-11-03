@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { phanTrangDoVat } from '../../../danh-sach-do/hooks/xuLyDanhSachDo.js'
+import { phanTrangDanhSach } from '../../../../components/shared/xuLyPhanTrang.js'
 import { locNguoiDung } from './xuLyNguoiDung.js'
 import api, { prepareCsrf } from '../../../../services/api'
 import useThongBaoThaoTac from '../../../../components/shared/hooks/useThongBaoThaoTac'
@@ -19,7 +19,7 @@ export default function useQuanLyNguoiDung() {
   const [trang, datTrang] = useState(1)
   const [hopThoai, datHopThoai] = useState(null)
   const ketQua = useMemo(() => locNguoiDung(danhSach, boLoc), [danhSach, boLoc])
-  const phanTrang = phanTrangDoVat(ketQua, trang, 8)
+  const phanTrang = phanTrangDanhSach(ketQua, trang, 8)
   const nguoiDungChon = danhSach.find((nguoiDung) => nguoiDung.id === hopThoai?.id)
   const thongKe = {
     tong: danhSach.length,
@@ -113,7 +113,7 @@ export default function useQuanLyNguoiDung() {
   }
 
   return {
-    ...phanTrang, cacNguoiDung: phanTrang.cacDoVat, boLoc, thongKe, nguoiDungChon,
+    ...phanTrang, cacNguoiDung: phanTrang.cacMuc, boLoc, thongKe, nguoiDungChon,
     dangTai, loiTai, taiLai, dangLuu, lyDoKhoa, datLyDoKhoa, loiLuu, xacNhanTrangThai,
     hopThoai, doiBoLoc, xoaBoLoc, chuyenTrang,
     moChiTiet, dongChiTiet, moDoiTrangThai, dongDoiTrangThai,

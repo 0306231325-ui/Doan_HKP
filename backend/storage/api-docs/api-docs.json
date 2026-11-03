@@ -21,7 +21,7 @@
                 "operationId": "3a735e470a4be62b18f40ae3aef36b9a",
                 "responses": {
                     "200": {
-                        "description": "data gồm id (string), tenDanhMuc, moTa, dangHoatDong (boolean), soTin (tổng tin chưa xóa, mọi trạng thái kiểm duyệt)"
+                        "description": "data gồm id (string), tenDanhMuc, moTa, dangHoatDong (boolean)"
                     },
                     "401": {
                         "description": "Chưa đăng nhập"
@@ -73,81 +73,10 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "data là danh mục đã lưu, soTin=0"
+                        "description": "data là danh mục đã lưu vào CSDL"
                     },
                     "422": {
                         "description": "Tên trống, vượt giới hạn hoặc trùng kể cả danh mục ngừng sử dụng"
-                    },
-                    "401": {
-                        "description": "Chưa đăng nhập"
-                    },
-                    "403": {
-                        "description": "Không phải quản trị hoạt động"
-                    },
-                    "429": {
-                        "description": "Tối đa 30 lần/phút"
-                    }
-                }
-            }
-        },
-        "/api/admin/danh-muc/{id}": {
-            "put": {
-                "tags": [
-                    "Danh mục"
-                ],
-                "summary": "Sửa tên và mô tả danh mục, giữ ID và trạng thái",
-                "operationId": "0acee3a4a92e0ad02ecc57517f0f92f4",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    },
-                    {
-                        "name": "X-XSRF-TOKEN",
-                        "in": "header",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "required": [
-                                    "tenDanhMuc"
-                                ],
-                                "properties": {
-                                    "tenDanhMuc": {
-                                        "type": "string",
-                                        "maxLength": 100
-                                    },
-                                    "moTa": {
-                                        "type": "string",
-                                        "nullable": true,
-                                        "maxLength": 500
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "data là danh mục đã cập nhật"
-                    },
-                    "404": {
-                        "description": "Danh mục không tồn tại"
-                    },
-                    "422": {
-                        "description": "Dữ liệu không hợp lệ hoặc trùng tên"
                     },
                     "401": {
                         "description": "Chưa đăng nhập"
@@ -166,8 +95,8 @@
                 "tags": [
                     "Danh mục"
                 ],
-                "summary": "Ngừng hoặc mở lại danh mục, giữ nguyên tin cũ",
-                "operationId": "135583c44df25ef8de165f32f53615df",
+                "summary": "Ẩn hoặc mở danh mục",
+                "operationId": "1d1db50500d356b94f3208af8b441016",
                 "parameters": [
                     {
                         "name": "id",
@@ -197,6 +126,7 @@
                                 ],
                                 "properties": {
                                     "dangHoatDong": {
+                                        "description": "false để ẩn, true để mở",
                                         "type": "boolean"
                                     },
                                     "trangThaiHienTai": {
@@ -210,22 +140,69 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "data là danh mục đã lưu; bộ lọc công khai và đăng tin chỉ lấy mục hoạt động"
-                    },
-                    "404": {
-                        "description": "Không tồn tại"
-                    },
-                    "409": {
-                        "description": "Trạng thái đã thay đổi, tải lại trước khi thao tác"
-                    },
-                    "422": {
-                        "description": "Trạng thái không hợp lệ"
+                        "description": "data là danh mục đã lưu; yêu cầu lặp cùng trạng thái trả thành công. Mục ẩn không xuất hiện trong lựa chọn đăng tin/Tra cứu, giữ nguyên tin cũ"
                     },
                     "401": {
                         "description": "Chưa đăng nhập"
                     },
                     "403": {
                         "description": "Không phải quản trị hoạt động"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy danh mục"
+                    },
+                    "409": {
+                        "description": "Trạng thái đã thay đổi, tải lại danh sách trước khi thử lại"
+                    },
+                    "422": {
+                        "description": "Trạng thái không hợp lệ"
+                    },
+                    "429": {
+                        "description": "Tối đa 30 lần/phút"
+                    }
+                }
+            }
+        },
+        "/api/admin/danh-muc/{id}": {
+            "delete": {
+                "tags": [
+                    "Danh mục"
+                ],
+                "summary": "Xóa danh mục chưa được sử dụng",
+                "operationId": "5fbc6fd726069ae647073d6464c4bd31",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "X-XSRF-TOKEN",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Đã xóa danh mục khỏi CSDL"
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Không phải quản trị hoạt động"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy danh mục"
+                    },
+                    "409": {
+                        "description": "Danh mục còn tin đăng kể cả xóa mềm, câu hỏi hoặc dữ liệu liên quan; giữ nguyên dữ liệu và có thể chọn ẩn"
                     },
                     "429": {
                         "description": "Tối đa 30 lần/phút"

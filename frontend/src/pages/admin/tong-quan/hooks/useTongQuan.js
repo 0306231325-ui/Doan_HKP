@@ -9,12 +9,11 @@ export default function useTongQuan(danhSachTinDang = danhSachMacDinh) {
   const [tuNgay, datTuNgay] = useState('')
   const [denNgay, datDenNgay] = useState('')
   const [loiKhoangNgay, datLoiKhoangNgay] = useState('')
-  const [kieuPhanBo, datKieuPhanBo] = useState('danh_muc')
   const homNay = layNgayVietNam(new Date())
 
   const thongKe = useMemo(
-    () => taoThongKe(danhSachTinDang, khoangDangXem, kieuPhanBo),
-    [danhSachTinDang, khoangDangXem, kieuPhanBo],
+    () => taoThongKe(danhSachTinDang, khoangDangXem),
+    [danhSachTinDang, khoangDangXem],
   )
 
   function chonMocThoiGian(suKien) {
@@ -49,18 +48,14 @@ export default function useTongQuan(danhSachTinDang = danhSachMacDinh) {
     if (!loi) datKhoangDangXem({ tuNgay, denNgay })
   }
 
-  function chonKieuPhanBo(kieuMoi) {
-    datKieuPhanBo(kieuMoi)
-  }
-
   const nhanKhoangThoiGian = khoangDangXem.tuNgay
     ? `${khoangDangXem.tuNgay.split('-').reverse().join('/')} – ${khoangDangXem.denNgay.split('-').reverse().join('/')}`
     : 'Tất cả thời gian'
 
   return {
     ...thongKe,
-    mocThoiGian, tuNgay, denNgay, homNay, loiKhoangNgay, kieuPhanBo,
+    mocThoiGian, tuNgay, denNgay, homNay, loiKhoangNgay,
     nhanKhoangThoiGian, chonMocThoiGian, doiTuNgay, doiDenNgay,
-    apDungKhoangNgay, chonKieuPhanBo,
+    apDungKhoangNgay,
   }
 }

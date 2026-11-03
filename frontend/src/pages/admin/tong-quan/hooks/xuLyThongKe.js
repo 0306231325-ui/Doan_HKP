@@ -1,5 +1,3 @@
-const cacMauPhanBo = ['#145c40', '#438765', '#76ab8c', '#a4cbb2', '#c9e3d2', '#8b9f94']
-
 export function layNgayVietNam(giaTri) {
   if (!giaTri) return ''
   if (typeof giaTri === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(giaTri)) {
@@ -49,42 +47,11 @@ export function locTinTheoNgay(danhSach, { tuNgay, denNgay }) {
   })
 }
 
-export function tinhPhanBo(danhSach, kieu) {
-  const cacNhom = new Map()
-  for (const tin of danhSach) {
-    const ten = kieu === 'dia_diem'
-      ? tin.dia_diem?.ten_dia_diem || 'Chưa rõ địa điểm'
-      : tin.danh_muc?.ten_danh_muc || 'Chưa phân loại'
-    cacNhom.set(ten, (cacNhom.get(ten) || 0) + 1)
-  }
-  const cacMuc = [...cacNhom].map(([ten, soLuong]) => ({ ten, soLuong }))
-    .sort((a, b) => b.soLuong - a.soLuong || a.ten.localeCompare(b.ten, 'vi'))
-  const cacMucHienThi = cacMuc.slice(0, 5)
-  if (cacMuc.length > 5) {
-    cacMucHienThi.push({ ten: 'Các nhóm khác', soLuong: cacMuc.slice(5).reduce((tong, muc) => tong + muc.soLuong, 0) })
-  }
-  let diemBatDau = 0
-  return cacMucHienThi.map((muc, viTri) => {
-    const tyLe = muc.soLuong / danhSach.length * 100
-    const ketQua = { ...muc, tyLe, diemBatDau, mau: cacMauPhanBo[viTri] }
-    diemBatDau += tyLe
-    return ketQua
-  })
-}
-
-export function taoThongKe(danhSach, khoangNgay, kieuPhanBo) {
+export function taoThongKe(danhSach, khoangNgay) {
   const cacTin = locTinTheoNgay(danhSach.filter((tin) => !tin.deleted_at), khoangNgay)
   const tongTin = cacTin.length
   const soBaoMat = cacTin.filter((tin) => tin.loai_tin === 'bao_mat').length
   const soNhatDuoc = cacTin.filter((tin) => tin.loai_tin === 'nhat_duoc').length
   const soDaTra = cacTin.filter((tin) => tin.loai_tin === 'nhat_duoc' && ['da_hoan_tat', 'da_ban_giao'].includes(tin.trang_thai)).length
-  const soChoDuyet = cacTin.filter((tin) => tin.trang_thai_kiem_duyet === 'cho_duyet').length
-  const tyLeTimLai = tongTin ? Math.round(soDaTra / tongTin * 100) : 0
-  const tinGanDay = [...cacTin].sort((a, b) => {
-    const ngayA = new Date(a.created_at).getTime() || 0
-    const ngayB = new Date(b.created_at).getTime() || 0
-    return ngayB - ngayA || b.id - a.id
-  }).slice(0, 5)
-
-  return { tongTin, soBaoMat, soNhatDuoc, soDaTra, soChoDuyet, tyLeTimLai, tinGanDay, phanBo: tinhPhanBo(cacTin, kieuPhanBo) }
+  return { tongTin, soBaoMat, soNhatDuoc, soDaTra }
 }

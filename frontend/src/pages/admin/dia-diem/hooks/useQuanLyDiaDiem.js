@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
-import { docDanhSachDiaDiem, luuDanhSachDiaDiem, kiemTraDiaDiem, locDanhSachDiaDiem, phanTrangDiaDiem } from './xuLyDiaDiem.js'
+import { phanTrangDanhSach } from '../../../../components/shared/xuLyPhanTrang.js'
+import { docDanhSachDiaDiem, luuDanhSachDiaDiem, kiemTraDiaDiem, locDanhSachDiaDiem } from './xuLyDiaDiem.js'
 
 export default function useQuanLyDiaDiem() {
   const [danhSach, datDanhSach] = useState(docDanhSachDiaDiem)
@@ -12,7 +13,7 @@ export default function useQuanLyDiaDiem() {
   const [diaDiemDoiTrangThai, datDiaDiemDoiTrangThai] = useState(null)
   const [thongBao, datThongBao] = useState('')
   const ketQuaLoc = useMemo(() => locDanhSachDiaDiem(danhSach, tuKhoa, trangThai), [danhSach, tuKhoa, trangThai])
-  const phanTrang = phanTrangDiaDiem(ketQuaLoc, trang)
+  const phanTrang = phanTrangDanhSach(ketQuaLoc, trang, 8)
   const soHoatDong = danhSach.filter((muc) => muc.dangHoatDong).length
 
   function doiTuKhoa(suKien) {
@@ -116,7 +117,7 @@ export default function useQuanLyDiaDiem() {
   }
 
   return {
-    ...phanTrang, tuKhoa, trangThai, bieuMau, loiBieuMau, loiLuu, diaDiemDoiTrangThai, thongBao,
+    ...phanTrang, cacDiaDiem: phanTrang.cacMuc, tuKhoa, trangThai, bieuMau, loiBieuMau, loiLuu, diaDiemDoiTrangThai, thongBao,
     tongDiaDiem: danhSach.length, soHoatDong, soNgungSuDung: danhSach.length - soHoatDong,
     doiTuKhoa, doiTrangThaiLoc, xoaBoLoc, chuyenTrang, moThemDiaDiem, moSuaDiaDiem,
     dongBieuMau, thayDoiBieuMau, luuDiaDiem, moDoiTrangThai, dongDoiTrangThai, xacNhanDoiTrangThai, dongThongBao,

@@ -1,5 +1,5 @@
 import { Eye, LockKeyhole, SearchX, UnlockKeyhole, UsersRound } from 'lucide-react'
-import PhanTrang from '../../../components/shared/PhanTrang'
+import PhanTrang from '../../../components/shared/PhanTrang.jsx'
 import ThongBaoTrong from '../../../components/shared/ThongBaoTrong'
 import NhanTaiKhoan from './NhanTaiKhoan'
 

@@ -1,7 +1,7 @@
 import { PackageSearch } from 'lucide-react'
 import DanhSachDoThatLac from '../../components/danh-sach-do/DanhSachDoThatLac'
 import ThanhTimKiem from '../../components/danh-sach-do/ThanhTimKiem'
-import PhanTrang from '../../components/shared/PhanTrang'
+import PhanTrang from '../../components/shared/PhanTrang.jsx'
 import useDanhSachDo from './hooks/useDanhSachDo'
 
 export default function DanhSachDo() {
