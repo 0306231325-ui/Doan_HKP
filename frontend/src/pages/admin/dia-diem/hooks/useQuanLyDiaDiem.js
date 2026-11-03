@@ -1,9 +1,30 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import api, { prepareCsrf } from '../../../../services/api'
 import { phanTrangDanhSach } from '../../../../components/shared/xuLyPhanTrang.js'
-import { docDanhSachDiaDiem, luuDanhSachDiaDiem, kiemTraDiaDiem, locDanhSachDiaDiem } from './xuLyDiaDiem.js'
+import { kiemTraDiaDiem, locDanhSachDiaDiem } from './xuLyDiaDiem.js'
 
 export default function useQuanLyDiaDiem() {
-  const [danhSach, datDanhSach] = useState(docDanhSachDiaDiem)
+  const [danhSach, datDanhSach] = useState([])
+  const [dangTai, datDangTai] = useState(true)
+  const [loiTai, datLoiTai] = useState('')
+  const [dangLuu, datDangLuu] = useState(false)
+  const dangGui = useRef(false)
+  const [lanTai, datLanTai] = useState(0)
+  useEffect(() => {
+    const controller = new AbortController()
+    api.get('/admin/dia-diem', { signal: controller.signal }).then(({ data }) => {
+      if (!controller.signal.aborted) { datDanhSach(data.data); datLoiTai(''); datDangTai(false) }
+    }).catch(() => {
+      if (!controller.signal.aborted) { datLoiTai('Không tải được địa điểm. Vui lòng thử lại.'); datDangTai(false) }
+    })
+    return () => controller.abort()
+  }, [lanTai])
+  function taiLai() { datDangTai(true); datLanTai((cu) => cu + 1) }
+  function xuLyLoi(loi) {
+    datLoiLuu(loi.response?.data?.message || 'Không lưu được địa điểm. Vui lòng thử lại.')
+    if (loi.response?.status === 422) datLoiBieuMau(Object.fromEntries(Object.entries(loi.response.data.errors || {}).map(([k, v]) => [k, v[0]])))
+    if ([404, 409].includes(loi.response?.status)) taiLai()
+  }
   const [tuKhoa, datTuKhoa] = useState('')
   const [trangThai, datTrangThai] = useState('tat_ca')
   const [trang, datTrang] = useState(1)
@@ -49,6 +70,7 @@ export default function useQuanLyDiaDiem() {
   }
 
   function dongBieuMau() {
+    if (dangGui.current) return
     datBieuMau(null)
     datLoiBieuMau({})
     datLoiLuu('')
@@ -61,37 +83,27 @@ export default function useQuanLyDiaDiem() {
     datLoiLuu('')
   }
 
-  function ghiDanhSach(danhSachMoi) {
-    if (!luuDanhSachDiaDiem(danhSachMoi)) {
-      datLoiLuu('Chưa lưu được thay đổi trên thiết bị này. Vui lòng kiểm tra quyền lưu trữ hoặc thử lại.')
-      return false
-    }
-    datDanhSach(danhSachMoi)
-    return true
-  }
-
-  function luuDiaDiem(suKien) {
+  async function luuDiaDiem(suKien) {
     suKien.preventDefault()
+    if (dangGui.current) return
     const cacLoi = kiemTraDiaDiem(bieuMau, danhSach)
     datLoiBieuMau(cacLoi)
     if (Object.keys(cacLoi).length) return
+    dangGui.current = true
+    datDangLuu(true)
+    datLoiLuu('')
     const laThemMoi = !bieuMau.id
-    const diaDiem = {
-      ...bieuMau,
-      id: bieuMau.id || crypto.randomUUID(),
-      tenDiaDiem: bieuMau.tenDiaDiem.trim().replace(/\s+/g, ' '),
-      moTa: bieuMau.moTa.trim(),
-    }
-    const danhSachMoi = laThemMoi ? [...danhSach, diaDiem] : danhSach.map((muc) => muc.id === diaDiem.id ? diaDiem : muc)
-    if (!ghiDanhSach(danhSachMoi)) return
-    if (laThemMoi) {
-      datTuKhoa('')
-      datTrangThai('tat_ca')
-      const viTri = locDanhSachDiaDiem(danhSachMoi, '', 'tat_ca').findIndex((muc) => muc.id === diaDiem.id)
-      datTrang(Math.floor(viTri / 8) + 1)
-    }
-    datThongBao(`Đã ${laThemMoi ? 'thêm' : 'cập nhật'} địa điểm “${diaDiem.tenDiaDiem}”.`)
-    dongBieuMau()
+    try {
+      await prepareCsrf()
+      const { data } = await api[laThemMoi ? 'post' : 'patch'](laThemMoi ? '/admin/dia-diem' : `/admin/dia-diem/${bieuMau.id}`, {
+        tenDiaDiem: bieuMau.tenDiaDiem.trim().replace(/\s+/g, ' '), moTa: bieuMau.moTa.trim(), dangHoatDong: bieuMau.dangHoatDong,
+      })
+      datDanhSach((cu) => laThemMoi ? [...cu, data.data] : cu.map((muc) => muc.id === data.data.id ? data.data : muc))
+      datThongBao(`Đã ${laThemMoi ? 'thêm' : 'cập nhật'} địa điểm “${data.data.tenDiaDiem}”.`)
+      datBieuMau(null)
+      if (laThemMoi) { datTuKhoa(''); datTrangThai('tat_ca'); datTrang(1) }
+    } catch (loi) { xuLyLoi(loi) }
+    finally { dangGui.current = false; datDangLuu(false) }
   }
 
   function moDoiTrangThai(diaDiem) {
@@ -100,16 +112,25 @@ export default function useQuanLyDiaDiem() {
   }
 
   function dongDoiTrangThai() {
+    if (dangGui.current) return
     datDiaDiemDoiTrangThai(null)
     datLoiLuu('')
   }
 
-  function xacNhanDoiTrangThai() {
+  async function xacNhanDoiTrangThai() {
+    if (dangGui.current || !diaDiemDoiTrangThai) return
+    dangGui.current = true
+    datDangLuu(true)
+    datLoiLuu('')
     const diaDiem = diaDiemDoiTrangThai
-    const danhSachMoi = danhSach.map((muc) => muc.id === diaDiem.id ? { ...muc, dangHoatDong: !muc.dangHoatDong } : muc)
-    if (!ghiDanhSach(danhSachMoi)) return
-    datThongBao(`Đã ${diaDiem.dangHoatDong ? 'ngừng sử dụng' : 'mở lại'} địa điểm “${diaDiem.tenDiaDiem}”.`)
-    dongDoiTrangThai()
+    try {
+      await prepareCsrf()
+      const { data } = await api.patch(`/admin/dia-diem/${diaDiem.id}/trang-thai`, { dangHoatDong: !diaDiem.dangHoatDong, trangThaiHienTai: diaDiem.dangHoatDong })
+      datDanhSach((cu) => cu.map((muc) => muc.id === data.data.id ? data.data : muc))
+      datThongBao(`Đã ${data.data.dangHoatDong ? 'kích hoạt' : 'ngừng sử dụng'} địa điểm “${data.data.tenDiaDiem}”.`)
+      datDiaDiemDoiTrangThai(null)
+    } catch (loi) { xuLyLoi(loi) }
+    finally { dangGui.current = false; datDangLuu(false) }
   }
 
   function dongThongBao() {
@@ -117,7 +138,7 @@ export default function useQuanLyDiaDiem() {
   }
 
   return {
-    ...phanTrang, cacDiaDiem: phanTrang.cacMuc, tuKhoa, trangThai, bieuMau, loiBieuMau, loiLuu, diaDiemDoiTrangThai, thongBao,
+    dangTai, loiTai, dangLuu, taiLai, ...phanTrang, cacDiaDiem: phanTrang.cacMuc, tuKhoa, trangThai, bieuMau, loiBieuMau, loiLuu, diaDiemDoiTrangThai, thongBao,
     tongDiaDiem: danhSach.length, soHoatDong, soNgungSuDung: danhSach.length - soHoatDong,
     doiTuKhoa, doiTrangThaiLoc, xoaBoLoc, chuyenTrang, moThemDiaDiem, moSuaDiaDiem,
     dongBieuMau, thayDoiBieuMau, luuDiaDiem, moDoiTrangThai, dongDoiTrangThai, xacNhanDoiTrangThai, dongThongBao,
