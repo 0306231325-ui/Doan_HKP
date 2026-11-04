@@ -1,4 +1,4 @@
-import { ArrowLeft, CalendarDays, ChevronRight, ClipboardList, Flag, HandHeart, ImageOff, Images, Info, MapPin, MessageSquare, Phone, Share2, UserRound } from 'lucide-react'
+import { ArrowLeft, CalendarDays, ChevronRight, ClipboardList, Flag, HandHeart, ImageOff, Images, Info, MapPin, MessageSquare, Share2, UserRound } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import Button from '../../components/shared/Button'
 import KhungThongTin from '../../components/shared/KhungThongTin'
@@ -29,7 +29,7 @@ export default function ChiTietTinDang() {
       {dangTai ? <p role="status" className="rounded-3xl bg-white p-10 text-center text-[#607568]">Đang tải tin đăng…</p> : loi ? <div role="alert" className="space-y-4 rounded-3xl bg-white p-10 text-center"><p>{loi}</p><Button onClick={taiLai}>Thử lại</Button></div> : !tin ? <ThongBaoTrong bieuTuong={Info} tieuDe="Không tìm thấy tin đăng" moTa="Tin đăng không tồn tại hoặc không còn được hiển thị. Bạn có thể quay lại danh sách để tìm tin khác." /> : <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] lg:gap-8">
         <div className="min-w-0 space-y-6">
           <KhungThongTin tieuDe="Hình ảnh đồ vật" bieuTuong={Images}>
-            {tin.imageUrl && tin.imageUrl !== '/do-vat-trong.svg' ? <img src={tin.imageUrl} alt={tin.title} className="aspect-[4/3] w-full rounded-2xl bg-[#f5faf7] object-contain sm:aspect-[16/10]" onError={(suKien) => { suKien.currentTarget.onerror = null; suKien.currentTarget.src = '/do-vat-trong.svg' }} /> : <div className="flex aspect-[4/3] flex-col items-center justify-center gap-4 rounded-2xl border border-dashed border-[#cbded1] bg-[#f5faf7] px-5 text-center sm:aspect-[16/10]">
+            {tin.imageUrl && tin.imageUrl !== '/do-vat-trong.svg' ? <div className={`grid gap-3 ${tin.images?.length > 1 ? 'sm:grid-cols-2' : ''}`}>{(tin.images?.length ? tin.images : [tin.imageUrl]).map((url, i) => <img key={url} src={url} alt={`${tin.title} · Ảnh ${i + 1}`} className="aspect-[4/3] w-full rounded-2xl bg-[#f5faf7] object-contain" onError={(suKien) => { suKien.currentTarget.onerror = null; suKien.currentTarget.src = '/do-vat-trong.svg' }} />)}</div> : <div className="flex aspect-[4/3] flex-col items-center justify-center gap-4 rounded-2xl border border-dashed border-[#cbded1] bg-[#f5faf7] px-5 text-center sm:aspect-[16/10]">
               <span className="flex h-20 w-20 items-center justify-center rounded-3xl bg-white text-[#9bb3a2] shadow-sm"><ImageOff className="h-9 w-9" strokeWidth={1.5} aria-hidden="true" /></span>
               <div><p className="text-sm font-semibold text-[#526c5b]">Chưa có hình ảnh</p><p className="mt-1.5 text-xs leading-5 text-[#718276]">Hình ảnh của tin đăng sẽ hiển thị tại đây.</p></div>
             </div>}
@@ -43,6 +43,7 @@ export default function ChiTietTinDang() {
 
           <KhungThongTin tieuDe="Thông tin đồ vật" bieuTuong={ClipboardList}>
             <p className="whitespace-pre-line text-sm leading-7 text-[#607568]">{tin.description || 'Chưa có mô tả đồ vật.'}</p>
+            {tin.publicAnswers?.length > 0 && <dl className="mt-5 space-y-4">{tin.publicAnswers.map((muc) => <div key={muc.id}><dt className="text-sm font-semibold text-[#315a43]">{muc.question}</dt><dd className="mt-1 whitespace-pre-wrap break-words text-sm text-[#607568]">{muc.answer}</dd></div>)}</dl>}
           </KhungThongTin>
 
           <KhungThongTin tieuDe="Thời gian và địa điểm" bieuTuong={MapPin}>
@@ -59,14 +60,14 @@ export default function ChiTietTinDang() {
               <p className="text-sm font-medium leading-6 text-[#718276]">{tin.contactPerson}</p>
             </div>
             <dl className="mt-5 space-y-4">
-              {[['Người đăng', tin.contactPerson], ['Liên hệ công khai', tin.contactPhone]].map(([nhan, giaTri]) => <div key={nhan} className="flex items-center justify-between gap-3 text-sm"><dt className="text-[#718276]">{nhan}</dt><dd className="font-medium text-[#315a43]">{giaTri || 'Chưa có thông tin'}</dd></div>)}
+              {[['Số điện thoại', tin.contactPhone], ['Email / Gmail', tin.contactEmail]].map(([nhan, giaTri]) => <div key={nhan} className="space-y-1 text-sm"><dt className="text-[#718276]">{nhan}</dt><dd className="break-words font-medium text-[#315a43]">{giaTri || 'Không cung cấp'}</dd></div>)}
             </dl>
-            <Button disabled title="Chỉ hiển thị thông tin liên hệ công khai ở trên" className="mt-5 inline-flex w-full items-center justify-center gap-2"><Phone className="h-4 w-4" aria-hidden="true" />Liên hệ người đăng</Button>
+            {tin.contactError ? <p role="alert" className="mt-4 text-sm text-rose-700">{tin.contactError} <button type="button" onClick={taiLai} className="underline">Thử lại</button></p> : !tin.contactUnlocked && <p className="mt-4 text-xs leading-5 text-[#718276]">{tin.type === 'found' ? 'Liên hệ được giữ kín. Gửi yêu cầu nhận đồ để xem thông tin.' : 'Thông tin liên hệ được giữ kín trên tin đăng.'}</p>}
           </KhungThongTin>
 
           <KhungThongTin tieuDe="Thao tác với tin đăng" bieuTuong={HandHeart}>
             <div className="space-y-3">
-              <Button disabled title="Chức năng này chưa được kết nối" className="inline-flex w-full items-center justify-center gap-2"><HandHeart className="h-4 w-4" aria-hidden="true" />Yêu cầu nhận lại đồ</Button>
+              {tin.canClaim && <Link to={`/yeu-cau-nhan-do?id=${tin.id}`} className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-emerald-900 px-4 py-3 text-center text-sm font-bold text-white hover:bg-emerald-800"><HandHeart className="h-4 w-4" aria-hidden="true" />{tin.hasClaim ? 'Xem yêu cầu đã gửi' : 'Yêu cầu nhận lại đồ'}</Link>}
               {[{ nhan: 'Tôi đang giữ đồ này', bieuTuong: MessageSquare }, { nhan: 'Chia sẻ tin', bieuTuong: Share2 }, { nhan: 'Báo cáo tin đăng', bieuTuong: Flag }].map(({ nhan, bieuTuong: BieuTuong }) => <button key={nhan} type="button" disabled title="Chức năng này chưa được kết nối" className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl border border-[#ceded3] bg-white px-4 py-3 text-sm font-semibold text-[#526c5b] disabled:cursor-not-allowed disabled:opacity-50"><BieuTuong className="h-4 w-4" aria-hidden="true" />{nhan}</button>)}
             </div>
           </KhungThongTin>

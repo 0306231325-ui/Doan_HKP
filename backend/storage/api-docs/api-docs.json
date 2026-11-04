@@ -12,6 +12,383 @@
         }
     ],
     "paths": {
+        "/api/dang-tin/cau-hoi": {
+            "get": {
+                "tags": [
+                    "Đăng tin"
+                ],
+                "summary": "Câu hỏi hiện hành để đăng tin theo danh mục",
+                "operationId": "f97c7929bd9619b41e0a0c5edb331e37",
+                "parameters": [
+                    {
+                        "name": "danhMucId",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "data gồm id, phienBanId, danhMucId, nhanDangTin, kieuNhap, thuTu, dangHoatDong. Chỉ câu đang dùng: chung optional/công khai, riêng bắt buộc/giữ kín; không trả lịch sử hoặc đáp án."
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Tài khoản bị khóa"
+                    },
+                    "422": {
+                        "description": "Danh mục không tồn tại hoặc đã ẩn"
+                    }
+                }
+            }
+        },
+        "/api/tin-dang": {
+            "post": {
+                "tags": [
+                    "Đăng tin"
+                ],
+                "summary": "Đăng tin báo mất hoặc nhặt được, hiển thị ngay",
+                "operationId": "34fcee1ef5b71e89eb7aee2b9ea1d01d",
+                "parameters": [
+                    {
+                        "name": "X-XSRF-TOKEN",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "maGui",
+                                    "loaiTin",
+                                    "danhMucId",
+                                    "tieuDe",
+                                    "ngayXayRa",
+                                    "diaDiemChiTiet",
+                                    "cauTraLoi"
+                                ],
+                                "properties": {
+                                    "maGui": {
+                                        "description": "UUID cho một lần đăng; dùng lại cùng mã khi thử gửi lại để tránh trùng tin",
+                                        "type": "string",
+                                        "format": "uuid"
+                                    },
+                                    "loaiTin": {
+                                        "type": "string",
+                                        "enum": [
+                                            "lost",
+                                            "found"
+                                        ]
+                                    },
+                                    "danhMucId": {
+                                        "type": "integer",
+                                        "minimum": 1
+                                    },
+                                    "tieuDe": {
+                                        "type": "string",
+                                        "maxLength": 150
+                                    },
+                                    "moTa": {
+                                        "type": "string",
+                                        "maxLength": 2000
+                                    },
+                                    "ngayXayRa": {
+                                        "description": "Không sau hôm nay theo múi giờ Việt Nam",
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "diaDiemId": {
+                                        "type": "integer",
+                                        "nullable": true,
+                                        "minimum": 1
+                                    },
+                                    "diaDiemChiTiet": {
+                                        "type": "string",
+                                        "maxLength": 255
+                                    },
+                                    "soDienThoai": {
+                                        "description": "Điện thoại hoặc email phải có ít nhất một. Liên hệ bị che trên API công khai.",
+                                        "type": "string",
+                                        "maxLength": 20
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "maxLength": 254
+                                    },
+                                    "cauTraLoi": {
+                                        "description": "Chuỗi JSON hoặc các trường cauTraLoi[0][id], cauTraLoi[0][phienBanId], cauTraLoi[0][giaTri]. Gửi toàn bộ câu từ API biểu mẫu, câu chung bỏ trống vẫn gửi giaTri rỗng. Kiểu Số giới hạn 14 chữ số nguyên/4 thập phân.",
+                                        "type": "string",
+                                        "example": "[{\"id\":1,\"phienBanId\":1,\"giaTri\":\"Đen\"}]"
+                                    },
+                                    "anh[]": {
+                                        "description": "Tối đa 5 ảnh JPG/PNG/WebP, 5 MB/ảnh, kích thước tối đa 8192 mỗi chiều",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "format": "binary"
+                                        },
+                                        "maxItems": 5
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "data.id và message. Lưu tin, lời khai đúng snapshot, ảnh và lịch sử trong transaction; lỗi dọn tệp đã lưu. Trạng thái hien_thi/dang_mo do server đặt."
+                    },
+                    "200": {
+                        "description": "Đã đăng bằng cùng maGui của chính người gửi; trả ID cũ, không tạo trùng"
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Tài khoản bị khóa"
+                    },
+                    "409": {
+                        "description": "Câu hỏi/danh mục đã đổi, hoặc mã gửi đã dùng bởi tài khoản khác"
+                    },
+                    "422": {
+                        "description": "Sai dữ liệu, thiếu câu riêng, danh mục chưa có câu hỏi, đáp án số vượt giới hạn, ảnh không hợp lệ"
+                    },
+                    "429": {
+                        "description": "Tối đa 10 lần/phút"
+                    }
+                }
+            }
+        },
+        "/api/tra-cuu/{tin}": {
+            "get": {
+                "tags": [
+                    "Tra cứu"
+                ],
+                "summary": "Chi tiết tin công khai, ảnh và câu trả lời chung",
+                "operationId": "6e80c2f6b3c4246252111e0c156acbba",
+                "parameters": [
+                    {
+                        "name": "tin",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "data gồm DTO card, images và publicAnswers. Điện thoại/email chỉ là ****, không chứa đáp án riêng. Phạm vi công khai dựa snapshot của lời khai gốc."
+                    },
+                    "404": {
+                        "description": "Không có tin, đã ẩn hoặc xóa mềm"
+                    }
+                }
+            }
+        },
+        "/api/tin-dang/anh/{tenAnh}": {
+            "get": {
+                "tags": [
+                    "Đăng tin"
+                ],
+                "summary": "Đọc ảnh công khai của tin đang hiển thị",
+                "operationId": "82e945dcfd872e5dcfde192a7499ea8a",
+                "parameters": [
+                    {
+                        "name": "tenAnh",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Nội dung ảnh lưu ở ổ private, no-store/nosniff; đường dẫn ngẫu nhiên do server tạo"
+                    },
+                    "404": {
+                        "description": "Ảnh không có, riêng tư, tin ẩn hoặc đã xóa"
+                    }
+                }
+            }
+        },
+        "/api/tin-dang/{tin}/nhan-lai": {
+            "get": {
+                "tags": [
+                    "Nhận đồ"
+                ],
+                "summary": "Biểu mẫu nhận lại từ bộ câu hỏi đã gắn với tin gốc",
+                "operationId": "b6687bd65fcace81237f8079b5720a8d",
+                "parameters": [
+                    {
+                        "name": "tin",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "tin, daGui và data câu hỏi riêng từ snapshot gốc, id là ID lời khai gốc; không trả đáp án người đăng. Không lấy câu mới hoặc kiểu mới từ cấu hình danh mục hiện tại."
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Tài khoản bị khóa hoặc tin của chính mình"
+                    },
+                    "404": {
+                        "description": "Tin không còn hiển thị"
+                    },
+                    "409": {
+                        "description": "Không phải tin nhặt được đang mở, hoặc không có câu hỏi nhận diện"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Nhận đồ"
+                ],
+                "summary": "Gửi yêu cầu nhận đồ chờ quản trị viên xác minh",
+                "operationId": "af855d233a6e11098d780f08c79184cb",
+                "parameters": [
+                    {
+                        "name": "tin",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "X-XSRF-TOKEN",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "xacNhan",
+                                    "cauTraLoi"
+                                ],
+                                "properties": {
+                                    "xacNhan": {
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "loiNhan": {
+                                        "type": "string",
+                                        "maxLength": 2000
+                                    },
+                                    "cauTraLoi": {
+                                        "type": "array",
+                                        "items": {
+                                            "required": [
+                                                "id",
+                                                "giaTri"
+                                            ],
+                                            "properties": {
+                                                "id": {
+                                                    "description": "ID lời khai từ form nhận lại",
+                                                    "type": "integer"
+                                                },
+                                                "giaTri": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Lưu yêu cầu cho_kiem_tra, đáp án riêng và lịch sử. Chỉ quản trị viên duyệt; gửi không tự xác minh hoặc bàn giao."
+                    },
+                    "200": {
+                        "description": "Đã có yêu cầu đang xử lý của tài khoản này, không gửi trùng"
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Tài khoản bị khóa hoặc tin của chính mình"
+                    },
+                    "404": {
+                        "description": "Tin không còn hiển thị"
+                    },
+                    "409": {
+                        "description": "Tin không còn nhận yêu cầu"
+                    },
+                    "422": {
+                        "description": "Thiếu câu hỏi gốc, đáp án sai kiểu hoặc chưa xác nhận"
+                    }
+                }
+            }
+        },
+        "/api/tin-dang/{tin}/lien-he": {
+            "get": {
+                "tags": [
+                    "Nhận đồ"
+                ],
+                "summary": "Xem điện thoại/email sau khi đã gửi yêu cầu",
+                "operationId": "953625ee982b7fcc38a13b558acb2a2d",
+                "parameters": [
+                    {
+                        "name": "tin",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "data.soDienThoai/email/laChuTin/daGui, private no-store. Chỉ chủ tin, admin hoặc người có yêu cầu cho_kiem_tra/can_bo_sung/da_xac_minh; yêu cầu từ chối/đã hủy không mở liên hệ."
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Chưa gửi yêu cầu hoặc tài khoản bị khóa"
+                    },
+                    "404": {
+                        "description": "Tin không còn hiển thị"
+                    }
+                }
+            }
+        },
         "/api/admin/tin-dang": {
             "get": {
                 "tags": [
@@ -152,6 +529,287 @@
                 }
             }
         },
+        "/api/admin/cau-hoi": {
+            "get": {
+                "tags": [
+                    "Câu hỏi"
+                ],
+                "summary": "Câu hỏi chung, riêng và lịch sử từ DB",
+                "operationId": "c788de789a25e58928f98d189d5614d0",
+                "responses": {
+                    "200": {
+                        "description": "data gồm một dòng hiện hành mỗi câu: id ổn định, phienBan mới nhất tính từ lich_su_cau_hoi, danhMucId, nhanDangTin, kieuNhap, thuTu, dangHoatDong, coCauTraLoi và mảng lichSu. Câu hỏi có hai kiểu trả lời van_ban/so, lịch sử thiếu kiểu dùng van_ban. Dùng cả hai loại tin, không nhận cấu hình từ client. Câu chung công khai và không bắt buộc; câu theo danh mục giữ kín, bắt buộc lúc đăng/nhận lại, dùng lại phiên bản gắn với bài đăng. Frontend chia 8 câu/trang."
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Không phải quản trị hoạt động"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Câu hỏi"
+                ],
+                "summary": "Lưu câu hỏi mới vào DB",
+                "operationId": "fd08cd031bbc1a0e3162a0f93e427a95",
+                "parameters": [
+                    {
+                        "name": "X-XSRF-TOKEN",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CauHoiInput"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "data là câu đã lưu, daThayDoi=true; ID/phiên bản/trạng thái tạo mới do server cấp. Câu chung luôn dùng cả hai loại tin và không bắt buộc."
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Không phải quản trị hoạt động"
+                    },
+                    "422": {
+                        "description": "Dữ liệu/cấu hình/danh mục không hợp lệ hoặc câu hỏi trùng trong phạm vi giao nhau"
+                    },
+                    "429": {
+                        "description": "Tối đa 30 lần/phút"
+                    }
+                }
+            }
+        },
+        "/api/admin/cau-hoi/{id}": {
+            "put": {
+                "tags": [
+                    "Câu hỏi"
+                ],
+                "summary": "Sửa câu hỏi bằng phiên bản mới, giữ lịch sử và câu trả lời cũ",
+                "operationId": "652a18afd38585762fa1d5f06d48160c",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "X-XSRF-TOKEN",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "allOf": [
+                                    {
+                                        "$ref": "#/components/schemas/CauHoiInput"
+                                    },
+                                    {
+                                        "required": [
+                                            "phienBan"
+                                        ],
+                                        "properties": {
+                                            "phienBan": {
+                                                "type": "integer",
+                                                "minimum": 1
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "data giữ nguyên ID, nội dung hiện hành được cập nhật và thêm snapshot vào lich_su_cau_hoi; daThayDoi=false không thêm lịch sử. phienBan gửi lên phải trùng bản mới nhất."
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Không phải quản trị hoạt động"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy câu hỏi"
+                    },
+                    "409": {
+                        "description": "Phiên bản hoặc trạng thái đã thay đổi, cần tải lại"
+                    },
+                    "422": {
+                        "description": "Dữ liệu không hợp lệ hoặc trùng câu hỏi"
+                    },
+                    "429": {
+                        "description": "Tối đa 30 lần/phút"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Câu hỏi"
+                ],
+                "summary": "Xóa câu hỏi chưa có lịch sử và chưa có câu trả lời",
+                "operationId": "ebebf95ec2b6adadfca56293b1cf05f0",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "X-XSRF-TOKEN",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "phienBan"
+                                ],
+                                "properties": {
+                                    "phienBan": {
+                                        "type": "integer",
+                                        "minimum": 1
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Đã xóa khỏi DB, không xóa dây chuyền"
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Không phải quản trị hoạt động"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy câu hỏi"
+                    },
+                    "409": {
+                        "description": "Bản cũ, có lịch sử hoặc câu trả lời; giữ dữ liệu và dùng Ẩn"
+                    },
+                    "429": {
+                        "description": "Tối đa 30 lần/phút"
+                    }
+                }
+            }
+        },
+        "/api/admin/cau-hoi/{id}/trang-thai": {
+            "patch": {
+                "tags": [
+                    "Câu hỏi"
+                ],
+                "summary": "Ẩn/mở câu hỏi hiện hành trong DB",
+                "operationId": "0e54ff7d424788d2fbd2ef2cd9f3ff4e",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "X-XSRF-TOKEN",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "phienBan",
+                                    "dangHoatDong",
+                                    "trangThaiHienTai"
+                                ],
+                                "properties": {
+                                    "phienBan": {
+                                        "type": "integer",
+                                        "minimum": 1
+                                    },
+                                    "dangHoatDong": {
+                                        "type": "boolean"
+                                    },
+                                    "trangThaiHienTai": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "data là câu đã lưu trạng thái; yêu cầu lặp đạt đích trả thành công"
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Không phải quản trị hoạt động"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy câu hỏi"
+                    },
+                    "409": {
+                        "description": "Bản cũ/trạng thái cũ hoặc danh mục đang ngừng khi mở lại"
+                    },
+                    "422": {
+                        "description": "Trạng thái không hợp lệ"
+                    },
+                    "429": {
+                        "description": "Tối đa 30 lần/phút"
+                    }
+                }
+            }
+        },
         "/api/admin/danh-muc": {
             "get": {
                 "tags": [
@@ -261,10 +919,15 @@
                         "application/json": {
                             "schema": {
                                 "required": [
+                                    "phienBan",
                                     "dangHoatDong",
                                     "trangThaiHienTai"
                                 ],
                                 "properties": {
+                                    "phienBan": {
+                                        "type": "integer",
+                                        "minimum": 1
+                                    },
                                     "dangHoatDong": {
                                         "description": "false để ẩn, true để mở",
                                         "type": "boolean"
@@ -648,7 +1311,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Nội dung ảnh, có cache và nosniff"
+                        "description": "Luồng nội dung ảnh từ ổ public, có cache và nosniff"
                     },
                     "404": {
                         "description": "Không tìm thấy ảnh"
@@ -767,7 +1430,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "data gồm các trường công khai cho card/modal; meta gồm trangHienTai, tongTrang, tongTin, tuViTri, denViTri. Không trả tin ẩn, xóa mềm, ảnh riêng tư hoặc mật khẩu/số điện thoại hồ sơ người đăng. Ngày lọc là ngày xảy ra, dự phòng ngày đăng; trang vượt biên về trang cuối."
+                        "description": "data gồm các trường công khai cho card/modal; meta gồm trangHienTai, tongTrang, tongTin, tuViTri, denViTri. Không trả tin ẩn, xóa mềm, ảnh riêng tư hoặc mật khẩu/số điện thoại hồ sơ người đăng. Điện thoại và email liên hệ tin đăng chỉ trả ****. Ngày lọc là ngày xảy ra, dự phòng ngày đăng; trang vượt biên về trang cuối."
                     },
                     "422": {
                         "description": "Bộ lọc hoặc khoảng ngày không hợp lệ"
@@ -885,10 +1548,68 @@
             }
         }
     },
+    "components": {
+        "schemas": {
+            "CauHoiInput": {
+                "required": [
+                    "danhMucId",
+                    "nhanDangTin",
+                    "kieuNhap",
+                    "thuTu",
+                    "dangHoatDong"
+                ],
+                "properties": {
+                    "danhMucId": {
+                        "description": "NULL là câu chung; ID danh mục cho câu riêng",
+                        "type": "integer",
+                        "nullable": true,
+                        "minimum": 1
+                    },
+                    "nhanDangTin": {
+                        "type": "string",
+                        "maxLength": 250
+                    },
+                    "kieuNhap": {
+                        "description": "Kiểu câu trả lời: Văn bản hoặc Số; được lưu trong snapshot lịch sử",
+                        "type": "string",
+                        "enum": [
+                            "van_ban",
+                            "so"
+                        ]
+                    },
+                    "thuTu": {
+                        "type": "integer",
+                        "maximum": 999,
+                        "minimum": 1
+                    },
+                    "dangHoatDong": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            }
+        }
+    },
     "tags": [
+        {
+            "name": "Đăng tin",
+            "description": "Đăng tin"
+        },
+        {
+            "name": "Tra cứu",
+            "description": "Tra cứu"
+        },
+        {
+            "name": "Nhận đồ",
+            "description": "Nhận đồ"
+        },
         {
             "name": "Kiểm duyệt",
             "description": "Kiểm duyệt"
+        },
+        {
+            "name": "Câu hỏi",
+            "description": "Câu hỏi"
         },
         {
             "name": "Danh mục",
@@ -905,10 +1626,6 @@
         {
             "name": "Users",
             "description": "Users"
-        },
-        {
-            "name": "Tra cứu",
-            "description": "Tra cứu"
         }
     ]
 }

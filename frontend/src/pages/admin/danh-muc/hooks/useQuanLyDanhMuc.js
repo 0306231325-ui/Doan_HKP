@@ -2,10 +2,11 @@ import { useRef, useState } from 'react'
 import api, { prepareCsrf } from '../../../../services/api'
 import useDanhMuc from '../../../../components/shared/hooks/useDanhMuc'
 import useThongBaoThaoTac from '../../../../components/shared/hooks/useThongBaoThaoTac'
-import { kiemTraDanhMuc } from './xuLyDanhMuc.js'
+import { chuanHoaTuKhoa, kiemTraDanhMuc, locDanhSachDanhMuc } from './xuLyDanhMuc.js'
 
 export default function useQuanLyDanhMuc() {
   const { danhSach, datDanhSach, dangTai, loiTai, taiLai } = useDanhMuc(true)
+  const [boLoc, datBoLoc] = useState({ tuKhoa: '', trangThai: 'tat_ca' })
   const [bieuMau, datBieuMau] = useState(null)
   const [loiBieuMau, datLoiBieuMau] = useState({})
   const [dangLuu, datDangLuu] = useState(false)
@@ -14,6 +15,17 @@ export default function useQuanLyDanhMuc() {
   const [loiThaoTac, datLoiThaoTac] = useState('')
   const khoaGui = useRef(false)
   const hienThongBao = useThongBaoThaoTac()
+  const cacDanhMuc = locDanhSachDanhMuc(danhSach, boLoc)
+  const coBoLoc = Boolean(chuanHoaTuKhoa(boLoc.tuKhoa) || boLoc.trangThai !== 'tat_ca')
+
+  function doiBoLoc(suKien) {
+    const { name, value } = suKien.target
+    datBoLoc((cu) => ({ ...cu, [name]: value }))
+  }
+
+  function xoaBoLoc() {
+    datBoLoc({ tuKhoa: '', trangThai: 'tat_ca' })
+  }
 
   function moThemDanhMuc() {
     if (khoaGui.current) return
@@ -94,5 +106,5 @@ export default function useQuanLyDanhMuc() {
     }
   }
 
-  return { danhSach, dangTai, loiTai, taiLai, bieuMau, loiBieuMau, dangLuu, danhMucDangDoi, thaoTacChoXacNhan, loiThaoTac, moXacNhanThaoTac, dongXacNhanThaoTac, xacNhanThaoTac, moThemDanhMuc, dongBieuMau, thayDoiBieuMau, yeuCauThemDanhMuc }
+  return { danhSach, cacDanhMuc, boLoc, coBoLoc, doiBoLoc, xoaBoLoc, dangTai, loiTai, taiLai, bieuMau, loiBieuMau, dangLuu, danhMucDangDoi, thaoTacChoXacNhan, loiThaoTac, moXacNhanThaoTac, dongXacNhanThaoTac, xacNhanThaoTac, moThemDanhMuc, dongBieuMau, thayDoiBieuMau, yeuCauThemDanhMuc }
 }

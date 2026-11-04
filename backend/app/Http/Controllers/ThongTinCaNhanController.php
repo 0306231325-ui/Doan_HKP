@@ -3,12 +3,14 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
+use LogicException;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Throwable;
 
@@ -112,10 +114,14 @@ class ThongTinCaNhanController extends Controller
 
     public function anhDaiDien(string $tenAnh): StreamedResponse
     {
+        $oDia = Storage::disk('public');
+        if (! $oDia instanceof FilesystemAdapter) {
+            throw new LogicException('Ổ lưu trữ ảnh đại diện không hỗ trợ trả tệp.');
+        }
         $duongDan = 'anh-dai-dien/'.$tenAnh;
-        abort_unless(Storage::disk('public')->exists($duongDan), 404);
+        abort_unless($oDia->exists($duongDan), 404);
 
-        return Storage::disk('public')->response($duongDan, null, [
+        return $oDia->response($duongDan, null, [
             'X-Content-Type-Options' => 'nosniff',
             'Cache-Control' => 'public, max-age=86400',
         ]);

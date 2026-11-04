@@ -1,19 +1,15 @@
-import { MapPin, CalendarDays, PackageCheck } from 'lucide-react'
+import { Link } from 'react-router-dom'
 
 export default function ThongTinDoNhanLai({ item }) {
   return (
-    <aside className="claim-card claim-item">
-      <img src={item.imageUrl} alt={item.fullName || item.title} className="claim-photo" />
-      <div className="claim-item-content">
-        <span className="claim-badge">Nhặt được · {item.category}</span>
-        <h2>{item.fullName || item.title}</h2>
-        <p className="claim-muted">Mã tin: {item.referenceCode}</p>
-        <dl className="claim-details">
-          <div><MapPin size={18} /><dt>Địa điểm</dt><dd>{item.location} · {item.campus}</dd></div>
-          <div><CalendarDays size={18} /><dt>Ngày ghi nhận</dt><dd>{item.date.split('-').reverse().join('/')}</dd></div>
-          <div><PackageCheck size={18} /><dt>Nơi giữ đồ</dt><dd>{item.storageLocation || 'Liên hệ người đăng để xác nhận'}</dd></div>
-        </dl>
-        <p className="claim-description">{item.description}</p>
+    <aside className="overflow-hidden rounded-2xl border border-[#d6e4db] bg-white">
+      <img src={item.imageUrl} alt={item.title} className="aspect-[4/3] w-full bg-[#f5faf7] object-contain" />
+      <div className="space-y-3 p-5">
+        <p className="text-xs font-semibold text-emerald-800">Nhặt được · {item.category}</p>
+        <h2 className="break-words text-lg font-bold text-[#243c30]">{item.title}</h2>
+        <p className="text-xs text-[#718276]">{item.referenceCode}</p>
+        <p className="text-sm text-[#607568]">{item.date} · {item.locationDetail || item.location}</p>
+        <Link to={`/chi-tiet-tin-dang?id=${item.id}`} className="inline-block text-sm font-semibold text-emerald-800 underline">Xem tin đăng</Link>
       </div>
     </aside>
   )

@@ -2,6 +2,12 @@ export function chuanHoaTuKhoa(giaTri) {
   return giaTri.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[đĐ]/g, 'd').toLowerCase().trim().replace(/\s+/g, ' ')
 }
 
+export function locDanhSachDanhMuc(danhSach, { tuKhoa = '', trangThai = 'tat_ca' }) {
+  const tuKhoaChuan = chuanHoaTuKhoa(tuKhoa)
+  return danhSach.filter((muc) => chuanHoaTuKhoa(`${muc.tenDanhMuc} ${muc.moTa ?? ''}`).includes(tuKhoaChuan)
+    && (trangThai === 'tat_ca' || muc.dangHoatDong === (trangThai === 'hoat_dong')))
+}
+
 export function kiemTraDanhMuc(bieuMau, danhSach) {
   const loi = {}
   const ten = bieuMau.tenDanhMuc.trim().replace(/\s+/g, ' ')

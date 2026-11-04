@@ -13,6 +13,7 @@ class LoiKhaiTinDang extends Model
     protected $fillable = [
         'tin_dang_id',
         'cau_hoi_id',
+        'cau_hoi_phien_ban_id',
         'gia_tri_text',
         'gia_tri_so',
         'gia_tri_lua_chon',
@@ -33,6 +34,11 @@ class LoiKhaiTinDang extends Model
     public function cauHoi(): BelongsTo
     {
         return $this->belongsTo(CauHoi::class, 'cau_hoi_id');
+    }
+
+    public function phienBanCauHoi(): BelongsTo
+    {
+        return $this->belongsTo(LichSuCauHoi::class, 'cau_hoi_phien_ban_id');
     }
 
     public function traLoiYeuCau(): HasMany

@@ -1,9 +1,11 @@
 import { ArrowLeft } from 'lucide-react'
+import { useEffect } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import FormDangTin from '../../components/tin-dang/FormDangTin'
 import HuongDanDangTin from './HuongDanDangTin'
 
 export default function DangTin() {
+  useEffect(function veDauTrang() { window.scrollTo(0, 0) }, [])
   const [thamSo] = useSearchParams()
   const loaiTin = thamSo.get('loaiTin') === 'found' ? 'found' : 'lost'
 

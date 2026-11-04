@@ -1,32 +1,19 @@
-﻿import { useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
-import { ShieldCheck, CircleCheck } from 'lucide-react'
-import { MOCK_ITEMS } from '../../data/mockData'
+import { Link } from 'react-router-dom'
+import Button from '../../components/shared/Button'
 import ThongTinDoNhanLai from '../../components/danh-sach-do/ThongTinDoNhanLai'
 import FormYeuCauNhanDo from '../../components/danh-sach-do/FormYeuCauNhanDo'
-import './yeu-cau-nhan-do.css'
+import useGuiYeuCauNhanDo from './hooks/useGuiYeuCauNhanDo'
 
 export default function YeuCauNhanDo() {
-  const [params] = useSearchParams()
-  const itemId = params.get('id')
-  const item = itemId === null ? MOCK_ITEMS.find((entry) => entry.type === 'found') : MOCK_ITEMS.find((entry) => String(entry.id) === itemId && entry.type === 'found')
-
-  if (!item) return <section className="claim-card claim-empty"><h1>Không tìm thấy đồ vật phù hợp</h1><p>Vui lòng chọn một tin nhặt được để gửi yêu cầu nhận lại đồ.</p><Link to="/">Về trang chủ</Link></section>
-  return <NoiDungYeuCau key={item.id} item={item} />
-}
-
-function NoiDungYeuCau({ item }) {
-  const [submitted, setSubmitted] = useState(false)
+  const yeuCau = useGuiYeuCauNhanDo()
   return (
-    <div className="claim-page">
-      <Link to="/" className="claim-back">← Quay lại danh sách đồ thất lạc</Link>
-      <header className="claim-heading"><span className="claim-eyebrow"><ShieldCheck size={16} /> KẾT NỐI ĐÚNG CHỦ NHÂN</span><h1>Yêu cầu nhận lại đồ</h1><p>Chỉ một vài thông tin để đưa món đồ trở về với bạn.</p></header>
-      <ol className="claim-steps" aria-label="Quy trình nhận đồ"><li className="current"><span>1</span>Gửi yêu cầu</li><li><span>2</span>Chờ xác minh</li><li><span>3</span>Nhận lại đồ</li></ol>
-      <div className="claim-grid">
-        <ThongTinDoNhanLai item={item} />
-        {submitted ? <section className="claim-card claim-success" role="status"><CircleCheck size={52} /><h2>Đã hoàn tất bản xem thử</h2><p>Thông tin đã được kiểm tra trên giao diện. Yêu cầu chưa được lưu hoặc gửi vì chưa kết nối backend.</p><p>Khi hệ thống hoạt động, yêu cầu sẽ chuyển sang trạng thái <strong>Chờ xác minh</strong>.</p><button type="button" onClick={() => setSubmitted(false)}>Quay lại form</button><Link to="/">Về trang chủ</Link></section> : <FormYeuCauNhanDo onSubmit={() => setSubmitted(true)} />}
-      </div>
+    <div className="mx-auto max-w-5xl space-y-6">
+      <Link to="/danh-sach-do" className="text-sm font-semibold text-emerald-800 underline">Quay lại danh sách tin</Link>
+      <h1 className="text-3xl font-extrabold text-emerald-900">Yêu cầu nhận lại đồ</h1>
+      {yeuCau.dangTai ? <p role="status">Đang tải câu hỏi của tin đăng…</p> : yeuCau.loiTai ? <div role="alert" className="space-y-4 rounded-2xl bg-white p-6"><p>{yeuCau.loiTai}</p><Button onClick={yeuCau.taiLai}>Thử lại</Button></div> : yeuCau.tin && <div className="grid items-start gap-6 lg:grid-cols-[18rem_1fr]">
+        <ThongTinDoNhanLai item={yeuCau.tin} />
+        {yeuCau.daGui ? <section className="space-y-4 rounded-2xl bg-white p-6"><h2 className="text-lg font-bold">Bạn đã gửi yêu cầu</h2><p className="text-sm text-[#607568]">Yêu cầu đang chờ quản trị viên xác minh. Bạn có thể xem liên hệ tại trang tin.</p><Link to={`/chi-tiet-tin-dang?id=${yeuCau.tin.id}`} className="font-semibold text-emerald-800 underline">Xem tin và thông tin liên hệ</Link></section> : <FormYeuCauNhanDo {...yeuCau} />}
+      </div>}
     </div>
   )
 }
-

@@ -25,6 +25,8 @@ class TinDang extends Model
         'thoi_gian_xay_ra',
         'dia_diem_chi_tiet',
         'thong_tin_lien_he',
+        'email_lien_he',
+        'ma_gui',
         'trang_thai',
         'trang_thai_kiem_duyet',
         'ly_do_an',

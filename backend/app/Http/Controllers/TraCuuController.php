@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\DanhMucDoVat;
 use App\Models\DiaDiem;
 use App\Models\TinDang;
+use App\Services\DuLieuTinDang;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -24,7 +25,7 @@ class TraCuuController extends Controller
         ]);
     }
 
-    public function danhSach(Request $request): JsonResponse
+    public function danhSach(Request $request, DuLieuTinDang $duLieu): JsonResponse
     {
         $boLoc = $request->validate([
             'tuKhoa' => ['nullable', 'string', 'max:200'],
@@ -70,7 +71,7 @@ class TraCuuController extends Controller
         ])->orderByRaw('COALESCE(thoi_gian_xay_ra, created_at) '.$chieu)->orderBy('id', $chieu)->forPage($trang, 6)->get();
 
         return response()->json([
-            'data' => $cacTin->map(fn ($tin) => $this->duLieuCongKhai($tin)),
+            'data' => $cacTin->map(fn ($tin) => $duLieu->congKhai($tin)),
             'meta' => [
                 'trangHienTai' => $trang, 'tongTrang' => $tongTrang, 'tongTin' => $tongTin,
                 'tuViTri' => $tongTin ? ($trang - 1) * 6 + 1 : 0,
@@ -115,25 +116,14 @@ class TraCuuController extends Controller
         return "({$noiChuoi}) LIKE ?";
     }
 
-    private function duLieuCongKhai(TinDang $tin): array
+    public function chiTiet(string $tin, DuLieuTinDang $duLieu): JsonResponse
     {
-        $laNhatDuoc = $tin->loai_tin === 'nhat_duoc';
-        $trangThai = ['dang_mo' => 'Đang mở', 'cho_ban_giao' => 'Chờ bàn giao', 'da_hoan_tat' => 'Đã hoàn tất', 'da_dong' => 'Đã đóng'];
+        $banTin = TinDang::where('trang_thai_kiem_duyet', 'hien_thi')->with([
+            'danhMuc:id,ten_danh_muc', 'diaDiem:id,ten_dia_diem', 'nguoiDung:id,ho_ten',
+            'hinhAnh' => fn ($anh) => $anh->where('pham_vi', 'cong_khai')->orderBy('thu_tu')->orderBy('id'),
+            'loiKhai.phienBanCauHoi',
+        ])->findOrFail($tin);
 
-        return [
-            'id' => $tin->id, 'title' => $tin->tieu_de, 'description' => $tin->mo_ta,
-            'referenceCode' => 'TIN-'.str_pad((string) $tin->id, 6, '0', STR_PAD_LEFT),
-            'type' => $laNhatDuoc ? 'found' : 'lost', 'typeName' => $laNhatDuoc ? 'Nhặt được' : 'Báo mất',
-            'categoryId' => (string) $tin->danh_muc_id, 'category' => $tin->danhMuc?->ten_danh_muc ?? 'Chưa phân loại',
-            'locationId' => $tin->dia_diem_id ? (string) $tin->dia_diem_id : '',
-            'location' => $tin->diaDiem?->ten_dia_diem ?? 'Chưa rõ địa điểm',
-            'locationDetail' => $tin->dia_diem_chi_tiet,
-            'date' => ($tin->thoi_gian_xay_ra ?? $tin->created_at)?->format('Y-m-d'),
-            'imageUrl' => $tin->hinhAnh->first()?->duong_dan ?? '/do-vat-trong.svg',
-            'statusBadge' => $trangThai[$tin->trang_thai] ?? 'Đang mở',
-            'statusType' => $tin->trang_thai === 'dang_mo' ? ($laNhatDuoc ? 'safe' : 'urgent') : 'secure',
-            'contactPerson' => $tin->nguoiDung?->ho_ten ?? 'Người đăng',
-            'contactPhone' => $tin->thong_tin_lien_he ?: 'Chưa công khai thông tin liên hệ',
-        ];
+        return response()->json(['data' => $duLieu->congKhai($banTin, true)])->header('Cache-Control', 'no-store');
     }
 }
