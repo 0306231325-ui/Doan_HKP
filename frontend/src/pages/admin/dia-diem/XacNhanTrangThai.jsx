@@ -1,7 +1,7 @@
 import { Power, RotateCcw } from 'lucide-react'
 import HopThoai from '../../../components/shared/HopThoai'
 
-export default function XacNhanTrangThai({ diaDiemDoiTrangThai, loiLuu, dongDoiTrangThai, xacNhanDoiTrangThai }) {
+export default function XacNhanTrangThai({ diaDiemDoiTrangThai, loiLuu, dangLuu, dongDoiTrangThai, xacNhanDoiTrangThai }) {
   const dangHoatDong = diaDiemDoiTrangThai.dangHoatDong
   const BieuTuong = dangHoatDong ? Power : RotateCcw
 
@@ -20,8 +20,8 @@ export default function XacNhanTrangThai({ diaDiemDoiTrangThai, loiLuu, dongDoiT
         {loiLuu && <p role="alert" className="mt-4 rounded-xl bg-red-50 px-3 py-2 text-sm leading-6 text-red-700">{loiLuu}</p>}
       </div>
       <div className="flex justify-end gap-3 border-t border-[#e1eae4] bg-[#f9fbfa] px-5 py-4 sm:px-6">
-        <button type="button" onClick={dongDoiTrangThai} className="rounded-xl border border-[#ceded3] bg-white px-5 py-2.5 text-sm font-semibold text-[#526c5b] hover:bg-[#f0f6f2] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700">Hủy</button>
-        <button type="button" onClick={xacNhanDoiTrangThai} className={`rounded-xl px-5 py-2.5 text-sm font-semibold text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 ${dangHoatDong ? 'bg-amber-700 hover:bg-amber-800' : 'bg-emerald-900 hover:bg-emerald-800'}`}>{dangHoatDong ? 'Ngừng sử dụng' : 'Mở lại địa điểm'}</button>
+        <button disabled={dangLuu} type="button" onClick={dongDoiTrangThai} className="rounded-xl border border-[#ceded3] bg-white px-5 py-2.5 text-sm font-semibold text-[#526c5b] hover:bg-[#f0f6f2] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700">Hủy</button>
+        <button disabled={dangLuu} type="button" onClick={xacNhanDoiTrangThai} className={`rounded-xl px-5 py-2.5 text-sm font-semibold text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 ${dangHoatDong ? 'bg-amber-700 hover:bg-amber-800' : 'bg-emerald-900 hover:bg-emerald-800'}`}>{dangHoatDong ? 'Ngừng sử dụng' : 'Mở lại địa điểm'}</button>
       </div>
     </HopThoai>
   )

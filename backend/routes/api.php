@@ -2,8 +2,9 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CauHoiController;
-use App\Http\Controllers\DanhMucController;
 use App\Http\Controllers\DangTinController;
+use App\Http\Controllers\DanhMucController;
+use App\Http\Controllers\DiaDiemController;
 use App\Http\Controllers\QuanLyTinDangController;
 use App\Http\Controllers\ThongTinCaNhanController;
 use App\Http\Controllers\TraCuuController;
@@ -39,6 +40,10 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::put('/admin/cau-hoi/{id}', [CauHoiController::class, 'sua'])->whereNumber('id')->middleware('throttle:30,1');
         Route::patch('/admin/cau-hoi/{id}/trang-thai', [CauHoiController::class, 'doiTrangThai'])->whereNumber('id')->middleware('throttle:30,1');
         Route::delete('/admin/cau-hoi/{id}', [CauHoiController::class, 'xoa'])->whereNumber('id')->middleware('throttle:30,1');
+        Route::get('/admin/dia-diem', [DiaDiemController::class, 'danhSach']);
+        Route::post('/admin/dia-diem', [DiaDiemController::class, 'them'])->middleware('throttle:30,1');
+        Route::patch('/admin/dia-diem/{id}', [DiaDiemController::class, 'sua'])->whereNumber('id')->middleware('throttle:30,1');
+        Route::patch('/admin/dia-diem/{id}/trang-thai', [DiaDiemController::class, 'doiTrangThai'])->whereNumber('id')->middleware('throttle:30,1');
         Route::get('/admin/danh-muc', [DanhMucController::class, 'danhSach']);
         Route::post('/admin/danh-muc', [DanhMucController::class, 'them'])->middleware('throttle:30,1');
         Route::patch('/admin/danh-muc/{id}/trang-thai', [DanhMucController::class, 'doiTrangThai'])->whereNumber('id')->middleware('throttle:30,1');

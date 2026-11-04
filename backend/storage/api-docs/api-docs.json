@@ -12,6 +12,231 @@
         }
     ],
     "paths": {
+        "/api/admin/dia-diem": {
+            "get": {
+                "tags": [
+                    "Địa điểm"
+                ],
+                "summary": "Danh sách địa điểm DB cho quản trị",
+                "operationId": "5ede844085bb81409d19c04c43f38b77",
+                "responses": {
+                    "200": {
+                        "description": "data gồm id dạng chuỗi, tenDiaDiem, moTa, dangHoatDong; gồm cả ngừng sử dụng. Frontend dùng tìm/lọc và phân trang chung 8 mục/trang."
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Không phải quản trị hoạt động"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Địa điểm"
+                ],
+                "summary": "Thêm địa điểm vào DB",
+                "operationId": "6d269fda28283af39d7e97e015aa0c2e",
+                "parameters": [
+                    {
+                        "name": "X-XSRF-TOKEN",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "tenDiaDiem",
+                                    "dangHoatDong"
+                                ],
+                                "properties": {
+                                    "tenDiaDiem": {
+                                        "type": "string",
+                                        "maxLength": 150
+                                    },
+                                    "moTa": {
+                                        "type": "string",
+                                        "nullable": true,
+                                        "maxLength": 500
+                                    },
+                                    "dangHoatDong": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "data là địa điểm đã lưu; đồng bộ lựa chọn Tra cứu/Đăng tin khi đang hoạt động"
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Không phải quản trị hoạt động"
+                    },
+                    "422": {
+                        "description": "Tên trống/quá dài/trùng kể cả ngừng sử dụng, mô tả quá dài hoặc trạng thái sai"
+                    },
+                    "429": {
+                        "description": "Tối đa 30 lần/phút"
+                    }
+                }
+            }
+        },
+        "/api/admin/dia-diem/{id}": {
+            "patch": {
+                "tags": [
+                    "Địa điểm"
+                ],
+                "summary": "Sửa địa điểm DB",
+                "operationId": "ea62466e25a46465f2512952f18a3f22",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "X-XSRF-TOKEN",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "tenDiaDiem",
+                                    "dangHoatDong"
+                                ],
+                                "properties": {
+                                    "tenDiaDiem": {
+                                        "type": "string",
+                                        "maxLength": 150
+                                    },
+                                    "moTa": {
+                                        "type": "string",
+                                        "nullable": true,
+                                        "maxLength": 500
+                                    },
+                                    "dangHoatDong": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "data là địa điểm sau sửa; giữ ID và các liên kết tin cũ"
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Không phải quản trị hoạt động"
+                    },
+                    "404": {
+                        "description": "Không có địa điểm"
+                    },
+                    "422": {
+                        "description": "Dữ liệu không hợp lệ hoặc tên trùng"
+                    }
+                }
+            }
+        },
+        "/api/admin/dia-diem/{id}/trang-thai": {
+            "patch": {
+                "tags": [
+                    "Địa điểm"
+                ],
+                "summary": "Ẩn/mở địa điểm DB",
+                "operationId": "d998951b869c449d011aeea8620cf090",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "X-XSRF-TOKEN",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "dangHoatDong",
+                                    "trangThaiHienTai"
+                                ],
+                                "properties": {
+                                    "dangHoatDong": {
+                                        "type": "boolean"
+                                    },
+                                    "trangThaiHienTai": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "data đã đổi trạng thái trong transaction/khóa hàng, gửi lặp tới cùng trạng thái thành công; địa điểm ẩn không còn ở bộ lọc nhưng giữ liên kết tin cũ"
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Không phải quản trị hoạt động"
+                    },
+                    "404": {
+                        "description": "Không có địa điểm"
+                    },
+                    "409": {
+                        "description": "Trạng thái hiện tại đã đổi, cần tải lại danh sách"
+                    },
+                    "422": {
+                        "description": "Trạng thái không hợp lệ"
+                    }
+                }
+            }
+        },
         "/api/dang-tin/cau-hoi": {
             "get": {
                 "tags": [
@@ -1591,6 +1816,10 @@
         }
     },
     "tags": [
+        {
+            "name": "Địa điểm",
+            "description": "Địa điểm"
+        },
         {
             "name": "Đăng tin",
             "description": "Đăng tin"

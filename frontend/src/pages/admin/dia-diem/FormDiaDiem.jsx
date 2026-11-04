@@ -1,10 +1,10 @@
 import HopThoai from '../../../components/shared/HopThoai'
 
-export default function FormDiaDiem({ bieuMau, loiBieuMau, loiLuu, dongBieuMau, thayDoiBieuMau, luuDiaDiem }) {
+export default function FormDiaDiem({ bieuMau, loiBieuMau, loiLuu, dangLuu, dongBieuMau, thayDoiBieuMau, luuDiaDiem }) {
   return (
     <HopThoai tieuDe={bieuMau.id ? 'Chỉnh sửa địa điểm' : 'Thêm địa điểm'} moTa="Đặt tên rõ ràng để sinh viên dễ chọn đúng khu vực trong trường." khiDong={dongBieuMau}>
       <form onSubmit={luuDiaDiem} noValidate>
-        <div className="space-y-5 px-5 py-5 sm:px-6">
+        <fieldset disabled={dangLuu} className="space-y-5 px-5 py-5 sm:px-6">
           <div>
             <label htmlFor="ten-dia-diem" className="mb-2 block text-sm font-semibold text-[#243c30]">Tên địa điểm <span className="text-red-600">*</span></label>
             <input id="ten-dia-diem" name="tenDiaDiem" value={bieuMau.tenDiaDiem} onChange={thayDoiBieuMau} maxLength={150} required aria-invalid={Boolean(loiBieuMau.tenDiaDiem)} aria-describedby={loiBieuMau.tenDiaDiem ? 'loi-ten-dia-diem' : undefined} placeholder="Ví dụ: Thư viện trung tâm" className={`w-full rounded-xl border bg-white px-3.5 py-3 text-sm text-[#243c30] outline-none placeholder:text-[#9aaa9f] focus-visible:ring-2 focus-visible:ring-emerald-700 ${loiBieuMau.tenDiaDiem ? 'border-red-500' : 'border-[#ceded3]'}`} />
@@ -23,10 +23,10 @@ export default function FormDiaDiem({ bieuMau, loiBieuMau, loiLuu, dongBieuMau, 
             </select>
           </div>
           {loiLuu && <p role="alert" className="rounded-xl bg-red-50 px-3 py-2 text-sm leading-6 text-red-700">{loiLuu}</p>}
-        </div>
+        </fieldset>
         <div className="flex justify-end gap-3 border-t border-[#e1eae4] bg-[#f9fbfa] px-5 py-4 sm:px-6">
-          <button type="button" onClick={dongBieuMau} className="rounded-xl border border-[#ceded3] bg-white px-5 py-2.5 text-sm font-semibold text-[#526c5b] hover:bg-[#f0f6f2] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700">Hủy</button>
-          <button type="submit" className="rounded-xl bg-emerald-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700">{bieuMau.id ? 'Lưu thay đổi' : 'Thêm địa điểm'}</button>
+          <button disabled={dangLuu} type="button" onClick={dongBieuMau} className="rounded-xl border border-[#ceded3] bg-white px-5 py-2.5 text-sm font-semibold text-[#526c5b] hover:bg-[#f0f6f2] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700">Hủy</button>
+          <button disabled={dangLuu} type="submit" className="rounded-xl bg-emerald-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700">{bieuMau.id ? 'Lưu thay đổi' : 'Thêm địa điểm'}</button>
         </div>
       </form>
     </HopThoai>
