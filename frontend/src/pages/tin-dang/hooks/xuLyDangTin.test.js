@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { kiemTraAnhDangTin, kiemTraTinDang, taoDuLieuGui } from './xuLyDangTin.js'
+import { chonAnhDangTin, kiemTraTinDang, taoDuLieuGui } from './xuLyDangTin.js'
 
 const danhMuc = [{ id: '2' }]
 const cauHoi = [{ id: '8', phienBanId: '12', danhMucId: '2', dangHoatDong: true, nhanDangTin: 'Dấu hiệu?', kieuNhap: 'van_ban' }]
@@ -26,9 +26,13 @@ test('Multipart giữ ID phiên bản, số 0 và đúng mã gửi khi thử l�
   assert.equal(data.get('cauTraLoi[0][giaTri]'), '0')
 })
 
-test('Giới hạn tổng số ảnh và dung lượng từng ảnh', () => {
-  assert.equal(kiemTraAnhDangTin([{ type: 'image/jpeg', size: 1024 }], 4), '')
-  assert.match(kiemTraAnhDangTin([{ type: 'image/jpeg', size: 1024 }], 5), /5 ảnh/)
-  assert.match(kiemTraAnhDangTin([{ type: 'image/jpeg', size: 6 * 1024 * 1024 }], 0), /5 MB/)
-  assert.match(kiemTraAnhDangTin([{ type: 'image/svg+xml', size: 1024 }], 0), /JPG/)
+test('Còn một chỗ thì lấy ảnh đầu và bỏ qua các tệp dư', () => {
+  const dau = { type: 'image/jpeg', size: 1024, name: 'dau.jpg' }
+  const sau = { type: 'image/png', size: 1024, name: 'sau.png' }
+  const quaLon = { type: 'image/jpeg', size: 6 * 1024 * 1024 }
+  assert.deepEqual(chonAnhDangTin([dau, sau], 2), { anhSeThem: [dau], loi: '' })
+  assert.deepEqual(chonAnhDangTin([dau, quaLon], 2), { anhSeThem: [dau], loi: '' })
+  assert.match(chonAnhDangTin([dau], 3).loi, /3 ảnh/)
+  assert.match(chonAnhDangTin([quaLon], 0).loi, /5 MB/)
+  assert.match(chonAnhDangTin([{ type: 'image/svg+xml', size: 1024 }], 0).loi, /JPG/)
 })

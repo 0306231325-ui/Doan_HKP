@@ -8,7 +8,7 @@ class ServeWithUploads extends ServeCommand
 {
     protected $name = 'serve:uploads';
 
-    protected $description = 'Chạy máy chủ local hỗ trợ 5 ảnh, tối đa 5 MB mỗi ảnh';
+    protected $description = 'Chạy máy chủ local hỗ trợ tải ảnh tối đa 5 MB mỗi ảnh';
 
     protected function serverCommand(): array
     {

@@ -16,7 +16,7 @@ class CauHoiController extends Controller
 {
     public function danhSach(): JsonResponse
     {
-        return response()->json(['data' => CauHoi::with('lichSu')->withExists('loiKhaiTinDang')->orderBy('id')->get()->map(fn ($cau) => $this->duLieu($cau))]);
+        return response()->json(['data' => CauHoi::whereNotNull('danh_muc_id')->with('lichSu')->withExists('loiKhaiTinDang')->orderBy('id')->get()->map(fn ($cau) => $this->duLieu($cau))]);
     }
 
     public function them(Request $request): JsonResponse
@@ -36,7 +36,7 @@ class CauHoiController extends Controller
 
         return DB::transaction(function () use ($mau, $id, $phienBan) {
             $danhMuc = DanhMucDoVat::orderBy('id')->lockForUpdate()->get();
-            $danhSach = CauHoi::orderBy('id')->lockForUpdate()->get();
+            $danhSach = CauHoi::whereNotNull('danh_muc_id')->orderBy('id')->lockForUpdate()->get();
             $cu = $id === null ? null : $danhSach->firstWhere('id', $id);
             abort_if($id !== null && ! $cu, 404, 'Không tìm thấy câu hỏi.');
             if ($cu) {
@@ -67,9 +67,9 @@ class CauHoiController extends Controller
 
         return DB::transaction(function () use ($id, $mau) {
             $danhMuc = DanhMucDoVat::orderBy('id')->lockForUpdate()->get();
-            $cau = CauHoi::lockForUpdate()->findOrFail($id);
+            $cau = CauHoi::whereNotNull('danh_muc_id')->lockForUpdate()->findOrFail($id);
             $this->kiemTraBanMoiNhat($cau, (int) $mau['phienBan']);
-            if ($mau['dangHoatDong'] && $cau->danh_muc_id !== null) {
+            if ($mau['dangHoatDong']) {
                 abort_unless($danhMuc->firstWhere('id', $cau->danh_muc_id)?->trang_thai, 409, 'Mở lại danh mục trước khi mở câu hỏi.');
             }
             if ($cau->trang_thai !== (bool) $mau['dangHoatDong']) {
@@ -86,7 +86,7 @@ class CauHoiController extends Controller
         $phienBan = $request->validate(['phienBan' => ['required', 'integer', 'min:1']])['phienBan'];
         try {
             return DB::transaction(function () use ($id, $phienBan) {
-                $cau = CauHoi::lockForUpdate()->findOrFail($id);
+                $cau = CauHoi::whereNotNull('danh_muc_id')->lockForUpdate()->findOrFail($id);
                 $this->kiemTraBanMoiNhat($cau, (int) $phienBan);
                 abort_if((int) $phienBan > 1 || $cau->loiKhaiTinDang()->exists(), 409, 'Câu hỏi có lịch sử hoặc đã có câu trả lời. Hãy dùng Ẩn để giữ dữ liệu.');
                 $cau->lichSu()->delete();
@@ -109,16 +109,13 @@ class CauHoiController extends Controller
 
     private function kiemTraTrung(array $mau, Collection $danhSach): void
     {
-        if ($danhSach->contains(fn ($cu) => ($cu['danhMucId'] === null || $mau['danhMucId'] === null || (string) $cu['danhMucId'] === (string) $mau['danhMucId']) && $this->chuanHoaTen($cu['nhanDangTin']) === $this->chuanHoaTen($mau['nhanDangTin']))) {
-            throw ValidationException::withMessages(['nhanDangTin' => 'Câu hỏi đã tồn tại trong phạm vi này, kể cả câu hỏi ngừng sử dụng.']);
+        if ($danhSach->contains(fn ($cu) => (string) $cu['danhMucId'] === (string) $mau['danhMucId'] && $this->chuanHoaTen($cu['nhanDangTin']) === $this->chuanHoaTen($mau['nhanDangTin']))) {
+            throw ValidationException::withMessages(['nhanDangTin' => 'Câu hỏi đã tồn tại trong danh mục này, kể cả câu hỏi ngừng sử dụng.']);
         }
     }
 
     private function kiemTraPhamVi(array $mau, Collection $danhMuc, ?CauHoi $cu): void
     {
-        if ($mau['danhMucId'] === null) {
-            return;
-        }
         $muc = $danhMuc->firstWhere('id', $mau['danhMucId']);
         if (! $muc || (! $muc->trang_thai && (string) $cu?->danh_muc_id !== (string) $mau['danhMucId'])) {
             throw ValidationException::withMessages(['danhMucId' => 'Vui lòng chọn danh mục đang hoạt động.']);
@@ -128,7 +125,7 @@ class CauHoiController extends Controller
     private function kiemTraDuLieu(Request $request): array
     {
         $quyTac = [
-            'danhMucId' => ['present', 'nullable', 'integer', 'min:1'],
+            'danhMucId' => ['required', 'integer', 'min:1'],
             'nhanDangTin' => ['required', 'string', 'max:250'],
             'kieuNhap' => ['required', 'in:van_ban,so'],
             'thuTu' => ['required', 'integer', 'min:1', 'max:999'],
@@ -166,7 +163,7 @@ class CauHoiController extends Controller
 
         return [
             'id' => (string) $cau->id, 'phienBan' => (int) $cau->lichSu->max('phien_ban'),
-            'danhMucId' => $cau->danh_muc_id === null ? null : (string) $cau->danh_muc_id,
+            'danhMucId' => (string) $cau->danh_muc_id,
             'nhanDangTin' => $cau->noi_dung, 'kieuNhap' => $cau->kieu_nhap,
             'thuTu' => $cau->thu_tu, 'dangHoatDong' => $cau->trang_thai, 'lichSu' => $lichSu,
             'coCauTraLoi' => (bool) ($cau->loi_khai_tin_dang_exists ?? $cau->loiKhaiTinDang()->exists()),

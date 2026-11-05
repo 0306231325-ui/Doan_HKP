@@ -86,7 +86,9 @@ class YeuCauNhanDoController extends Controller
 
     private function cacLoiKhai(TinDang $tin): Collection
     {
-        return $tin->loiKhai()->with('phienBanCauHoi')->orderBy('id')->get()->filter(fn ($loi) => $loi->phienBanCauHoi && isset($loi->phienBanCauHoi->du_lieu['danh_muc_id']));
+        return $tin->loiKhai()->with('phienBanCauHoi')->get()
+            ->filter(fn ($loi) => $loi->phienBanCauHoi && isset($loi->phienBanCauHoi->du_lieu['danh_muc_id']))
+            ->sortBy(fn ($loi) => [(int) $loi->phienBanCauHoi->du_lieu['thu_tu'], $loi->cau_hoi_id]);
     }
 
     private function daGui(TinDang $tin, Request $request): bool

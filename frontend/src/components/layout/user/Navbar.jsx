@@ -77,13 +77,13 @@ export default function Navbar({ adminView = false }) {
           <div className="flex items-center gap-1.5 sm:gap-3">
             {user && <ThongBao />}
             {!adminView && <Link
-              to="/dang-tin?loaiTin=lost"
+              to="/dang-tin"
               onClick={dongMenuDiDong}
               className="inline-flex items-center gap-2 px-2.5 sm:px-5 py-2.5 rounded-xl text-base font-bold bg-[#86efac] text-emerald-950 hover:bg-[#6ee7a0] active:scale-95 transition-all shadow-sm cursor-pointer"
-              aria-label="Báo mất đồ"
+              aria-label="Thêm tin"
             >
               <Plus className="w-5 h-5 stroke-[2.5]" />
-              <span className="hidden sm:inline">Báo mất đồ</span>
+              <span className="hidden sm:inline">Thêm tin</span>
             </Link>}
 
             {user ? <AccountDropdown /> : <Link

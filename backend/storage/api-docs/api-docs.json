@@ -257,7 +257,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "data gồm id, phienBanId, danhMucId, nhanDangTin, kieuNhap, thuTu, dangHoatDong. Chỉ câu đang dùng: chung optional/công khai, riêng bắt buộc/giữ kín; không trả lịch sử hoặc đáp án."
+                        "description": "data gồm id, phienBanId, danhMucId, nhanDangTin, kieuNhap, thuTu, dangHoatDong. Chỉ câu đang dùng của danh mục đã chọn; bắt buộc trả lời và giữ kín. Không trả lịch sử hoặc đáp án."
                     },
                     "401": {
                         "description": "Chưa đăng nhập"
@@ -352,18 +352,18 @@
                                         "maxLength": 254
                                     },
                                     "cauTraLoi": {
-                                        "description": "Chuỗi JSON hoặc các trường cauTraLoi[0][id], cauTraLoi[0][phienBanId], cauTraLoi[0][giaTri]. Gửi toàn bộ câu từ API biểu mẫu, câu chung bỏ trống vẫn gửi giaTri rỗng. Kiểu Số giới hạn 14 chữ số nguyên/4 thập phân.",
+                                        "description": "Chuỗi JSON hoặc các trường cauTraLoi[0][id], cauTraLoi[0][phienBanId], cauTraLoi[0][giaTri]. Trả lời đầy đủ các câu của danh mục từ API biểu mẫu. Kiểu Số giới hạn 14 chữ số nguyên/4 thập phân.",
                                         "type": "string",
                                         "example": "[{\"id\":1,\"phienBanId\":1,\"giaTri\":\"Đen\"}]"
                                     },
                                     "anh[]": {
-                                        "description": "Tối đa 5 ảnh JPG/PNG/WebP, 5 MB/ảnh, kích thước tối đa 8192 mỗi chiều",
+                                        "description": "Tối đa 3 ảnh JPG/PNG/WebP, 5 MB/ảnh, kích thước tối đa 8192 mỗi chiều",
                                         "type": "array",
                                         "items": {
                                             "type": "string",
                                             "format": "binary"
                                         },
-                                        "maxItems": 5
+                                        "maxItems": 3
                                     }
                                 },
                                 "type": "object"
@@ -388,7 +388,7 @@
                         "description": "Câu hỏi/danh mục đã đổi, hoặc mã gửi đã dùng bởi tài khoản khác"
                     },
                     "422": {
-                        "description": "Sai dữ liệu, thiếu câu riêng, danh mục chưa có câu hỏi, đáp án số vượt giới hạn, ảnh không hợp lệ"
+                        "description": "Sai dữ liệu, thiếu câu theo danh mục, danh mục chưa có câu hỏi, đáp án số vượt giới hạn, ảnh không hợp lệ"
                     },
                     "429": {
                         "description": "Tối đa 10 lần/phút"
@@ -401,7 +401,7 @@
                 "tags": [
                     "Tra cứu"
                 ],
-                "summary": "Chi tiết tin công khai, ảnh và câu trả lời chung",
+                "summary": "Chi tiết tin công khai và ảnh",
                 "operationId": "6e80c2f6b3c4246252111e0c156acbba",
                 "parameters": [
                     {
@@ -416,7 +416,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "data gồm DTO card, images và publicAnswers. Điện thoại/email chỉ là ****, không chứa đáp án riêng. Phạm vi công khai dựa snapshot của lời khai gốc."
+                        "description": "data gồm DTO card và images. Điện thoại/email chỉ là ****; không có câu trả lời nhận diện."
                     },
                     "404": {
                         "description": "Không có tin, đã ẩn hoặc xóa mềm"
@@ -759,11 +759,11 @@
                 "tags": [
                     "Câu hỏi"
                 ],
-                "summary": "Câu hỏi chung, riêng và lịch sử từ DB",
+                "summary": "Câu hỏi theo danh mục và lịch sử từ DB",
                 "operationId": "c788de789a25e58928f98d189d5614d0",
                 "responses": {
                     "200": {
-                        "description": "data gồm một dòng hiện hành mỗi câu: id ổn định, phienBan mới nhất tính từ lich_su_cau_hoi, danhMucId, nhanDangTin, kieuNhap, thuTu, dangHoatDong, coCauTraLoi và mảng lichSu. Câu hỏi có hai kiểu trả lời van_ban/so, lịch sử thiếu kiểu dùng van_ban. Dùng cả hai loại tin, không nhận cấu hình từ client. Câu chung công khai và không bắt buộc; câu theo danh mục giữ kín, bắt buộc lúc đăng/nhận lại, dùng lại phiên bản gắn với bài đăng. Frontend chia 8 câu/trang."
+                        "description": "data gồm một dòng hiện hành mỗi câu: id ổn định, phienBan mới nhất tính từ lich_su_cau_hoi, danhMucId, nhanDangTin, kieuNhap, thuTu, dangHoatDong, coCauTraLoi và mảng lichSu. Câu hỏi có hai kiểu trả lời van_ban/so, lịch sử thiếu kiểu dùng van_ban. Dùng cả hai loại tin, không nhận cấu hình từ client. Chỉ trả câu hỏi có danh mục. Đáp án giữ kín, bắt buộc lúc đăng/nhận lại; form nhận lại dùng phiên bản gắn với tin nhặt được. Frontend chia 8 câu/trang."
                     },
                     "401": {
                         "description": "Chưa đăng nhập"
@@ -801,7 +801,7 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "data là câu đã lưu, daThayDoi=true; ID/phiên bản/trạng thái tạo mới do server cấp. Câu chung luôn dùng cả hai loại tin và không bắt buộc."
+                        "description": "data là câu đã lưu, daThayDoi=true; ID/phiên bản/trạng thái tạo mới do server cấp. Danh mục là bắt buộc."
                     },
                     "401": {
                         "description": "Chưa đăng nhập"
@@ -810,7 +810,7 @@
                         "description": "Không phải quản trị hoạt động"
                     },
                     "422": {
-                        "description": "Dữ liệu/cấu hình/danh mục không hợp lệ hoặc câu hỏi trùng trong phạm vi giao nhau"
+                        "description": "Dữ liệu/cấu hình/danh mục không hợp lệ hoặc câu hỏi trùng trong cùng danh mục"
                     },
                     "429": {
                         "description": "Tối đa 30 lần/phút"
@@ -1785,9 +1785,8 @@
                 ],
                 "properties": {
                     "danhMucId": {
-                        "description": "NULL là câu chung; ID danh mục cho câu riêng",
+                        "description": "ID danh mục bắt buộc cho câu hỏi",
                         "type": "integer",
-                        "nullable": true,
                         "minimum": 1
                     },
                     "nhanDangTin": {

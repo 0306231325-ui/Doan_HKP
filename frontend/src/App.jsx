@@ -36,7 +36,7 @@ export default function App() {
             <Route path="gioi-thieu" element={<GioiThieu />} />
             <Route element={<RequireAuth />}>
               <Route path="yeu-cau-nhan-do" element={<YeuCauNhanDo />} />
-              <Route path="dang-tin" element={<DangTin />} />
+              <Route path="dang-tin/noi-dung?" element={<DangTin />} />
               <Route path="trang-ca-nhan" element={<TrangCaNhan />} />
             </Route>
           </Route>

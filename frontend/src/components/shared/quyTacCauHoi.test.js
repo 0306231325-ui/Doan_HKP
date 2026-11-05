@@ -9,12 +9,9 @@ test('Câu kiểu Số chấp nhận số hợp lệ, chặn chữ và giá tr�
   for (const giaTri of ['abc', '12a', 'Infinity', 'NaN', '0x10', '1,2', '1e999', '--2']) assert.match(kiemTraCauTraLoi(cauSo, giaTri), /số hợp lệ/)
 })
 
-test('Bắt buộc theo nhóm câu hỏi, số 0 không bị coi là bỏ trống', () => {
+test('Bắt buộc trả lời, số 0 không bị coi là bỏ trống', () => {
   assert.match(kiemTraCauTraLoi(cauSo, ''), /Vui lòng trả lời/)
   assert.equal(kiemTraCauTraLoi(cauSo, '0'), '')
-  const chung = { ...cauSo, danhMucId: null }
-  assert.equal(kiemTraCauTraLoi(chung, ''), '')
-  assert.match(kiemTraCauTraLoi(chung, 'không'), /số hợp lệ/)
 })
 
 test('Văn bản giữ nguyên chữ và số, giới hạn độ dài câu trả lời', () => {

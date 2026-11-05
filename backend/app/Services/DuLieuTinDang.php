@@ -26,8 +26,6 @@ class DuLieuTinDang
         ];
         if ($chiTiet) {
             $duLieu['images'] = $tin->hinhAnh->pluck('duong_dan')->values();
-            $duLieu['publicAnswers'] = $tin->loiKhai->filter(fn ($loi) => $loi->phienBanCauHoi && array_key_exists('danh_muc_id', $loi->phienBanCauHoi->du_lieu) && $loi->phienBanCauHoi->du_lieu['danh_muc_id'] === null)
-                ->map(fn ($loi) => ['id' => (string) $loi->id, 'question' => $loi->phienBanCauHoi->du_lieu['noi_dung'], 'answer' => $loi->gia_tri_text ?? $loi->gia_tri_so ?? $loi->gia_tri_lua_chon])->values();
         }
 
         return $duLieu;

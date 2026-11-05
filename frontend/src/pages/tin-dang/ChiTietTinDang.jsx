@@ -43,7 +43,6 @@ export default function ChiTietTinDang() {
 
           <KhungThongTin tieuDe="Thông tin đồ vật" bieuTuong={ClipboardList}>
             <p className="whitespace-pre-line text-sm leading-7 text-[#607568]">{tin.description || 'Chưa có mô tả đồ vật.'}</p>
-            {tin.publicAnswers?.length > 0 && <dl className="mt-5 space-y-4">{tin.publicAnswers.map((muc) => <div key={muc.id}><dt className="text-sm font-semibold text-[#315a43]">{muc.question}</dt><dd className="mt-1 whitespace-pre-wrap break-words text-sm text-[#607568]">{muc.answer}</dd></div>)}</dl>}
           </KhungThongTin>
 
           <KhungThongTin tieuDe="Thời gian và địa điểm" bieuTuong={MapPin}>

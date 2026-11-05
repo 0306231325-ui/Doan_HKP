@@ -25,7 +25,7 @@ class DangTinController extends Controller
     {
         $mau = $request->validate(['danhMucId' => ['required', 'integer', Rule::exists('danh_muc_do_vat', 'id')->where('trang_thai', true)]]);
         $cacCau = CauHoi::with('lichSu')->where('trang_thai', true)
-            ->where(fn ($q) => $q->whereNull('danh_muc_id')->orWhere('danh_muc_id', $mau['danhMucId']))
+            ->where('danh_muc_id', $mau['danhMucId'])
             ->orderBy('thu_tu')->orderBy('id')->get();
 
         return response()->json(['data' => $cacCau->map(function ($cau) use ($traLoi) {
@@ -54,20 +54,20 @@ class DangTinController extends Controller
             'cauTraLoi.*.id' => ['required', 'integer', 'distinct', 'min:1'],
             'cauTraLoi.*.phienBanId' => ['required', 'integer', 'min:1'],
             'cauTraLoi.*.giaTri' => ['present', 'nullable'],
-            'anh' => ['nullable', 'array', 'max:5'],
+            'anh' => ['nullable', 'array', 'max:3'],
             'anh.*' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120', 'dimensions:max_width=8192,max_height=8192'],
         ], [
             'required' => 'Vui lòng điền :attribute.', 'required_without' => 'Nhập ít nhất số điện thoại hoặc email liên hệ.',
             'ngayXayRa.before_or_equal' => 'Ngày xảy ra không được ở tương lai.',
             'soDienThoai.regex' => 'Số điện thoại không hợp lệ.', 'email.email' => 'Email không đúng định dạng.',
-            'anh.max' => 'Mỗi tin tối đa 5 ảnh.', 'anh.*.max' => 'Mỗi ảnh tối đa 5 MB.',
+            'anh.max' => 'Mỗi tin tối đa 3 ảnh.', 'anh.*.max' => 'Mỗi ảnh tối đa 5 MB.',
             'anh.*.image' => 'Tệp tải lên phải là hình ảnh.', 'anh.*.mimes' => 'Chỉ nhận ảnh JPG, PNG hoặc WebP.',
         ], ['tieuDe' => 'tiêu đề', 'diaDiemChiTiet' => 'vị trí cụ thể', 'ngayXayRa' => 'ngày xảy ra', 'danhMucId' => 'danh mục']);
         $tepDaLuu = [];
         try {
             return DB::transaction(function () use ($request, $mau, $traLoi, &$tepDaLuu) {
                 $danhMuc = DanhMucDoVat::orderBy('id')->lockForUpdate()->get();
-                $cacCau = CauHoi::orderBy('id')->lockForUpdate()->get();
+                $cacCau = CauHoi::where('danh_muc_id', $mau['danhMucId'])->where('trang_thai', true)->orderBy('id')->lockForUpdate()->get();
                 $request->user()->newQuery()->whereKey($request->user()->id)->lockForUpdate()->firstOrFail();
                 $cu = TinDang::withTrashed()->where('ma_gui', $mau['maGui'])->first();
                 if ($cu) {
@@ -79,8 +79,7 @@ class DangTinController extends Controller
                 if (! empty($mau['diaDiemId'])) {
                     abort_unless(DiaDiem::whereKey($mau['diaDiemId'])->where('trang_thai', true)->lockForUpdate()->exists(), 422, 'Địa điểm không còn được sử dụng.');
                 }
-                $cacCau = $cacCau->filter(fn ($cau) => $cau->trang_thai && ($cau->danh_muc_id === null || (string) $cau->danh_muc_id === (string) $mau['danhMucId']));
-                abort_unless($cacCau->contains(fn ($cau) => $cau->danh_muc_id !== null), 422, 'Danh mục chưa có câu hỏi nhận diện. Vui lòng chọn danh mục khác.');
+                abort_unless($cacCau->isNotEmpty(), 422, 'Danh mục chưa có câu hỏi nhận diện. Vui lòng chọn danh mục khác.');
                 $dapAn = collect($mau['cauTraLoi'])->keyBy('id');
                 abort_unless($cacCau->count() === $dapAn->count() && $cacCau->every(fn ($cau) => $dapAn->has($cau->id)), 409, 'Bộ câu hỏi đã thay đổi. Hãy tải lại câu hỏi và kiểm tra câu trả lời.');
                 $loiKhai = [];
@@ -88,9 +87,7 @@ class DangTinController extends Controller
                     $ban = $cau->lichSu()->reorder('phien_ban', 'desc')->first();
                     abort_unless($ban && (string) $ban->id === (string) $dapAn[$cau->id]['phienBanId'], 409, 'Câu hỏi đã thay đổi. Hãy tải lại câu hỏi và kiểm tra câu trả lời.');
                     $cot = $traLoi->giaTri($traLoi->cauHoi($ban, (string) $cau->id), $dapAn[$cau->id]['giaTri'], 'cauTraLoi.'.$cau->id);
-                    if ($cot) {
-                        $loiKhai[] = ['cau_hoi_id' => $cau->id, 'cau_hoi_phien_ban_id' => $ban->id, ...$cot];
-                    }
+                    $loiKhai[] = ['cau_hoi_id' => $cau->id, 'cau_hoi_phien_ban_id' => $ban->id, ...$cot];
                 }
                 $tin = TinDang::create([
                     'nguoi_dung_id' => $request->user()->id, 'danh_muc_id' => $mau['danhMucId'],

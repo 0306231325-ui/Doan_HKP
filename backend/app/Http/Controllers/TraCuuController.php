@@ -121,7 +121,6 @@ class TraCuuController extends Controller
         $banTin = TinDang::where('trang_thai_kiem_duyet', 'hien_thi')->with([
             'danhMuc:id,ten_danh_muc', 'diaDiem:id,ten_dia_diem', 'nguoiDung:id,ho_ten',
             'hinhAnh' => fn ($anh) => $anh->where('pham_vi', 'cong_khai')->orderBy('thu_tu')->orderBy('id'),
-            'loiKhai.phienBanCauHoi',
         ])->findOrFail($tin);
 
         return response()->json(['data' => $duLieu->congKhai($banTin, true)])->header('Cache-Control', 'no-store');

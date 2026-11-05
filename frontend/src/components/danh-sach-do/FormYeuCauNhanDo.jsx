@@ -7,8 +7,8 @@ export default function FormYeuCauNhanDo({ cauHoi, cauTraLoi, doiCauTraLoi, loiN
   return <>
     <form onSubmit={yeuCauGui} className="rounded-2xl border border-[#d6e4db] bg-white p-5 sm:p-6">
       <fieldset disabled={dangGui} className="space-y-5">
-        <div><h2 className="text-lg font-bold text-[#243c30]">Thông tin xác minh</h2><p className="mt-2 text-sm leading-6 text-[#607568]">Trả lời các câu hỏi đã được gắn với tin đăng. Câu trả lời chỉ dùng để quản trị viên đối chiếu, không công khai.</p></div>
-        {cauHoi.map((cau) => <TruongCauHoi key={cau.id} cauHoi={cau} loaiForm="nhan_lai" giaTri={cauTraLoi[cau.id] ?? ''} khiThayDoi={doiCauTraLoi} />)}
+        <div><h2 className="text-lg font-bold text-[#243c30]">Thông tin xác minh</h2><p className="mt-2 text-sm leading-6 text-[#607568]">Trả lời bộ câu hỏi người nhặt đã dùng khi đăng tin. Câu trả lời của bạn được giữ kín để quản trị viên đối chiếu.</p></div>
+        {cauHoi.map((cau) => <TruongCauHoi key={cau.id} cauHoi={cau} giaTri={cauTraLoi[cau.id] ?? ''} khiThayDoi={doiCauTraLoi} />)}
         <FormField as="textarea" label="Lời nhắn thêm" name="loiNhan" rows={3} maxLength={2000} value={loiNhan} onChange={(suKien) => datLoiNhan(suKien.target.value)} />
         <label className="flex items-start gap-3 text-sm leading-6 text-[#315a43]"><input type="checkbox" checked={xacNhan} onChange={(suKien) => datXacNhan(suKien.target.checked)} required className="mt-1 h-4 w-4 shrink-0 accent-emerald-800" /><span>Tôi xác nhận thông tin cung cấp là đúng và đây là đồ vật của tôi.</span></label>
         {loi && <p role="alert" className="text-sm text-rose-700">{loi}</p>}

@@ -26,11 +26,7 @@ class CauTraLoiTinDang
         }
         $noiDung = trim((string) $giaTri);
         if ($noiDung === '') {
-            if ($cau['danhMucId'] !== null) {
-                throw ValidationException::withMessages([$truong => 'Vui lòng trả lời: '.$cau['nhanDangTin']]);
-            }
-
-            return [];
+            throw ValidationException::withMessages([$truong => 'Vui lòng trả lời: '.$cau['nhanDangTin']]);
         }
         if (mb_strlen($noiDung) > 2000) {
             throw ValidationException::withMessages([$truong => 'Mỗi câu trả lời tối đa 2000 ký tự.']);

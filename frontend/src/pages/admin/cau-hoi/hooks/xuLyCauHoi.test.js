@@ -1,7 +1,6 @@
-import { layQuyTacCauHoi } from '../../../../components/shared/quyTacCauHoi.js'
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { kiemTraCauHoi, layCauHoiXemTruoc, locCauHoi, taoBieuMau } from './xuLyCauHoi.js'
+import { kiemTraCauHoi, locCauHoi, taoBieuMau } from './xuLyCauHoi.js'
 import { kiemTraTinDang } from '../../../tin-dang/hooks/xuLyDangTin.js'
 
 const danhMuc = [{ id: '1', tenDanhMuc: 'Điện tử', dangHoatDong: true }, { id: '2', tenDanhMuc: 'Giấy tờ', dangHoatDong: false }]
@@ -10,18 +9,19 @@ function cauThu(ghiDe = {}) {
 }
 
 test('Form có kiểu Văn bản mặc định, không có cấu hình loại tin hoặc lựa chọn', () => {
-  const mau = taoBieuMau()
+  const mau = taoBieuMau('1')
   for (const ten of ['luaChon', 'nhanNhanLai', 'apDung']) assert.equal(Object.hasOwn(mau, ten), false)
-  assert.equal(mau.danhMucId, null)
+  assert.equal(mau.danhMucId, '1')
   assert.equal(mau.kieuNhap, 'van_ban')
-  assert.deepEqual(kiemTraCauHoi({ ...mau, nhanDangTin: 'Đồ vật?' }, [], []), {})
+  assert.deepEqual(kiemTraCauHoi({ ...mau, nhanDangTin: 'Đồ vật?' }, [], danhMuc), {})
 })
 
-test('Chặn câu trùng không dấu ở phạm vi giao nhau kể cả câu ẩn', () => {
+test('Chặn câu trùng không dấu trong cùng danh mục kể cả câu ẩn', () => {
   const cu = cauThu({ dangHoatDong: false })
   const moi = cauThu({ id: '', nhanDangTin: ' DAC DIEM DO VAT? ' })
   assert.ok(kiemTraCauHoi(moi, [cu], danhMuc).nhanDangTin)
-  assert.ok(kiemTraCauHoi({ ...moi, danhMucId: null }, [cu], danhMuc).nhanDangTin)
+  assert.ok(kiemTraCauHoi({ ...moi, danhMucId: null }, [cu], danhMuc).danhMucId)
+  assert.equal(kiemTraCauHoi(moi, [{ ...cu, danhMucId: null }], danhMuc).nhanDangTin, undefined)
   assert.equal(kiemTraCauHoi({ ...moi, danhMucId: '3' }, [cu], [...danhMuc, { id: '3' }]).nhanDangTin, undefined)
 })
 
@@ -36,28 +36,12 @@ test('Kiểm tra nội dung, thứ tự và danh mục hoạt động', () => {
   assert.deepEqual(kiemTraCauHoi(cu, [cu], danhMuc), {})
 })
 
-test('Mọi câu theo danh mục dùng cho cả hai loại tin và nhận lại, luôn giữ kín dù cấu hình cũ khác', () => {
-  const cau = cauThu({ apDung: { mat: { suDung: false, congKhai: true }, nhat: { suDung: false, dungXacMinh: false } } })
-  const quyTac = layQuyTacCauHoi(cau)
-  assert.deepEqual(quyTac, { batBuoc: true, congKhai: false, dungNhanLai: true })
-  for (const form of ['mat', 'nhat', 'nhan_lai']) assert.deepEqual(layCauHoiXemTruoc([cau], '1', form), [cau])
-  assert.deepEqual(kiemTraCauHoi(cau, [], danhMuc), {})
-})
-
-test('Câu chung dùng hai loại tin, không bắt buộc và giữ cách hiển thị hiện tại', () => {
-  const cu = cauThu({ danhMucId: null })
-  assert.deepEqual(layQuyTacCauHoi(cu), { batBuoc: false, congKhai: true, dungNhanLai: false })
-  assert.deepEqual(layCauHoiXemTruoc([cu], '1', 'mat'), [cu])
-  assert.deepEqual(layCauHoiXemTruoc([cu], '1', 'nhat'), [cu])
-  assert.deepEqual(layCauHoiXemTruoc([cu], '1', 'nhan_lai'), [])
-})
-
-test('Tìm/lọc từng nhóm, ghép chung trước riêng và loại câu ẩn', () => {
-  const ds = [cauThu(), cauThu({ id: '2', danhMucId: null, nhanDangTin: 'Tên đồ vật?' }), cauThu({ id: '3', dangHoatDong: false })]
+test('Xem thử chỉ lấy câu đang dùng của danh mục đã chọn', () => {
+  const ds = [cauThu(), cauThu({ id: '2', danhMucId: null }), cauThu({ id: '3', dangHoatDong: false }), cauThu({ id: '4', danhMucId: '2' })]
   assert.deepEqual(locCauHoi(ds, '1', 'dac diem', 'hoat_dong').map(c => c.id), ['1'])
-  assert.deepEqual(layCauHoiXemTruoc(ds, '1', 'mat').map(c => c.id), ['2', '1'])
-  assert.deepEqual(layCauHoiXemTruoc(ds, null, 'nhat').map(c => c.id), ['2'])
-  assert.deepEqual(layCauHoiXemTruoc(ds, '', 'mat'), [])
+  assert.deepEqual(locCauHoi(ds, '1').map(c => c.id), ['1', '3'])
+  assert.deepEqual(locCauHoi(ds, null), [])
+  assert.deepEqual(locCauHoi(ds, ''), [])
 })
 
 test('Dùng ID để sửa và kiểm tra trùng, không gộp mất các câu khi không có UUID', () => {

@@ -3,7 +3,6 @@ import { useEffect, useRef } from 'react'
 import HopThoai from '../../../components/shared/HopThoai'
 
 export default function FormCauHoi({ bieuMau, danhMuc, loi, loiLuu, dongBieuMau, doiBieuMau, luuCauHoi }) {
-  const laChung = bieuMau.danhMucId === null
   const lopNhap = 'w-full rounded-xl border border-[#ceded3] bg-white px-3.5 py-2.5 text-sm text-[#243c30] outline-none focus-visible:ring-2 focus-visible:ring-emerald-700'
   const oNoiDung = useRef(null)
 
@@ -12,7 +11,7 @@ export default function FormCauHoi({ bieuMau, danhMuc, loi, loiLuu, dongBieuMau,
   }, [])
 
   return (
-    <HopThoai tieuDe={bieuMau.id ? 'Chỉnh sửa câu hỏi' : 'Thêm câu hỏi'} moTa={laChung ? 'Dùng chung cho mọi danh mục và cả hai loại tin. Không bắt buộc trả lời.' : `Câu hỏi riêng cho danh mục ${danhMuc.find((muc) => muc.id === bieuMau.danhMucId)?.tenDanhMuc || 'đang chọn'}. Câu trả lời được giữ kín và bắt buộc khi đăng tin, xin nhận lại.`} khiDong={dongBieuMau}>
+    <HopThoai tieuDe={bieuMau.id ? 'Chỉnh sửa câu hỏi' : 'Thêm câu hỏi'} moTa={`Câu hỏi riêng cho danh mục ${danhMuc.find((muc) => muc.id === bieuMau.danhMucId)?.tenDanhMuc || 'đang chọn'}. Câu trả lời được giữ kín và bắt buộc khi đăng tin, xin nhận lại.`} khiDong={dongBieuMau}>
       <form onSubmit={luuCauHoi} noValidate>
         <div className="space-y-5 px-5 py-5 sm:px-6">
           {loi.danhMucId && <p role="alert" className="text-sm text-rose-700">{loi.danhMucId}</p>}

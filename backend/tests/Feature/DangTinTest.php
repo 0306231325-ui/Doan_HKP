@@ -161,37 +161,43 @@ class DangTinTest extends TestCase
             'maGui' => (string) Str::uuid(), 'loaiTin' => 'found', 'danhMucId' => $this->danhMuc->id,
             'tieuDe' => 'Nhặt được tai nghe', 'moTa' => 'Mô tả công khai', 'ngayXayRa' => '2026-01-01',
             'diaDiemChiTiet' => 'Thư viện tầng 2', 'soDienThoai' => '0901234567', 'email' => 'lienhe@gmail.com',
-            'cauTraLoi' => array_map(fn ($cau) => ['id' => $cau['id'], 'phienBanId' => $cau['phienBanId'], 'giaTri' => $cau['danhMucId'] === null ? 'Đen công khai' : 'SECRET-ANSWER'], $cacCau),
+            'cauTraLoi' => array_map(fn ($cau) => ['id' => $cau['id'], 'phienBanId' => $cau['phienBanId'], 'giaTri' => 'SECRET-ANSWER'], $cacCau),
         ];
     }
 
     public function test_dang_tin_luu_db_hien_ngay_khong_lo_bi_mat_va_khong_trung(): void
     {
         $mau = $this->mau();
+        $khac = DanhMucDoVat::create(['ten_danh_muc' => 'Giấy tờ']);
+        $this->cauHoi($khac->id, 'Câu của danh mục khác?');
+        $this->cauHoi($this->danhMuc->id, 'Câu đã ẩn?')->update(['trang_thai' => false]);
+        $this->getJson('/api/dang-tin/cau-hoi')->assertUnprocessable()->assertJsonValidationErrors('danhMucId');
+        $this->getJson('/api/dang-tin/cau-hoi?danhMucId='.$this->danhMuc->id)->assertOk()
+            ->assertJsonCount(1, 'data')->assertJsonPath('data.0.id', (string) $this->rieng->id);
         $mau['nguoi_dung_id'] = $this->nguoiNhan->id;
         $mau['trang_thai_kiem_duyet'] = 'da_an';
         $id = $this->postJson('/api/tin-dang', $mau)->assertCreated()->json('data.id');
         $this->assertDatabaseHas('tin_dang', ['id' => $id, 'nguoi_dung_id' => $this->chuTin->id, 'email_lien_he' => 'lienhe@gmail.com', 'trang_thai_kiem_duyet' => 'hien_thi']);
         $this->getJson('/api/tra-cuu')->assertOk()->assertJsonPath('data.0.id', $id)->assertJsonPath('data.0.contactPhone', '****')->assertJsonPath('data.0.contactEmail', '****');
-        $response = $this->getJson('/api/tra-cuu/'.$id)->assertOk()->assertJsonCount(1, 'data.publicAnswers')->assertJsonPath('data.publicAnswers.0.answer', 'Đen công khai');
+        $response = $this->getJson('/api/tra-cuu/'.$id)->assertOk()->assertJsonMissingPath('data.publicAnswers');
         foreach (['SECRET-ANSWER', '0901234567', 'lienhe@gmail.com', 'Dấu hiệu bí mật?', 'khong-doi-mat-khau'] as $biMat) {
             $this->assertStringNotContainsString($biMat, $response->getContent());
         }
         $this->postJson('/api/tin-dang', $mau)->assertOk()->assertJsonPath('data.id', $id);
         $this->assertDatabaseCount('tin_dang', 1);
-        $this->assertDatabaseCount('loi_khai_tin_dang', 2);
+        $this->assertDatabaseCount('loi_khai_tin_dang', 1);
         $this->assertDatabaseCount('lich_su_tin_dang', 1);
     }
 
-    public function test_bat_buoc_cau_rieng_optional_cau_chung_va_cho_email_thay_dien_thoai(): void
+    public function test_bat_buoc_cau_danh_muc_va_cho_email_thay_dien_thoai(): void
     {
         $mau = $this->mau();
+        $mau['loaiTin'] = 'lost';
         $mau['soDienThoai'] = '';
         $mau['cauTraLoi'][0]['giaTri'] = '';
-        $mau['cauTraLoi'][1]['giaTri'] = '';
         $this->postJson('/api/tin-dang', $mau)->assertUnprocessable();
         $this->assertDatabaseCount('tin_dang', 0);
-        $mau['cauTraLoi'][1]['giaTri'] = 'Sọc đỏ';
+        $mau['cauTraLoi'][0]['giaTri'] = 'Sọc đỏ';
         $this->postJson('/api/tin-dang', $mau)->assertCreated();
         $this->assertDatabaseCount('loi_khai_tin_dang', 1);
         $mau['maGui'] = (string) Str::uuid();
@@ -207,12 +213,11 @@ class DangTinTest extends TestCase
         $this->postJson('/api/tin-dang', $mau)->assertConflict();
         $moi = $this->mau();
         $this->postJson('/api/tin-dang', $moi)->assertCreated();
-        $this->assertDatabaseHas('loi_khai_tin_dang', ['cau_hoi_id' => $this->rieng->id, 'cau_hoi_phien_ban_id' => $moi['cauTraLoi'][1]['phienBanId']]);
+        $this->assertDatabaseHas('loi_khai_tin_dang', ['cau_hoi_id' => $this->rieng->id, 'cau_hoi_phien_ban_id' => $moi['cauTraLoi'][0]['phienBanId']]);
         $moi['maGui'] = (string) Str::uuid();
-        array_pop($moi['cauTraLoi']);
-        $this->postJson('/api/tin-dang', $moi)->assertConflict();
-        $mau['cauTraLoi'][] = ['id' => 999, 'phienBanId' => 999, 'giaTri' => 'Giả'];
-        $this->postJson('/api/tin-dang', $mau)->assertConflict();
+        $cu = CauHoi::whereNull('danh_muc_id')->firstOrFail();
+        $this->postJson('/api/tin-dang', [...$moi, 'cauTraLoi' => []])->assertUnprocessable();
+        $this->postJson('/api/tin-dang', [...$moi, 'cauTraLoi' => [...$moi['cauTraLoi'], ['id' => $cu->id, 'phienBanId' => $cu->lichSu()->firstOrFail()->id, 'giaTri' => 'Giả']]])->assertConflict();
         $this->danhMuc->update(['trang_thai' => false]);
         $this->postJson('/api/tin-dang', $mau)->assertConflict();
         $this->assertDatabaseCount('tin_dang', 1);
@@ -236,7 +241,7 @@ class DangTinTest extends TestCase
         $this->rieng->update(['kieu_nhap' => 'so']);
         $this->rieng->lichSu()->create(['phien_ban' => 2, 'du_lieu' => $this->rieng->attributesToArray()]);
         $mau = $this->mau();
-        $mau['cauTraLoi'][1]['giaTri'] = '0';
+        $mau['cauTraLoi'][0]['giaTri'] = '0';
         $this->postJson('/api/tin-dang', $mau)->assertCreated();
         $this->assertDatabaseHas('loi_khai_tin_dang', ['cau_hoi_id' => $this->rieng->id, 'gia_tri_so' => 0, 'gia_tri_text' => null]);
     }
@@ -244,11 +249,14 @@ class DangTinTest extends TestCase
     public function test_nhieu_anh_luu_that_va_tu_choi_doc_anh_tin_da_an(): void
     {
         $mau = $this->mau();
-        $mau['anh'] = [UploadedFile::fake()->image('mot.jpg'), UploadedFile::fake()->image('hai.png')];
+        $mau['anh'] = [UploadedFile::fake()->image('mot.jpg'), UploadedFile::fake()->image('hai.png'), UploadedFile::fake()->image('ba.jpg')];
+        $this->post('/api/tin-dang', [...$mau, 'anh' => [...$mau['anh'], UploadedFile::fake()->image('bon.jpg')]], ['Accept' => 'application/json'])
+            ->assertUnprocessable()->assertJsonValidationErrors('anh');
+        $this->assertDatabaseCount('tin_dang', 0);
         $id = $this->post('/api/tin-dang', $mau, ['Accept' => 'application/json'])->assertCreated()->json('data.id');
-        $this->assertDatabaseCount('hinh_anh_tin_dang', 2);
-        $this->assertCount(2, Storage::disk('local')->allFiles('tin-dang'));
-        $this->getJson('/api/tra-cuu/'.$id)->assertOk()->assertJsonCount(2, 'data.images');
+        $this->assertDatabaseCount('hinh_anh_tin_dang', 3);
+        $this->assertCount(3, Storage::disk('local')->allFiles('tin-dang'));
+        $this->getJson('/api/tra-cuu/'.$id)->assertOk()->assertJsonCount(3, 'data.images');
         $url = HinhAnhTinDang::first()->duong_dan;
         $this->get($url)->assertOk();
         TinDang::find($id)->update(['trang_thai_kiem_duyet' => 'da_an']);
@@ -273,21 +281,36 @@ class DangTinTest extends TestCase
 
     public function test_nhan_lai_dung_cau_goc_va_gui_roi_moi_mo_lien_he(): void
     {
-        $id = $this->postJson('/api/tin-dang', $this->mau())->assertCreated()->json('data.id');
-        $this->rieng->update(['noi_dung' => 'Đổi câu sau khi đăng?', 'kieu_nhap' => 'so', 'danh_muc_id' => null, 'trang_thai' => false]);
+        $this->rieng->update(['thu_tu' => 2]);
         $this->rieng->lichSu()->create(['phien_ban' => 2, 'du_lieu' => $this->rieng->attributesToArray()]);
+        $this->cauHoi($this->danhMuc->id, 'Hãng nào?');
+        $id = $this->postJson('/api/tin-dang', $this->mau())->assertCreated()->json('data.id');
+        $cu = CauHoi::whereNull('danh_muc_id')->firstOrFail();
+        $loiKhaiCu = TinDang::findOrFail($id)->loiKhai()->create([
+            'cau_hoi_id' => $cu->id, 'cau_hoi_phien_ban_id' => $cu->lichSu()->firstOrFail()->id, 'gia_tri_text' => 'Đáp án cũ',
+        ]);
+        $this->getJson('/api/tra-cuu/'.$id)->assertOk()->assertJsonMissingPath('data.publicAnswers')->assertDontSee('Đáp án cũ');
+        $this->rieng->update(['noi_dung' => 'Đổi câu sau khi đăng?', 'kieu_nhap' => 'so', 'danh_muc_id' => null, 'trang_thai' => false]);
+        $this->rieng->lichSu()->create(['phien_ban' => 3, 'du_lieu' => $this->rieng->attributesToArray()]);
         $this->cauHoi($this->danhMuc->id, 'Câu thêm sau?');
         $this->actingAs($this->nguoiNhan);
         $this->getJson('/api/tin-dang/'.$id.'/lien-he')->assertForbidden();
-        $form = $this->getJson('/api/tin-dang/'.$id.'/nhan-lai')->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.nhanDangTin', 'Dấu hiệu bí mật?')->assertJsonPath('data.0.kieuNhap', 'van_ban');
+        $form = $this->getJson('/api/tin-dang/'.$id.'/nhan-lai')->assertOk()->assertJsonCount(2, 'data')
+            ->assertJsonPath('data.0.nhanDangTin', 'Hãng nào?')
+            ->assertJsonPath('data.1.nhanDangTin', 'Dấu hiệu bí mật?')->assertJsonPath('data.1.kieuNhap', 'van_ban');
         $this->assertStringNotContainsString('SECRET-ANSWER', $form->getContent());
-        $mau = ['xacNhan' => true, 'cauTraLoi' => [['id' => $form->json('data.0.id'), 'giaTri' => 'Câu trả lời của người mất']]];
+        $mau = ['xacNhan' => true, 'cauTraLoi' => [
+            ['id' => $form->json('data.0.id'), 'giaTri' => 'Sony'],
+            ['id' => $form->json('data.1.id'), 'giaTri' => 'Câu trả lời của người mất'],
+        ]];
         $this->postJson('/api/tin-dang/'.$id.'/nhan-lai', ['xacNhan' => true, 'cauTraLoi' => [['id' => 999, 'giaTri' => 'giả']]])->assertUnprocessable();
         $this->postJson('/api/tin-dang/'.$id.'/nhan-lai', $mau)->assertCreated();
         $this->getJson('/api/tin-dang/'.$id.'/lien-he')->assertOk()->assertJsonPath('data.email', 'lienhe@gmail.com')->assertJsonPath('data.soDienThoai', '0901234567');
         $this->postJson('/api/tin-dang/'.$id.'/nhan-lai', $mau)->assertOk();
         $this->assertDatabaseCount('yeu_cau_nhan_do', 1);
-        $this->assertDatabaseCount('tra_loi_yeu_cau', 1);
+        $this->assertDatabaseCount('tra_loi_yeu_cau', 2);
+        $this->assertDatabaseHas('loi_khai_tin_dang', ['id' => $loiKhaiCu->id, 'gia_tri_text' => 'Đáp án cũ']);
+        $this->assertDatabaseHas('tra_loi_yeu_cau', ['loi_khai_tin_dang_id' => $form->json('data.1.id'), 'gia_tri_text' => 'Câu trả lời của người mất']);
         $this->assertDatabaseHas('yeu_cau_nhan_do', ['trang_thai' => 'cho_kiem_tra']);
         YeuCauNhanDo::first()->update(['trang_thai' => 'tu_choi']);
         $this->getJson('/api/tin-dang/'.$id.'/lien-he')->assertForbidden();

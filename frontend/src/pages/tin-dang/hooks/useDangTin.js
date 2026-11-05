@@ -4,14 +4,21 @@ import { useAuth } from '../../../auth/useAuth'
 import api, { prepareCsrf } from '../../../services/api'
 import useDanhMuc from '../../../components/shared/hooks/useDanhMuc'
 import { layNgayVietNam } from '../../admin/tong-quan/hooks/xuLyThongKe.js'
-import { kiemTraAnhDangTin, kiemTraTinDang, taoDuLieuGui, layLoiGui } from './xuLyDangTin.js'
+import { chonAnhDangTin, kiemTraThongTinDangTin, kiemTraTinDang, taoDuLieuGui, layLoiGui } from './xuLyDangTin.js'
 
-export default function useDangTin(loaiBanDau = 'lost') {
+export default function useDangTin(loaiBanDau, duongDanNoiDung) {
   const { user } = useAuth()
   const dieuHuong = useNavigate()
   const [ngayToiDa] = useState(() => layNgayVietNam(new Date()))
-  const [duLieu, datDuLieu] = useState(() => ({ loaiTin: loaiBanDau === 'found' ? 'found' : 'lost', danhMucId: '', tieuDe: '', moTa: '', ngayXayRa: ngayToiDa, diaDiemId: '', diaDiemChiTiet: '', soDienThoai: user?.so_dien_thoai || '', email: user?.email || '' }))
+  const [banNhap, datBanNhap] = useState(() => ({ loaiTin: loaiBanDau, danhMucId: '', tieuDe: '', moTa: '', ngayXayRa: ngayToiDa, diaDiemId: '', diaDiemChiTiet: '' }))
+  const duLieu = {
+    soDienThoai: user?.so_dien_thoai ?? '',
+    email: user?.email ?? '',
+    ...banNhap,
+  }
   const { danhSach: danhMuc, diaDiem, dangTai: dangTaiDanhMuc, loiTai: loiTaiDanhMuc, taiLai: taiLaiDanhMuc } = useDanhMuc()
+  const loiThongTin = kiemTraThongTinDangTin(duLieu, danhMuc)
+  const [loiChonThongTin, datLoiChonThongTin] = useState('')
   const [cauTraLoi, datCauTraLoi] = useState({})
   const [lanTaiCauHoi, datLanTaiCauHoi] = useState(0)
   const khoa = `${duLieu.danhMucId}#${lanTaiCauHoi}`
@@ -28,7 +35,6 @@ export default function useDangTin(loaiBanDau = 'lost') {
   const dangXuLy = useRef(false)
   const cacUrl = useRef(new Set())
   const nutGui = useRef(null)
-  const loaiForm = duLieu.loaiTin === 'found' ? 'nhat' : 'mat'
 
   useEffect(function napCauHoi() {
     if (!duLieu.danhMucId) return
@@ -58,9 +64,20 @@ export default function useDangTin(loaiBanDau = 'lost') {
 
   function doiTruong(suKien) {
     const { name, value } = suKien.target
-    datDuLieu((cu) => ({ ...cu, [name]: value }))
+    datBanNhap((cu) => ({ ...cu, [name]: value }))
     if (name === 'danhMucId') datCauTraLoi({})
+    datLoiChonThongTin('')
     datLoi('')
+  }
+
+  function chuyenSangNoiDung(suKien) {
+    suKien.preventDefault()
+    if (dangTaiDanhMuc || loiTaiDanhMuc || dangXuLy.current) return
+    datLoiChonThongTin(loiThongTin)
+    if (loiThongTin) return
+    datLoi('')
+    datBuoc('')
+    dieuHuong(duongDanNoiDung)
   }
 
   function doiCauTraLoi(suKien) {
@@ -72,10 +89,10 @@ export default function useDangTin(loaiBanDau = 'lost') {
   function chonAnh(suKien) {
     const cacTep = Array.from(suKien.target.files || [])
     suKien.target.value = ''
-    const thongBao = kiemTraAnhDangTin(cacTep, anh.length)
+    const { anhSeThem, loi: thongBao } = chonAnhDangTin(cacTep, anh.length)
     datLoiAnh(thongBao)
-    if (thongBao) return
-    const anhMoi = cacTep.map((tep) => {
+    if (!anhSeThem.length) return
+    const anhMoi = anhSeThem.map((tep) => {
       const url = URL.createObjectURL(tep)
       cacUrl.current.add(url)
       return { id: crypto.randomUUID(), tep, url }
@@ -130,5 +147,5 @@ export default function useDangTin(loaiBanDau = 'lost') {
     }
   }
 
-  return { dangTaiDanhMuc, loiTaiDanhMuc, taiLaiDanhMuc, diaDiem, ngayToiDa, dangTaiCauHoi, loiTaiCauHoi, taiLaiCauHoi, duLieu, danhMuc, cauHoi, cauTraLoi, loaiForm, anh, loiAnh, loi, moXemTruoc: Boolean(buoc), moXacNhan: buoc === 'xac_nhan', dangGui, doiTruong, doiCauTraLoi, chonAnh, xoaAnh, xuLyGuiBieuMau, dongXemTruoc, xacNhanDang }
+  return { dangTaiDanhMuc, loiTaiDanhMuc, taiLaiDanhMuc, loiThongTin, loiChonThongTin, chuyenSangNoiDung, diaDiem, ngayToiDa, dangTaiCauHoi, loiTaiCauHoi, taiLaiCauHoi, duLieu, danhMuc, cauHoi, cauTraLoi, anh, loiAnh, loi, moXemTruoc: Boolean(buoc), moXacNhan: buoc === 'xac_nhan', dangGui, doiTruong, doiCauTraLoi, chonAnh, xoaAnh, xuLyGuiBieuMau, dongXemTruoc, xacNhanDang }
 }
