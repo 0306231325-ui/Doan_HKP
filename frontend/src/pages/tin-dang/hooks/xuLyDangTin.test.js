@@ -1,10 +1,15 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { chonAnhDangTin, kiemTraTinDang, taoDuLieuGui } from './xuLyDangTin.js'
+import { chonAnhDangTin, kiemTraTinDang, layLoiGui, taoDuLieuGui } from './xuLyDangTin.js'
 
 const danhMuc = [{ id: '2' }]
 const cauHoi = [{ id: '8', phienBanId: '12', danhMucId: '2', dangHoatDong: true, nhanDangTin: 'Dấu hiệu?', kieuNhap: 'van_ban' }]
 const mau = { danhMucId: '2', loaiTin: 'found', tieuDe: 'Tai nghe', ngayXayRa: '2026-11-01', diaDiemId: '', diaDiemChiTiet: 'Thư viện', soDienThoai: '', email: 'nguoi@gmail.com' }
+
+test('Che lỗi máy chủ và giữ thông báo nhập liệu', () => {
+  assert.equal(layLoiGui({ response: { status: 500, data: { message: 'SQLSTATE: unknown column' } } }), 'Máy chủ chưa xử lý được yêu cầu. Vui lòng thử lại.')
+  assert.equal(layLoiGui({ response: { status: 422, data: { errors: { gioXayRa: ['Giờ không hợp lệ.'] } } } }), 'Giờ không hợp lệ.')
+})
 
 test('Cho liên hệ bằng Gmail hoặc điện thoại, giữ câu riêng bắt buộc', () => {
   assert.equal(kiemTraTinDang(mau, danhMuc, cauHoi, { 8: 'Vết xước' }, '2026-11-04'), '')

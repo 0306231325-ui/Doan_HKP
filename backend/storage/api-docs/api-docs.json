@@ -332,6 +332,12 @@
                                         "type": "string",
                                         "format": "date"
                                     },
+                                    "gioXayRa": {
+                                        "description": "Giờ xảy ra không bắt buộc, định dạng HH:mm theo giờ Việt Nam",
+                                        "type": "string",
+                                        "example": "14:30",
+                                        "nullable": true
+                                    },
                                     "diaDiemId": {
                                         "type": "integer",
                                         "nullable": true,
@@ -396,6 +402,176 @@
                 }
             }
         },
+        "/api/tin-dang/{tin}/chinh-sua": {
+            "get": {
+                "tags": [
+                    "Đăng tin"
+                ],
+                "summary": "Lấy nội dung để chủ tin chỉnh sửa",
+                "operationId": "4ca8792d709eed734eb8e17da0eca061",
+                "parameters": [
+                    {
+                        "name": "tin",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Nội dung công khai hiện tại, giờ nếu có và thông tin khu vực để điền vào form"
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Tài khoản bị khóa"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy tin của tài khoản hiện tại"
+                    }
+                }
+            }
+        },
+        "/api/tin-dang/{tin}": {
+            "delete": {
+                "tags": [
+                    "Đăng tin"
+                ],
+                "summary": "Chủ tin xóa mềm tin đăng",
+                "operationId": "8988a53f295295c66689cd48acd988ee",
+                "parameters": [
+                    {
+                        "name": "tin",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "X-XSRF-TOKEN",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Đã gỡ tin khỏi danh sách công khai"
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Tài khoản bị khóa"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy tin của tài khoản hiện tại"
+                    },
+                    "429": {
+                        "description": "Tối đa 30 lần/phút"
+                    }
+                }
+            },
+            "patch": {
+                "tags": [
+                    "Đăng tin"
+                ],
+                "summary": "Chủ tin cập nhật nội dung công khai",
+                "operationId": "dc5bc20d16acfd9a8ae9f072346759bc",
+                "parameters": [
+                    {
+                        "name": "tin",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "X-XSRF-TOKEN",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "tieuDe",
+                                    "ngayXayRa",
+                                    "diaDiemChiTiet"
+                                ],
+                                "properties": {
+                                    "tieuDe": {
+                                        "type": "string",
+                                        "maxLength": 150
+                                    },
+                                    "moTa": {
+                                        "type": "string",
+                                        "nullable": true,
+                                        "maxLength": 2000
+                                    },
+                                    "ngayXayRa": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "gioXayRa": {
+                                        "description": "Giờ xảy ra không bắt buộc, định dạng HH:mm theo giờ Việt Nam",
+                                        "type": "string",
+                                        "example": "14:30",
+                                        "nullable": true
+                                    },
+                                    "diaDiemId": {
+                                        "type": "integer",
+                                        "nullable": true,
+                                        "minimum": 1
+                                    },
+                                    "diaDiemChiTiet": {
+                                        "type": "string",
+                                        "maxLength": 255
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Đã lưu nội dung tin đăng"
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Tài khoản bị khóa"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy tin của tài khoản hiện tại"
+                    },
+                    "422": {
+                        "description": "Nội dung hoặc khu vực không hợp lệ"
+                    },
+                    "429": {
+                        "description": "Tối đa 30 lần/phút"
+                    }
+                }
+            }
+        },
         "/api/tra-cuu/{tin}": {
             "get": {
                 "tags": [
@@ -416,7 +592,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "data gồm DTO card và images. Điện thoại/email chỉ là ****; không có câu trả lời nhận diện."
+                        "description": "data gồm DTO thẻ, images và gioXayRa (null nếu không có giờ). Điện thoại hiện nửa đầu. Email hiện tối đa hai ký tự đầu và che toàn bộ tên miền. Không có câu trả lời nhận diện."
                     },
                     "404": {
                         "description": "Không có tin, đã ẩn hoặc xóa mềm"
@@ -443,7 +619,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Nội dung ảnh lưu ở ổ private, no-store/nosniff; đường dẫn ngẫu nhiên do server tạo"
+                        "description": "Nội dung ảnh ở ổ public theo nhóm tin mất/nhặt hoặc ảnh cũ ở ổ local. no-store/nosniff."
                     },
                     "404": {
                         "description": "Ảnh không có, riêng tư, tin ẩn hoặc đã xóa"
@@ -1655,7 +1831,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "data gồm các trường công khai cho card/modal; meta gồm trangHienTai, tongTrang, tongTin, tuViTri, denViTri. Không trả tin ẩn, xóa mềm, ảnh riêng tư hoặc mật khẩu/số điện thoại hồ sơ người đăng. Điện thoại và email liên hệ tin đăng chỉ trả ****. Ngày lọc là ngày xảy ra, dự phòng ngày đăng; trang vượt biên về trang cuối."
+                        "description": "data gồm thông tin công khai cho thẻ và cờ laChuTin theo phiên hiện tại. meta gồm trangHienTai, tongTrang, tongTin, tuViTri, denViTri. Tin ẩn và xóa mềm được loại khỏi kết quả. Điện thoại hiện nửa đầu. Email hiện tối đa hai ký tự đầu và che toàn bộ tên miền. Ngày lọc ưu tiên ngày xảy ra. Trang vượt biên về trang cuối."
                     },
                     "422": {
                         "description": "Bộ lọc hoặc khoảng ngày không hợp lệ"

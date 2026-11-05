@@ -1,5 +1,5 @@
 import { Eye, ImagePlus, Send, X } from 'lucide-react'
-import FormField from '../shared/FormField'
+import TruongNoiDungTinDang from './TruongNoiDungTinDang'
 import Button from '../shared/Button'
 import TruongCauHoi from '../shared/TruongCauHoi'
 import { SO_ANH_TOI_DA } from '../../pages/tin-dang/hooks/xuLyDangTin.js'
@@ -7,13 +7,17 @@ import XemTruocTin from '../../pages/tin-dang/XemTruocTin'
 
 export default function FormDangTin({ tin }) {
   const { duLieu, cauHoi, cauTraLoi, anh, loiAnh, loi, doiTruong, doiCauTraLoi, chonAnh, xoaAnh, xuLyGuiBieuMau } = tin
-  const lopNhap = 'w-full rounded-xl border border-[#ceded3] bg-white px-3.5 py-3 text-sm text-[#243c30] outline-none focus-visible:ring-2 focus-visible:ring-emerald-700'
 
   return (
     <>
       <form onSubmit={xuLyGuiBieuMau} className="space-y-7 rounded-3xl border border-[#d6e4db] bg-white p-5 shadow-sm sm:p-8">
         <fieldset disabled={tin.dangGui} className="min-w-0 space-y-6 disabled:opacity-70">
           <p className="text-xs text-[#718276]">Các mục có dấu <span className="font-bold text-rose-600">*</span> là bắt buộc.</p>
+          <fieldset className="space-y-4 border-t border-[#e4ece7] pt-5">
+            <legend className="px-1 text-lg font-bold text-[#243c30]">Thông tin công khai</legend>
+            <TruongNoiDungTinDang duLieu={duLieu} diaDiem={tin.diaDiem} ngayToiDa={tin.ngayToiDa} doiTruong={doiTruong} dangTaiDiaDiem={tin.dangTaiDanhMuc} />
+          </fieldset>
+
           {tin.dangTaiCauHoi ? <p role="status" className="text-sm text-[#718276]">Đang tải câu hỏi…</p> : tin.loiTaiCauHoi ? <p role="alert" className="text-sm text-rose-700">{tin.loiTaiCauHoi} <button type="button" onClick={tin.taiLaiCauHoi} className="underline">Thử lại</button></p> : <fieldset className="space-y-4 rounded-2xl border border-[#d6e4db] bg-[#f8fcf9] p-4 sm:p-5">
             <legend className="px-1 text-base font-bold text-[#243c30]">Thông tin đối chiếu · Giữ kín</legend>
             <p className="text-xs leading-5 text-[#607568]">Các câu trả lời dưới đây không hiển thị trên tin đăng và sẽ dùng để xác minh yêu cầu nhận đồ.</p>
@@ -21,20 +25,6 @@ export default function FormDangTin({ tin }) {
             {!cauHoi.length && <p className="text-sm text-amber-800">Danh mục này chưa có câu hỏi nhận diện. Quản trị viên cần thiết lập câu hỏi trước khi đăng tin.</p>}
             <button type="button" onClick={tin.taiLaiCauHoi} className="text-xs font-semibold text-emerald-800 underline">Tải lại câu hỏi</button>
           </fieldset>}
-
-          <fieldset className="space-y-4 border-t border-[#e4ece7] pt-5">
-            <legend className="px-1 text-lg font-bold text-[#243c30]">Thông tin công khai</legend>
-            <FormField label="Tiêu đề *" name="tieuDe" value={duLieu.tieuDe} onChange={doiTruong} required maxLength={150} placeholder={duLieu.loaiTin === 'found' ? 'Ví dụ: Nhặt được ví ở thư viện' : 'Ví dụ: Mất tai nghe tại sân trường'} />
-            <div className="grid gap-4 sm:grid-cols-2">
-              <FormField label={duLieu.loaiTin === 'found' ? 'Ngày nhặt được *' : 'Ngày bị mất *'} name="ngayXayRa" type="date" value={duLieu.ngayXayRa} onChange={doiTruong} max={tin.ngayToiDa} required />
-              <FormField as="select" label="Khu vực" name="diaDiemId" value={duLieu.diaDiemId} onChange={doiTruong} disabled={tin.dangTaiDanhMuc} className={lopNhap}>
-                <option value="">Chọn khu vực (không bắt buộc)</option>
-                {tin.diaDiem.map((noi) => <option key={noi.id} value={noi.id}>{noi.name}</option>)}
-              </FormField>
-            </div>
-            <FormField label="Vị trí cụ thể *" name="diaDiemChiTiet" value={duLieu.diaDiemChiTiet} onChange={doiTruong} required maxLength={255} placeholder="Ví dụ: Bàn đọc tầng 2, thư viện" />
-            <FormField as="textarea" label="Mô tả thêm" name="moTa" rows={3} value={duLieu.moTa} onChange={doiTruong} maxLength={2000} placeholder="Thông tin giúp mọi người nhận biết món đồ; giữ dấu hiệu riêng ở phần thông tin đối chiếu." className={lopNhap} />
-          </fieldset>
 
           <fieldset className="space-y-4 border-t border-[#e4ece7] pt-6">
             <legend className="px-1 text-lg font-bold text-[#243c30]">Hình ảnh đồ vật</legend>

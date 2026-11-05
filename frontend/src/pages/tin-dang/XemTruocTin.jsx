@@ -1,9 +1,12 @@
 import HopThoai from '../../components/shared/HopThoai'
 import Button from '../../components/shared/Button'
+import { cheLienHe } from './hooks/xuLyDangTin.js'
 
 export default function XemTruocTin({ duLieu, danhMuc, anh, dongXemTruoc, moXacNhan, dangGui, xacNhanDang, loi }) {
   const tenDanhMuc = danhMuc.find((muc) => muc.id === duLieu.danhMucId)?.tenDanhMuc
   const cotAnh = anh.length === 1 ? 'grid-cols-1' : anh.length === 2 ? 'grid-cols-2' : 'grid-cols-2 sm:grid-cols-3'
+  const soDienThoai = cheLienHe(duLieu.soDienThoai)
+  const email = cheLienHe(duLieu.email, true)
 
   return (
     <HopThoai rong tieuDe={moXacNhan ? 'Xác nhận đăng tin' : 'Xem trước tin đăng'} moTa="Nội dung công khai sẽ hiển thị như bên dưới. Câu trả lời đối chiếu được giữ kín." khiDong={dongXemTruoc}>
@@ -19,8 +22,8 @@ export default function XemTruocTin({ duLieu, danhMuc, anh, dongXemTruoc, moXacN
         )}
         <dl className="grid grid-cols-1 gap-3 text-sm text-[#607568]">
           <div><dt className="font-semibold text-[#243c30]">Danh mục</dt><dd>{tenDanhMuc}</dd></div>
-          <div><dt className="font-semibold text-[#243c30]">Thời gian và vị trí</dt><dd>{duLieu.ngayXayRa} · {duLieu.diaDiemChiTiet}</dd></div>
-          <div><dt className="font-semibold text-[#243c30]">Liên hệ</dt><dd>{duLieu.soDienThoai.trim() && 'Số điện thoại: ****'}{duLieu.soDienThoai.trim() && duLieu.email.trim() && ' · '}{duLieu.email.trim() && 'Email: ****'}</dd></div>
+          <div><dt className="font-semibold text-[#243c30]">Thời gian và vị trí</dt><dd>{duLieu.ngayXayRa}{duLieu.gioXayRa && ` ${duLieu.gioXayRa}`} · {duLieu.diaDiemChiTiet}</dd></div>
+          <div><dt className="font-semibold text-[#243c30]">Liên hệ</dt><dd className="break-words">{soDienThoai && `Số điện thoại: ${soDienThoai}`}{soDienThoai && email && ' · '}{email && `Email: ${email}`}</dd></div>
         </dl>
         {duLieu.moTa && <p className="whitespace-pre-wrap break-words text-sm text-[#607568]">{duLieu.moTa}</p>}
       </article>

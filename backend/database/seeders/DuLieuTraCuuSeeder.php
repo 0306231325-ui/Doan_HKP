@@ -17,37 +17,71 @@ class DuLieuTraCuuSeeder extends Seeder
         if (! app()->environment(['local', 'testing'])) {
             throw new RuntimeException('Chỉ seed dữ liệu tra cứu mẫu ở môi trường local hoặc testing.');
         }
-        $nguoiDung = NguoiDung::where('trang_thai', 'hoat_dong')->orderBy('id')->first();
-        if (! $nguoiDung) {
-            throw new RuntimeException('Cần có ít nhất một tài khoản hoạt động trước khi seed tin mẫu.');
-        }
-        DB::transaction(function () use ($nguoiDung) {
+
+        DB::transaction(function () {
             $danhMuc = [];
-            foreach (['Điện thoại', 'Ví và giấy tờ', 'Chìa khóa', 'Sách vở', 'Phụ kiện điện tử'] as $ten) {
+            foreach (['Đồ điện tử', 'Đồ dùng học tập', 'Giấy tờ', 'Chìa khóa và vé xe', 'Ví và túi xách'] as $ten) {
                 $danhMuc[$ten] = DanhMucDoVat::firstOrCreate(['ten_danh_muc' => $ten], ['trang_thai' => true]);
             }
+
             $diaDiem = [];
-            foreach (['Thư viện', 'Căn tin', 'Nhà xe', 'Sân trường', 'Khu phòng học'] as $ten) {
+            foreach (['Thư viện', 'Khoa Công nghệ thông tin', 'Khoa Kế toán', 'Khoa Kỹ thuật ô tô', 'Nhà xe sinh viên'] as $ten) {
                 $diaDiem[$ten] = DiaDiem::firstOrCreate(['ten_dia_diem' => $ten], ['trang_thai' => true]);
             }
+
             $cacTin = [
-                ['dien-thoai-den', 'Nhặt được điện thoại màu đen', 'Điện thoại', 'Thư viện', 'nhat_duoc', 'Điện thoại có ốp màu đen, nhặt tại khu bàn đọc sách.', 'Bàn đọc tầng 1'],
-                ['vi-da-nau', 'Mất ví da màu nâu', 'Ví và giấy tờ', 'Căn tin', 'bao_mat', 'Ví da nhỏ màu nâu, có ngăn đựng thẻ và giấy tờ.', 'Khu bàn gần quầy nước'],
-                ['chum-chia-khoa', 'Nhặt được chùm chìa khóa', 'Chìa khóa', 'Nhà xe', 'nhat_duoc', 'Chùm chìa khóa có móc vải màu xanh.', 'Lối đi khu gửi xe'],
-                ['sach-lap-trinh', 'Mất sách lập trình PHP', 'Sách vở', 'Khu phòng học', 'bao_mat', 'Sách lập trình PHP và MySQL, bìa xanh, có ghi chú bằng bút chì.', 'Hành lang tầng 2'],
-                ['tai-nghe-trang', 'Nhặt được tai nghe màu trắng', 'Phụ kiện điện tử', 'Sân trường', 'nhat_duoc', 'Hộp tai nghe không dây màu trắng, có vết xước nhỏ bên ngoài.', 'Ghế đá gần lối vào'],
-                ['dien-thoai-xanh', 'Mất điện thoại ốp xanh', 'Điện thoại', 'Sân trường', 'bao_mat', 'Điện thoại dùng ốp xanh dương, mặt lưng có hình dán nhỏ.', 'Khu ghế đá'],
-                ['the-sinh-vien', 'Nhặt được thẻ sinh viên', 'Ví và giấy tờ', 'Thư viện', 'nhat_duoc', 'Thẻ sinh viên để trong bao đeo màu xanh. Thông tin nhận dạng cần đối chiếu khi nhận.', 'Quầy mượn sách'],
-                ['sac-laptop', 'Mất sạc laptop màu đen', 'Phụ kiện điện tử', 'Khu phòng học', 'bao_mat', 'Bộ sạc laptop màu đen, dây được buộc bằng dây dán.', 'Phòng tự học'],
+                ['laptop-asus', 'Báo mất laptop ASUS VivoBook màu đen', 'legiahan', 'Đồ điện tử', 'Thư viện',
+                    'bao_mat', '2026-11-05', '09:20', 'Bàn đọc tầng 2', 'Mình để quên laptop sau buổi học nhóm ở thư viện.', ['anhtin1.webp']],
+                ['the-ve-xe', 'Báo mất thẻ vé xe màu xanh', 'phamduckhang', 'Chìa khóa và vé xe', 'Nhà xe sinh viên',
+                    'bao_mat', '2026-11-04', null, 'Lối ra nhà xe', 'Mình làm rơi thẻ vé xe màu xanh lúc rời nhà xe.', ['anhtin2.jpg']],
+                ['may-tinh-flexio', 'Nhặt được máy tính cầm tay Flexio FX680VN', 'nguyenthaovy', 'Đồ dùng học tập', 'Khoa Kế toán',
+                    'nhat_duoc', '2026-11-05', '10:45', 'Hành lang khoa', 'Mình nhặt được máy tính Flexio màu đen có viền xanh.', ['anhtin3.jpg']],
+                ['the-can-cuoc', 'Nhặt được thẻ căn cước trước phòng máy', 'vohoangnam', 'Giấy tờ', 'Khoa Công nghệ thông tin',
+                    'nhat_duoc', '2026-11-04', null, 'Hành lang trước phòng máy', 'Mình nhặt được thẻ căn cước. Ảnh đã che thông tin nhận dạng.', ['anhtin4.jpg']],
+                ['vi-da-den', 'Nhặt được ví da đen gần xưởng thực hành', 'phamduckhang', 'Ví và túi xách', 'Khoa Kỹ thuật ô tô',
+                    'nhat_duoc', '2026-11-03', '15:10', 'Ghế chờ gần xưởng', 'Mình nhặt được ví da đen dạng gập ở khu ghế chờ.', ['anhtin5.jpg', 'anhtin5_a.png']],
             ];
-            foreach ($cacTin as $viTri => [$slug, $tieuDe, $tenDanhMuc, $tenDiaDiem, $loaiTin, $moTa, $chiTiet]) {
-                TinDang::withTrashed()->firstOrCreate(['slug' => 'mau-tra-cuu-'.$slug], [
-                    'nguoi_dung_id' => $nguoiDung->id, 'danh_muc_id' => $danhMuc[$tenDanhMuc]->id,
-                    'dia_diem_id' => $diaDiem[$tenDiaDiem]->id, 'loai_tin' => $loaiTin,
-                    'tieu_de' => $tieuDe, 'mo_ta' => $moTa.' (Dữ liệu mẫu để thử tìm kiếm.)',
-                    'thoi_gian_xay_ra' => now('Asia/Ho_Chi_Minh')->subDays($viTri),
-                    'dia_diem_chi_tiet' => $chiTiet, 'thong_tin_lien_he' => null,
-                    'trang_thai' => 'dang_mo', 'trang_thai_kiem_duyet' => 'hien_thi',
+
+            foreach ($cacTin as [$slug, $tieuDe, $tenEmail, $tenDanhMuc, $tenDiaDiem, $loaiTin, $ngay, $gio, $chiTiet, $moTa, $cacAnh]) {
+                $nguoiDang = NguoiDung::withTrashed()->where('email', $tenEmail.'@caothang.edu.vn')->firstOrFail();
+                $tin = TinDang::withTrashed()->firstOrCreate(['slug' => 'mau-tra-cuu-'.$slug], [
+                    'nguoi_dung_id' => $nguoiDang->id,
+                    'danh_muc_id' => $danhMuc[$tenDanhMuc]->id,
+                    'dia_diem_id' => $diaDiem[$tenDiaDiem]->id,
+                    'loai_tin' => $loaiTin,
+                    'tieu_de' => $tieuDe,
+                    'mo_ta' => $moTa,
+                    'thoi_gian_xay_ra' => $ngay.' '.($gio ?? '00:00').':00',
+                    'co_gio_xay_ra' => $gio !== null,
+                    'dia_diem_chi_tiet' => $chiTiet,
+                    'thong_tin_lien_he' => $nguoiDang->so_dien_thoai,
+                    'email_lien_he' => $nguoiDang->email,
+                    'trang_thai' => 'dang_mo',
+                    'trang_thai_kiem_duyet' => 'hien_thi',
+                ]);
+
+                if (! $tin->wasRecentlyCreated) {
+                    continue;
+                }
+
+                foreach ($cacAnh as $thuTu => $tenAnh) {
+                    $duongDan = '/'.$tin->thuMucAnh().'/'.$tenAnh;
+                    if (! is_file(base_path('../frontend/public'.$duongDan))) {
+                        throw new RuntimeException('Thiếu ảnh tin mẫu: '.$tenAnh);
+                    }
+                    $tin->hinhAnh()->create([
+                        'nguoi_tai_len_id' => $nguoiDang->id,
+                        'duong_dan' => $duongDan,
+                        'pham_vi' => 'cong_khai',
+                        'thu_tu' => $thuTu,
+                    ]);
+                }
+
+                $tin->lichSu()->create([
+                    'nguoi_thuc_hien_id' => $nguoiDang->id,
+                    'hanh_dong' => 'tao_tin',
+                    'trang_thai_moi' => 'hien_thi',
+                    'noi_dung' => 'Đã đăng tin.',
                 ]);
             }
         });

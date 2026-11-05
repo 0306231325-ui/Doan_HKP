@@ -23,6 +23,7 @@ class TinDang extends Model
         'slug',
         'mo_ta',
         'thoi_gian_xay_ra',
+        'co_gio_xay_ra',
         'dia_diem_chi_tiet',
         'thong_tin_lien_he',
         'email_lien_he',
@@ -36,7 +37,23 @@ class TinDang extends Model
     {
         return [
             'thoi_gian_xay_ra' => 'datetime',
+            'co_gio_xay_ra' => 'boolean',
         ];
+    }
+
+    public function gioXayRa(): ?string
+    {
+        $thoiGian = $this->thoi_gian_xay_ra;
+        if ($thoiGian === null || $this->co_gio_xay_ra === false) {
+            return null;
+        }
+
+        return $this->co_gio_xay_ra || $thoiGian->format('H:i:s') !== '00:00:00' ? $thoiGian->format('H:i') : null;
+    }
+
+    public function thuMucAnh(): string
+    {
+        return $this->loai_tin === 'nhat_duoc' ? 'tin/tin-nhat' : 'tin/tin-mat';
     }
 
     public function nguoiDung(): BelongsTo

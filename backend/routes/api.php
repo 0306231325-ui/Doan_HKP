@@ -25,6 +25,9 @@ Route::get('/anh-dai-dien/{tenAnh}', [ThongTinCaNhanController::class, 'anhDaiDi
 Route::middleware(['auth:sanctum', 'active'])->group(function () {
     Route::get('/dang-tin/cau-hoi', [DangTinController::class, 'bieuMau'])->middleware('throttle:120,1');
     Route::post('/tin-dang', [DangTinController::class, 'them'])->middleware('throttle:10,1');
+    Route::get('/tin-dang/{tin}/chinh-sua', [DangTinController::class, 'duLieuSua'])->whereNumber('tin');
+    Route::patch('/tin-dang/{tin}', [DangTinController::class, 'sua'])->whereNumber('tin')->middleware('throttle:30,1');
+    Route::delete('/tin-dang/{tin}', [DangTinController::class, 'xoa'])->whereNumber('tin')->middleware('throttle:30,1');
     Route::get('/tin-dang/{tin}/nhan-lai', [YeuCauNhanDoController::class, 'bieuMau'])->whereNumber('tin');
     Route::post('/tin-dang/{tin}/nhan-lai', [YeuCauNhanDoController::class, 'them'])->whereNumber('tin')->middleware('throttle:10,1');
     Route::get('/tin-dang/{tin}/lien-he', [YeuCauNhanDoController::class, 'lienHe'])->whereNumber('tin')->middleware('throttle:60,1');

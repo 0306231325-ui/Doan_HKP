@@ -1,6 +1,8 @@
-import { ArrowLeft, CalendarDays, ChevronRight, ClipboardList, Flag, HandHeart, ImageOff, Images, Info, MapPin, MessageSquare, Share2, UserRound } from 'lucide-react'
+import { ArrowLeft, CalendarDays, ChevronRight, ClipboardList, Flag, HandHeart, ImageOff, Images, Info, MapPin, MessageSquare, Share2, UserRound, ZoomIn } from 'lucide-react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import Button from '../../components/shared/Button'
+import HopThoai from '../../components/shared/HopThoai'
 import KhungThongTin from '../../components/shared/KhungThongTin'
 import ThongBaoTrong from '../../components/shared/ThongBaoTrong'
 import useChiTietTinDang from './hooks/useChiTietTinDang'
@@ -8,6 +10,21 @@ import { dinhDangNgay } from '../danh-sach-do/hooks/xuLyDanhSachDo'
 
 export default function ChiTietTinDang() {
   const { tin, dangTai, loi, taiLai, quayLai } = useChiTietTinDang()
+  const [anhDangXem, datAnhDangXem] = useState(null)
+  const anh = tin?.images?.length ? tin.images : [tin?.imageUrl].filter((url) => url && url !== '/do-vat-trong.svg')
+  const cotAnh = anh.length >= 3 ? 'sm:grid-cols-2 lg:grid-cols-3' : anh.length === 2 ? 'sm:grid-cols-2' : ''
+  const thoiGian = tin ? [dinhDangNgay(tin.date), tin.gioXayRa].filter(Boolean).join(' · ') : ''
+  const lopTieuDeMuc = 'mb-4 flex items-center gap-2.5 text-base font-bold text-[#243c30]'
+
+  function dungAnhThayThe(suKien) {
+    const img = suKien.currentTarget
+    if (img.getAttribute('src') !== '/do-vat-trong.svg') img.src = '/do-vat-trong.svg'
+  }
+
+  function dongAnh() {
+    datAnhDangXem(null)
+  }
+
   return (
     <div className="mx-auto max-w-6xl space-y-6 pb-6 sm:space-y-8">
       <nav aria-label="Đường dẫn trang" className="flex flex-wrap items-center gap-2 text-xs text-[#718276] sm:text-sm">
@@ -26,52 +43,74 @@ export default function ChiTietTinDang() {
         <Link to={quayLai} className="inline-flex shrink-0 items-center gap-2 self-start rounded-xl border border-[#ceded3] bg-white px-4 py-2.5 text-sm font-semibold text-[#315a43] transition-colors hover:bg-emerald-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700"><ArrowLeft className="h-4 w-4" aria-hidden="true" />Quay lại danh sách</Link>
       </header>
 
-      {dangTai ? <p role="status" className="rounded-3xl bg-white p-10 text-center text-[#607568]">Đang tải tin đăng…</p> : loi ? <div role="alert" className="space-y-4 rounded-3xl bg-white p-10 text-center"><p>{loi}</p><Button onClick={taiLai}>Thử lại</Button></div> : !tin ? <ThongBaoTrong bieuTuong={Info} tieuDe="Không tìm thấy tin đăng" moTa="Tin đăng không tồn tại hoặc không còn được hiển thị. Bạn có thể quay lại danh sách để tìm tin khác." /> : <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] lg:gap-8">
-        <div className="min-w-0 space-y-6">
-          <KhungThongTin tieuDe="Hình ảnh đồ vật" bieuTuong={Images}>
-            {tin.imageUrl && tin.imageUrl !== '/do-vat-trong.svg' ? <div className={`grid gap-3 ${tin.images?.length > 1 ? 'sm:grid-cols-2' : ''}`}>{(tin.images?.length ? tin.images : [tin.imageUrl]).map((url, i) => <img key={url} src={url} alt={`${tin.title} · Ảnh ${i + 1}`} className="aspect-[4/3] w-full rounded-2xl bg-[#f5faf7] object-contain" onError={(suKien) => { suKien.currentTarget.onerror = null; suKien.currentTarget.src = '/do-vat-trong.svg' }} />)}</div> : <div className="flex aspect-[4/3] flex-col items-center justify-center gap-4 rounded-2xl border border-dashed border-[#cbded1] bg-[#f5faf7] px-5 text-center sm:aspect-[16/10]">
-              <span className="flex h-20 w-20 items-center justify-center rounded-3xl bg-white text-[#9bb3a2] shadow-sm"><ImageOff className="h-9 w-9" strokeWidth={1.5} aria-hidden="true" /></span>
-              <div><p className="text-sm font-semibold text-[#526c5b]">Chưa có hình ảnh</p><p className="mt-1.5 text-xs leading-5 text-[#718276]">Hình ảnh của tin đăng sẽ hiển thị tại đây.</p></div>
-            </div>}
-          </KhungThongTin>
-
-          <KhungThongTin tieuDe="Thông tin tin đăng" bieuTuong={Info}>
-            <dl className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2">
-              {[['Tiêu đề', tin.title], ['Mã tin', tin.referenceCode], ['Loại tin', tin.typeName], ['Trạng thái', tin.statusBadge], ['Danh mục', tin.category]].map(([nhan, giaTri]) => <div key={nhan} className="border-b border-[#edf2ee] pb-3"><dt className="text-xs font-medium text-[#718276]">{nhan}</dt><dd className="mt-2 text-sm font-semibold text-[#315a43]">{giaTri || 'Chưa có thông tin'}</dd></div>)}
+      {dangTai ? <p role="status" className="rounded-3xl bg-white p-10 text-center text-[#607568]">Đang tải tin đăng…</p> : loi ? <div role="alert" className="space-y-4 rounded-3xl bg-white p-10 text-center"><p>{loi}</p><Button onClick={taiLai}>Thử lại</Button></div> : !tin ? <ThongBaoTrong bieuTuong={Info} tieuDe="Không tìm thấy tin đăng" moTa="Tin đăng không tồn tại hoặc không còn được hiển thị. Bạn có thể quay lại danh sách để tìm tin khác." /> : <KhungThongTin tieuDe="Thông tin tin đăng" bieuTuong={Info}>
+        <div className="divide-y divide-[#e4ece7]">
+          <section className="pb-6">
+            <h3 className={lopTieuDeMuc}><Images className="h-5 w-5 text-emerald-700" aria-hidden="true" />Hình ảnh đồ vật</h3>
+            {anh.length ? (
+              <div className={`grid gap-3 ${cotAnh}`}>
+                {anh.map((url, i) => (
+                  <button key={url} type="button" aria-label={`Phóng to ảnh ${i + 1}`} aria-haspopup="dialog" onClick={() => datAnhDangXem({ url, viTri: i + 1, tinId: tin.id })} className="relative cursor-zoom-in overflow-hidden rounded-2xl bg-[#f5faf7] hover:ring-2 hover:ring-emerald-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700">
+                    <img src={url} alt={`${tin.title} · Ảnh ${i + 1}`} className="aspect-[4/3] max-h-96 w-full object-contain" onError={dungAnhThayThe} />
+                    <span className="absolute bottom-3 right-3 rounded-full bg-white/90 p-2 text-emerald-900 shadow-sm"><ZoomIn className="h-4 w-4" aria-hidden="true" /></span>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="flex min-h-40 flex-col items-center justify-center gap-4 rounded-2xl border border-dashed border-[#cbded1] bg-[#f5faf7] px-5 text-center">
+                <ImageOff className="h-9 w-9 text-[#9bb3a2]" strokeWidth={1.5} aria-hidden="true" />
+                <p className="text-sm font-semibold text-[#526c5b]">Chưa có hình ảnh</p>
+              </div>
+            )}
+          </section>
+          <section aria-label="Thông tin cơ bản" className="py-6">
+            <dl className="grid gap-x-6 gap-y-5 sm:grid-cols-[2fr_1fr_1fr]">
+              {[['Tiêu đề', tin.title], ['Loại tin', tin.typeName], ['Danh mục', tin.category]].map(([nhan, giaTri]) => (
+                <div key={nhan} className="min-w-0">
+                  <dt className="text-xs font-medium text-[#718276]">{nhan}</dt>
+                  <dd className="mt-2 break-words text-sm font-semibold text-[#315a43]">{giaTri || 'Chưa có thông tin'}</dd>
+                </div>
+              ))}
             </dl>
-          </KhungThongTin>
+          </section>
 
-          <KhungThongTin tieuDe="Thông tin đồ vật" bieuTuong={ClipboardList}>
+          <section className="py-6">
+            <h3 className={lopTieuDeMuc}><ClipboardList className="h-5 w-5 text-emerald-700" aria-hidden="true" />Thông tin đồ vật</h3>
             <p className="whitespace-pre-line text-sm leading-7 text-[#607568]">{tin.description || 'Chưa có mô tả đồ vật.'}</p>
-          </KhungThongTin>
+          </section>
 
-          <KhungThongTin tieuDe="Thời gian và địa điểm" bieuTuong={MapPin}>
-            <dl className="space-y-4">
-              {[{ nhan: 'Thời gian ghi nhận', bieuTuong: CalendarDays, giaTri: dinhDangNgay(tin.date) }, { nhan: 'Khu vực', bieuTuong: MapPin, giaTri: tin.location }, { nhan: 'Vị trí chi tiết', bieuTuong: Info, giaTri: tin.locationDetail }].map(({ nhan, bieuTuong: BieuTuong, giaTri }) => <div key={nhan} className="flex gap-3 rounded-2xl bg-[#f7faf8] p-4"><BieuTuong className="mt-0.5 h-4 w-4 shrink-0 text-[#8ba594]" aria-hidden="true" /><div><dt className="text-xs font-medium text-[#718276]">{nhan}</dt><dd className="mt-1.5 text-sm text-[#315a43]">{giaTri || 'Chưa có thông tin'}</dd></div></div>)}
+          <section className="py-6">
+            <h3 className={lopTieuDeMuc}><MapPin className="h-5 w-5 text-emerald-700" aria-hidden="true" />Thời gian và địa điểm</h3>
+            <dl className="grid gap-3 sm:grid-cols-3">
+              {[{ nhan: 'Thời gian ghi nhận', bieuTuong: CalendarDays, giaTri: thoiGian }, { nhan: 'Khu vực', bieuTuong: MapPin, giaTri: tin.location }, { nhan: 'Vị trí chi tiết', bieuTuong: Info, giaTri: tin.locationDetail }].map(({ nhan, bieuTuong: BieuTuong, giaTri }) => <div key={nhan} className="flex gap-3 rounded-2xl bg-[#f7faf8] p-4"><BieuTuong className="mt-0.5 h-4 w-4 shrink-0 text-[#8ba594]" aria-hidden="true" /><div><dt className="text-xs font-medium text-[#718276]">{nhan}</dt><dd className="mt-1.5 text-sm text-[#315a43]">{giaTri || 'Chưa có thông tin'}</dd></div></div>)}
             </dl>
-          </KhungThongTin>
-        </div>
-
-        <aside className="space-y-6 lg:sticky lg:top-28">
-          <KhungThongTin tieuDe="Người đăng & liên hệ" bieuTuong={UserRound}>
-            <div className="flex items-center gap-3 border-b border-[#e4ece7] pb-5">
+          </section>
+          <section className="py-6">
+            <h3 className={lopTieuDeMuc}><UserRound className="h-5 w-5 text-emerald-700" aria-hidden="true" />Người đăng &amp; liên hệ</h3>
+            <div className="flex items-center gap-3">
               <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#edf5ef] text-[#9bb3a2]"><UserRound className="h-6 w-6" aria-hidden="true" /></span>
               <p className="text-sm font-medium leading-6 text-[#718276]">{tin.contactPerson}</p>
             </div>
-            <dl className="mt-5 space-y-4">
+            <dl className="mt-5 grid gap-4 sm:grid-cols-2">
               {[['Số điện thoại', tin.contactPhone], ['Email / Gmail', tin.contactEmail]].map(([nhan, giaTri]) => <div key={nhan} className="space-y-1 text-sm"><dt className="text-[#718276]">{nhan}</dt><dd className="break-words font-medium text-[#315a43]">{giaTri || 'Không cung cấp'}</dd></div>)}
             </dl>
-            {tin.contactError ? <p role="alert" className="mt-4 text-sm text-rose-700">{tin.contactError} <button type="button" onClick={taiLai} className="underline">Thử lại</button></p> : !tin.contactUnlocked && <p className="mt-4 text-xs leading-5 text-[#718276]">{tin.type === 'found' ? 'Liên hệ được giữ kín. Gửi yêu cầu nhận đồ để xem thông tin.' : 'Thông tin liên hệ được giữ kín trên tin đăng.'}</p>}
-          </KhungThongTin>
+            {tin.contactError ? <p role="alert" className="mt-4 text-sm text-rose-700">{tin.contactError} <button type="button" onClick={taiLai} className="underline">Thử lại</button></p> : !tin.contactUnlocked && <p className="mt-4 text-xs leading-5 text-[#718276]">{tin.type === 'found' ? 'Gửi yêu cầu nhận đồ để xem liên hệ đầy đủ.' : 'Tin đăng hiển thị một phần thông tin liên hệ.'}</p>}
+          </section>
 
-          <KhungThongTin tieuDe="Thao tác với tin đăng" bieuTuong={HandHeart}>
-            <div className="space-y-3">
-              {tin.canClaim && <Link to={`/yeu-cau-nhan-do?id=${tin.id}`} className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-emerald-900 px-4 py-3 text-center text-sm font-bold text-white hover:bg-emerald-800"><HandHeart className="h-4 w-4" aria-hidden="true" />{tin.hasClaim ? 'Xem yêu cầu đã gửi' : 'Yêu cầu nhận lại đồ'}</Link>}
-              {[{ nhan: 'Tôi đang giữ đồ này', bieuTuong: MessageSquare }, { nhan: 'Chia sẻ tin', bieuTuong: Share2 }, { nhan: 'Báo cáo tin đăng', bieuTuong: Flag }].map(({ nhan, bieuTuong: BieuTuong }) => <button key={nhan} type="button" disabled title="Chức năng này chưa được kết nối" className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl border border-[#ceded3] bg-white px-4 py-3 text-sm font-semibold text-[#526c5b] disabled:cursor-not-allowed disabled:opacity-50"><BieuTuong className="h-4 w-4" aria-hidden="true" />{nhan}</button>)}
+          <section className="pt-6">
+            <h3 className={lopTieuDeMuc}><HandHeart className="h-5 w-5 text-emerald-700" aria-hidden="true" />Thao tác với tin đăng</h3>
+            <div className="flex flex-wrap gap-3">
+              {tin.canClaim && <Link to={`/yeu-cau-nhan-do?id=${tin.id}`} className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-emerald-900 px-4 py-3 text-center text-sm font-bold text-white hover:bg-emerald-800 sm:w-auto"><HandHeart className="h-4 w-4" aria-hidden="true" />{tin.hasClaim ? 'Xem yêu cầu đã gửi' : 'Yêu cầu nhận lại đồ'}</Link>}
+              {[{ nhan: 'Tôi đang giữ đồ này', bieuTuong: MessageSquare }, { nhan: 'Chia sẻ tin', bieuTuong: Share2 }, { nhan: 'Báo cáo tin đăng', bieuTuong: Flag }].map(({ nhan, bieuTuong: BieuTuong }) => <button key={nhan} type="button" disabled title="Chức năng này chưa được kết nối" className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl border border-[#ceded3] bg-white px-4 py-3 text-sm font-semibold text-[#526c5b] disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"><BieuTuong className="h-4 w-4" aria-hidden="true" />{nhan}</button>)}
             </div>
-          </KhungThongTin>
-        </aside>
-      </div>}
+          </section>
+        </div>
+      </KhungThongTin>}
+      {anhDangXem && anhDangXem.tinId === tin?.id && (
+        <HopThoai rong tieuDe={`Ảnh ${anhDangXem.viTri} / ${anh.length}`} khiDong={dongAnh}>
+          <img src={anhDangXem.url} alt={`${tin.title} · Ảnh ${anhDangXem.viTri}`} className="max-h-[70dvh] w-full bg-[#f5faf7] object-contain" onError={dungAnhThayThe} />
+        </HopThoai>
+      )}
     </div>
   )
 }

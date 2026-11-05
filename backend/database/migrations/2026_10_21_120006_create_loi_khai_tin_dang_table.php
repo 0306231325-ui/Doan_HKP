@@ -16,6 +16,7 @@ return new class extends Migration
               id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
               tin_dang_id BIGINT UNSIGNED NOT NULL,
               cau_hoi_id BIGINT UNSIGNED NOT NULL,
+              cau_hoi_phien_ban_id BIGINT UNSIGNED NOT NULL,
               gia_tri_text TEXT NULL,
               gia_tri_so DECIMAL(18,4) NULL,
               gia_tri_lua_chon VARCHAR(100) NULL,
@@ -23,7 +24,9 @@ return new class extends Migration
               updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
               CONSTRAINT fk_loi_khai_tin FOREIGN KEY (tin_dang_id) REFERENCES tin_dang(id),
               CONSTRAINT fk_loi_khai_cau_hoi FOREIGN KEY (cau_hoi_id) REFERENCES cau_hoi(id),
-              UNIQUE KEY uq_loi_khai_tin_cau_hoi (tin_dang_id, cau_hoi_id),
+              CONSTRAINT loi_khai_tin_dang_cau_hoi_phien_ban_id_foreign FOREIGN KEY (cau_hoi_phien_ban_id) REFERENCES lich_su_cau_hoi(id),
+              CONSTRAINT fk_loi_khai_phien_ban_cau_hoi FOREIGN KEY (cau_hoi_phien_ban_id, cau_hoi_id) REFERENCES lich_su_cau_hoi(id, cau_hoi_id),
+              UNIQUE KEY uq_loi_khai_tin_phien_ban (tin_dang_id, cau_hoi_phien_ban_id),
               UNIQUE KEY uq_loi_khai_tin_id_tin (id, tin_dang_id),
               INDEX idx_loi_khai_loc (cau_hoi_id, gia_tri_lua_chon, tin_dang_id),
               CONSTRAINT chk_loi_khai_tin_mot_gia_tri CHECK (

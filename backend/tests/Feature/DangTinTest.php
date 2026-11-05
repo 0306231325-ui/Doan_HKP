@@ -35,6 +35,7 @@ class DangTinTest extends TestCase
         config(['database.default' => 'sqlite', 'database.connections.sqlite.database' => ':memory:']);
         DB::purge('sqlite');
         Storage::fake('local');
+        Storage::fake('public');
         Schema::create('nguoi_dung', function (Blueprint $t) {
             $t->id();
             foreach (['ho_ten', 'email', 'mat_khau', 'vai_tro', 'trang_thai'] as $cot) {
@@ -77,14 +78,16 @@ class DangTinTest extends TestCase
             $t->string('slug')->unique();
             $t->text('mo_ta');
             $t->dateTime('thoi_gian_xay_ra');
+            $t->boolean('co_gio_xay_ra')->nullable();
             $t->string('dia_diem_chi_tiet');
             $t->string('thong_tin_lien_he')->nullable();
+            $t->string('email_lien_he', 254)->nullable();
+            $t->uuid('ma_gui')->nullable()->unique();
             $t->string('trang_thai')->default('dang_mo');
             $t->string('trang_thai_kiem_duyet')->default('hien_thi');
             $t->softDeletes();
             $t->timestamps();
         });
-        (require database_path('migrations/2026_11_04_000005_add_contact_and_submission_key_to_tin_dang.php'))->up();
         Schema::create('loi_khai_tin_dang', function (Blueprint $t) {
             $t->id();
             $t->foreignId('tin_dang_id')->constrained('tin_dang');
@@ -178,8 +181,11 @@ class DangTinTest extends TestCase
         $mau['trang_thai_kiem_duyet'] = 'da_an';
         $id = $this->postJson('/api/tin-dang', $mau)->assertCreated()->json('data.id');
         $this->assertDatabaseHas('tin_dang', ['id' => $id, 'nguoi_dung_id' => $this->chuTin->id, 'email_lien_he' => 'lienhe@gmail.com', 'trang_thai_kiem_duyet' => 'hien_thi']);
-        $this->getJson('/api/tra-cuu')->assertOk()->assertJsonPath('data.0.id', $id)->assertJsonPath('data.0.contactPhone', '****')->assertJsonPath('data.0.contactEmail', '****');
-        $response = $this->getJson('/api/tra-cuu/'.$id)->assertOk()->assertJsonMissingPath('data.publicAnswers');
+        $this->getJson('/api/tra-cuu')->assertOk()->assertJsonPath('data.0.id', $id)
+            ->assertJsonPath('data.0.contactPhone', '09012****')->assertJsonPath('data.0.contactEmail', 'li****@****');
+        $response = $this->getJson('/api/tra-cuu/'.$id)->assertOk()->assertJsonMissingPath('data.publicAnswers')
+            ->assertJsonPath('data.contactPhone', '09012****')->assertJsonPath('data.contactEmail', 'li****@****')
+            ->assertJsonPath('data.gioXayRa', null);
         foreach (['SECRET-ANSWER', '0901234567', 'lienhe@gmail.com', 'Dấu hiệu bí mật?', 'khong-doi-mat-khau'] as $biMat) {
             $this->assertStringNotContainsString($biMat, $response->getContent());
         }
@@ -255,13 +261,22 @@ class DangTinTest extends TestCase
         $this->assertDatabaseCount('tin_dang', 0);
         $id = $this->post('/api/tin-dang', $mau, ['Accept' => 'application/json'])->assertCreated()->json('data.id');
         $this->assertDatabaseCount('hinh_anh_tin_dang', 3);
-        $this->assertCount(3, Storage::disk('local')->allFiles('tin-dang'));
+        $this->assertCount(3, Storage::disk('public')->allFiles('tin/tin-nhat'));
         $this->getJson('/api/tra-cuu/'.$id)->assertOk()->assertJsonCount(3, 'data.images');
         $url = HinhAnhTinDang::first()->duong_dan;
+        $this->get($url)->assertOk();
+        $tep = basename($url);
+        $anhMoi = 'tin/tin-nhat/'.$tep;
+        Storage::disk('local')->put('tin-dang/'.$tep, Storage::disk('public')->get($anhMoi));
+        Storage::disk('public')->delete($anhMoi);
         $this->get($url)->assertOk();
         TinDang::find($id)->update(['trang_thai_kiem_duyet' => 'da_an']);
         $this->get($url)->assertNotFound();
         $this->getJson('/api/tra-cuu/'.$id)->assertNotFound();
+
+        $baoMat = [...$this->mau(), 'loaiTin' => 'lost', 'anh' => [UploadedFile::fake()->image('bao-mat.jpg')]];
+        $this->post('/api/tin-dang', $baoMat, ['Accept' => 'application/json'])->assertCreated();
+        $this->assertCount(1, Storage::disk('public')->allFiles('tin/tin-mat'));
     }
 
     public function test_loi_luu_anh_rollback_tin_va_don_tep(): void
@@ -276,7 +291,7 @@ class DangTinTest extends TestCase
         }
         $this->assertDatabaseCount('tin_dang', 0);
         $this->assertDatabaseCount('loi_khai_tin_dang', 0);
-        $this->assertEmpty(Storage::disk('local')->allFiles('tin-dang'));
+        $this->assertEmpty(Storage::disk('public')->allFiles('tin'));
     }
 
     public function test_nhan_lai_dung_cau_goc_va_gui_roi_moi_mo_lien_he(): void
@@ -321,6 +336,39 @@ class DangTinTest extends TestCase
         $this->getJson('/api/tin-dang/'.$id.'/nhan-lai')->assertForbidden();
         $this->actingAs($this->taiKhoan('quan_tri'));
         $this->getJson('/api/tin-dang/'.$id.'/lien-he')->assertOk();
+    }
+
+    public function test_chu_tin_moi_duoc_sua_noi_dung_va_xoa_tin(): void
+    {
+        $mau = $this->mau();
+        $mau['gioXayRa'] = '00:00';
+        $id = $this->postJson('/api/tin-dang', $mau)->assertCreated()->json('data.id');
+        $url = '/api/tin-dang/'.$id;
+        $mau['tieuDe'] = 'Tai nghe màu xanh ở thư viện';
+        $mau['loaiTin'] = 'lost';
+        $this->getJson('/api/tra-cuu')->assertJsonPath('data.0.laChuTin', true);
+
+        $this->app['auth']->forgetGuards();
+        $this->actingAs($this->nguoiNhan, 'web');
+        $this->getJson('/api/tra-cuu')->assertJsonPath('data.0.laChuTin', false);
+        $this->getJson($url.'/chinh-sua')->assertNotFound();
+        $this->patchJson($url, $mau)->assertNotFound();
+        $this->deleteJson($url)->assertNotFound();
+
+        $this->app['auth']->forgetGuards();
+        $this->actingAs($this->chuTin, 'web');
+        $this->getJson($url.'/chinh-sua')->assertOk()->assertJsonPath('data.tieuDe', 'Nhặt được tai nghe')->assertJsonPath('data.gioXayRa', '00:00');
+        $this->getJson('/api/tra-cuu/'.$id)->assertOk()->assertJsonPath('data.gioXayRa', '00:00');
+        $this->patchJson($url, [...$mau, 'tieuDe' => ''])->assertUnprocessable()->assertJsonValidationErrors('tieuDe');
+        $this->patchJson($url, [...$mau, 'gioXayRa' => '24:00'])->assertUnprocessable()->assertJsonValidationErrors('gioXayRa');
+        $this->patchJson($url, [...$mau, 'gioXayRa' => ''])->assertOk();
+        $this->getJson('/api/tra-cuu/'.$id)->assertOk()->assertJsonPath('data.title', $mau['tieuDe'])
+            ->assertJsonPath('data.type', 'found')->assertJsonPath('data.gioXayRa', null);
+        $this->deleteJson($url)->assertOk();
+        $this->assertSoftDeleted('tin_dang', ['id' => $id]);
+        $this->assertDatabaseCount('loi_khai_tin_dang', 1);
+        $this->getJson('/api/tra-cuu')->assertJsonPath('meta.tongTin', 0);
+        $this->getJson('/api/tra-cuu/'.$id)->assertNotFound();
     }
 
     public function test_quyen_va_du_lieu_sai(): void

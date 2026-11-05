@@ -10,7 +10,7 @@ export default function useDangTin(loaiBanDau, duongDanNoiDung) {
   const { user } = useAuth()
   const dieuHuong = useNavigate()
   const [ngayToiDa] = useState(() => layNgayVietNam(new Date()))
-  const [banNhap, datBanNhap] = useState(() => ({ loaiTin: loaiBanDau, danhMucId: '', tieuDe: '', moTa: '', ngayXayRa: ngayToiDa, diaDiemId: '', diaDiemChiTiet: '' }))
+  const [banNhap, datBanNhap] = useState(() => ({ loaiTin: loaiBanDau, danhMucId: '', tieuDe: '', moTa: '', ngayXayRa: ngayToiDa, gioXayRa: '', diaDiemId: '', diaDiemChiTiet: '' }))
   const duLieu = {
     soDienThoai: user?.so_dien_thoai ?? '',
     email: user?.email ?? '',
@@ -18,7 +18,6 @@ export default function useDangTin(loaiBanDau, duongDanNoiDung) {
   }
   const { danhSach: danhMuc, diaDiem, dangTai: dangTaiDanhMuc, loiTai: loiTaiDanhMuc, taiLai: taiLaiDanhMuc } = useDanhMuc()
   const loiThongTin = kiemTraThongTinDangTin(duLieu, danhMuc)
-  const [loiChonThongTin, datLoiChonThongTin] = useState('')
   const [cauTraLoi, datCauTraLoi] = useState({})
   const [lanTaiCauHoi, datLanTaiCauHoi] = useState(0)
   const khoa = `${duLieu.danhMucId}#${lanTaiCauHoi}`
@@ -31,6 +30,7 @@ export default function useDangTin(loaiBanDau, duongDanNoiDung) {
   const [loi, datLoi] = useState('')
   const [buoc, datBuoc] = useState('')
   const [dangGui, datDangGui] = useState(false)
+  const coTheTiepTuc = !dangTaiDanhMuc && !loiTaiDanhMuc && !loiThongTin && !dangGui
   const khoaGui = useRef(null)
   const dangXuLy = useRef(false)
   const cacUrl = useRef(new Set())
@@ -66,15 +66,11 @@ export default function useDangTin(loaiBanDau, duongDanNoiDung) {
     const { name, value } = suKien.target
     datBanNhap((cu) => ({ ...cu, [name]: value }))
     if (name === 'danhMucId') datCauTraLoi({})
-    datLoiChonThongTin('')
     datLoi('')
   }
 
-  function chuyenSangNoiDung(suKien) {
-    suKien.preventDefault()
-    if (dangTaiDanhMuc || loiTaiDanhMuc || dangXuLy.current) return
-    datLoiChonThongTin(loiThongTin)
-    if (loiThongTin) return
+  function chuyenSangNoiDung() {
+    if (!coTheTiepTuc || dangXuLy.current) return
     datLoi('')
     datBuoc('')
     dieuHuong(duongDanNoiDung)
@@ -147,5 +143,5 @@ export default function useDangTin(loaiBanDau, duongDanNoiDung) {
     }
   }
 
-  return { dangTaiDanhMuc, loiTaiDanhMuc, taiLaiDanhMuc, loiThongTin, loiChonThongTin, chuyenSangNoiDung, diaDiem, ngayToiDa, dangTaiCauHoi, loiTaiCauHoi, taiLaiCauHoi, duLieu, danhMuc, cauHoi, cauTraLoi, anh, loiAnh, loi, moXemTruoc: Boolean(buoc), moXacNhan: buoc === 'xac_nhan', dangGui, doiTruong, doiCauTraLoi, chonAnh, xoaAnh, xuLyGuiBieuMau, dongXemTruoc, xacNhanDang }
+  return { dangTaiDanhMuc, loiTaiDanhMuc, taiLaiDanhMuc, loiThongTin, coTheTiepTuc, chuyenSangNoiDung, diaDiem, ngayToiDa, dangTaiCauHoi, loiTaiCauHoi, taiLaiCauHoi, duLieu, danhMuc, cauHoi, cauTraLoi, anh, loiAnh, loi, moXemTruoc: Boolean(buoc), moXacNhan: buoc === 'xac_nhan', dangGui, doiTruong, doiCauTraLoi, chonAnh, xoaAnh, xuLyGuiBieuMau, dongXemTruoc, xacNhanDang }
 }

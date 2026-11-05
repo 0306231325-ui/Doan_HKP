@@ -44,9 +44,7 @@ class DangTinController extends Controller
         $mau = $request->validate([
             'maGui' => ['required', 'uuid'], 'loaiTin' => ['required', 'in:lost,found'],
             'danhMucId' => ['required', 'integer', 'min:1'],
-            'tieuDe' => ['required', 'string', 'max:150'], 'moTa' => ['nullable', 'string', 'max:2000'],
-            'ngayXayRa' => ['required', 'date_format:Y-m-d', 'before_or_equal:'.now('Asia/Ho_Chi_Minh')->toDateString()],
-            'diaDiemId' => ['nullable', 'integer', 'min:1'], 'diaDiemChiTiet' => ['required', 'string', 'max:255'],
+            ...$this->quyTacNoiDung(),
             'soDienThoai' => ['nullable', 'required_without:email', 'string', 'max:20', 'regex:/^\+?[0-9 ]{9,20}$/'],
             'email' => ['nullable', 'required_without:soDienThoai', 'email:rfc', 'max:254'],
             'cauTraLoi' => ['required', 'array', 'max:500'],
@@ -91,16 +89,16 @@ class DangTinController extends Controller
                 }
                 $tin = TinDang::create([
                     'nguoi_dung_id' => $request->user()->id, 'danh_muc_id' => $mau['danhMucId'],
-                    'dia_diem_id' => $mau['diaDiemId'] ?? null, 'loai_tin' => $mau['loaiTin'] === 'found' ? 'nhat_duoc' : 'bao_mat',
-                    'tieu_de' => $mau['tieuDe'], 'slug' => Str::slug($mau['tieuDe']).'-'.Str::uuid(),
-                    'mo_ta' => $mau['moTa'] ?? '', 'thoi_gian_xay_ra' => $mau['ngayXayRa'],
-                    'dia_diem_chi_tiet' => $mau['diaDiemChiTiet'], 'thong_tin_lien_he' => $mau['soDienThoai'] ?? null,
+                    ...$this->cotNoiDung($mau),
+                    'loai_tin' => $mau['loaiTin'] === 'found' ? 'nhat_duoc' : 'bao_mat',
+                    'slug' => Str::slug($mau['tieuDe']).'-'.Str::uuid(),
+                    'thong_tin_lien_he' => $mau['soDienThoai'] ?? null,
                     'email_lien_he' => $mau['email'] ?? null, 'ma_gui' => $mau['maGui'],
                     'trang_thai' => 'dang_mo', 'trang_thai_kiem_duyet' => 'hien_thi',
                 ]);
                 $tin->loiKhai()->createMany($loiKhai);
                 foreach ($request->file('anh', []) as $thuTu => $tep) {
-                    $duongDan = $tep->store('tin-dang', 'local');
+                    $duongDan = $tep->store($tin->thuMucAnh(), 'public');
                     if (! $duongDan) {
                         throw new LogicException('Không lưu được ảnh. Vui lòng thử lại.');
                     }
@@ -112,21 +110,113 @@ class DangTinController extends Controller
                 return response()->json(['data' => ['id' => $tin->id], 'message' => 'Đăng tin thành công.'], 201);
             });
         } catch (Throwable $loi) {
-            Storage::disk('local')->delete($tepDaLuu);
+            Storage::disk('public')->delete($tepDaLuu);
             throw $loi;
         }
     }
 
+    public function duLieuSua(Request $request, string $tin): JsonResponse
+    {
+        $banTin = $this->timTinCuaToi($request, $tin);
+
+        return response()->json(['data' => [
+            'loaiTin' => $banTin->loai_tin === 'nhat_duoc' ? 'found' : 'lost',
+            'tieuDe' => $banTin->tieu_de,
+            'moTa' => $banTin->mo_ta ?? '',
+            'ngayXayRa' => ($banTin->thoi_gian_xay_ra ?? $banTin->created_at)?->format('Y-m-d') ?? '',
+            'gioXayRa' => $banTin->gioXayRa() ?? '',
+            'diaDiemId' => (string) $banTin->dia_diem_id,
+            'tenDiaDiem' => $banTin->diaDiem?->ten_dia_diem,
+            'diaDiemChiTiet' => $banTin->dia_diem_chi_tiet ?? '',
+        ]])->header('Cache-Control', 'private, no-store');
+    }
+
+    public function sua(Request $request, string $tin): JsonResponse
+    {
+        return DB::transaction(function () use ($request, $tin) {
+            $banTin = $this->timTinCuaToi($request, $tin, true);
+            $mau = $request->validate($this->quyTacNoiDung(), [
+                'ngayXayRa.before_or_equal' => 'Ngày xảy ra không được ở tương lai.',
+            ], ['tieuDe' => 'tiêu đề', 'diaDiemChiTiet' => 'vị trí cụ thể', 'ngayXayRa' => 'ngày xảy ra']);
+            $diaDiemMoi = $mau['diaDiemId'] ?? null;
+            if ($diaDiemMoi !== null && (string) $diaDiemMoi !== (string) $banTin->dia_diem_id) {
+                abort_unless(DiaDiem::whereKey($diaDiemMoi)->where('trang_thai', true)->lockForUpdate()->exists(), 422, 'Địa điểm không còn được sử dụng.');
+            }
+            $banTin->fill($this->cotNoiDung($mau));
+            if ($banTin->isDirty()) {
+                $banTin->save();
+                $banTin->lichSu()->create(['nguoi_thuc_hien_id' => $request->user()->id, 'hanh_dong' => 'sua_tin', 'trang_thai_moi' => $banTin->trang_thai_kiem_duyet, 'noi_dung' => 'Chủ tin đã sửa nội dung tin đăng.']);
+            }
+
+            return response()->json(['message' => 'Đã lưu nội dung tin đăng.']);
+        });
+    }
+
+    public function xoa(Request $request, string $tin): JsonResponse
+    {
+        return DB::transaction(function () use ($request, $tin) {
+            $banTin = $this->timTinCuaToi($request, $tin, true);
+            $banTin->lichSu()->create(['nguoi_thuc_hien_id' => $request->user()->id, 'hanh_dong' => 'xoa_tin', 'trang_thai_moi' => 'da_xoa', 'noi_dung' => 'Chủ tin đã xóa tin đăng.']);
+            $banTin->delete();
+
+            return response()->json(['message' => 'Đã xóa tin đăng.']);
+        });
+    }
+
+    private function timTinCuaToi(Request $request, string $tin, bool $khoa = false): TinDang
+    {
+        $truyVan = TinDang::where('nguoi_dung_id', $request->user()->id);
+        if ($khoa) {
+            $truyVan->lockForUpdate();
+        }
+
+        return $truyVan->findOrFail($tin);
+    }
+
+    private function quyTacNoiDung(): array
+    {
+        return [
+            'tieuDe' => ['required', 'string', 'max:150'],
+            'moTa' => ['nullable', 'string', 'max:2000'],
+            'ngayXayRa' => ['required', 'date_format:Y-m-d', 'before_or_equal:'.now('Asia/Ho_Chi_Minh')->toDateString()],
+            'gioXayRa' => ['nullable', 'date_format:H:i'],
+            'diaDiemId' => ['nullable', 'integer', 'min:1'],
+            'diaDiemChiTiet' => ['required', 'string', 'max:255'],
+        ];
+    }
+
+    private function cotNoiDung(array $mau): array
+    {
+        $gio = $mau['gioXayRa'] ?? null;
+
+        return [
+            'tieu_de' => $mau['tieuDe'],
+            'mo_ta' => $mau['moTa'] ?? '',
+            'thoi_gian_xay_ra' => $mau['ngayXayRa'].' '.($gio ?? '00:00').':00',
+            'co_gio_xay_ra' => $gio !== null,
+            'dia_diem_id' => $mau['diaDiemId'] ?? null,
+            'dia_diem_chi_tiet' => $mau['diaDiemChiTiet'],
+        ];
+    }
+
     public function anh(string $tenAnh): StreamedResponse
     {
-        abort_unless(HinhAnhTinDang::where('duong_dan', '/api/tin-dang/anh/'.$tenAnh)->where('pham_vi', 'cong_khai')
-            ->whereHas('tinDang', fn ($q) => $q->where('trang_thai_kiem_duyet', 'hien_thi'))->exists(), 404);
-        $oDia = Storage::disk('local');
+        $anh = HinhAnhTinDang::where('duong_dan', '/api/tin-dang/anh/'.$tenAnh)
+            ->where('pham_vi', 'cong_khai')
+            ->whereHas('tinDang', fn ($q) => $q->where('trang_thai_kiem_duyet', 'hien_thi'))
+            ->with('tinDang:id,loai_tin')
+            ->firstOrFail();
+        $duongDan = $anh->tinDang->thuMucAnh().'/'.$tenAnh;
+        $oDia = Storage::disk('public');
+        if (! $oDia->exists($duongDan)) {
+            $oDia = Storage::disk('local');
+            $duongDan = 'tin-dang/'.$tenAnh;
+        }
         if (! $oDia instanceof FilesystemAdapter) {
             throw new LogicException('Ổ lưu trữ không hỗ trợ trả tệp.');
         }
-        abort_unless($oDia->exists('tin-dang/'.$tenAnh), 404);
+        abort_unless($oDia->exists($duongDan), 404);
 
-        return $oDia->response('tin-dang/'.$tenAnh, null, ['X-Content-Type-Options' => 'nosniff', 'Cache-Control' => 'no-store']);
+        return $oDia->response($duongDan, null, ['X-Content-Type-Options' => 'nosniff', 'Cache-Control' => 'no-store']);
     }
 }

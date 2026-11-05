@@ -15,7 +15,6 @@ return new class extends Migration
             CREATE TABLE danh_muc_do_vat (
               id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
               ten_danh_muc VARCHAR(100) NOT NULL UNIQUE,
-              bieu_tuong VARCHAR(50) NULL,
               mo_ta TEXT NULL,
               trang_thai TINYINT(1) NOT NULL DEFAULT 1,
               created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,

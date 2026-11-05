@@ -3,6 +3,17 @@ import { laNgayHopLe } from '../../admin/tong-quan/hooks/xuLyThongKe.js'
 
 export const SO_ANH_TOI_DA = 3
 
+export function cheLienHe(giaTri, laEmail = false) {
+  const lienHe = (giaTri ?? '').trim()
+  if (!lienHe) return ''
+  if (laEmail) {
+    const ten = Array.from(lienHe.split('@', 1)[0])
+    return ten.slice(0, Math.max(0, Math.min(2, ten.length - 1))).join('') + '****@****'
+  }
+  const kyTu = Array.from(lienHe)
+  return kyTu.slice(0, Math.floor(kyTu.length / 2)).join('') + '****'
+}
+
 export function chonAnhDangTin(cacTep, soAnhHienTai) {
   const soChoTrong = Math.max(0, SO_ANH_TOI_DA - soAnhHienTai)
   const anhSeThem = cacTep.slice(0, soChoTrong)
@@ -57,5 +68,6 @@ export function taoDuLieuGui(duLieu, cauHoi, cauTraLoi, anh, maGui) {
 
 export function layLoiGui(loi) {
   if (loi.response?.status === 413) return 'Ảnh vượt giới hạn tải lên của máy chủ. Hãy giảm dung lượng ảnh rồi thử lại.'
+  if (loi.response?.status >= 500) return 'Máy chủ chưa xử lý được yêu cầu. Vui lòng thử lại.'
   return Object.values(loi.response?.data?.errors || {}).flat()[0] || loi.response?.data?.message || 'Chưa gửi được dữ liệu. Vui lòng thử lại.'
 }

@@ -1,7 +1,8 @@
 import { Link, useLocation } from 'react-router-dom'
 import { CalendarDays, MapPin, ArrowRight } from 'lucide-react'
+import ThaoTacTinDang from '../../pages/tin-dang/ThaoTacTinDang'
 
-export default function TheDoThatLac({ doVat }) {
+export default function TheDoThatLac({ doVat, taiLai }) {
   const viTri = useLocation()
   const laDoNhatDuoc = doVat.type === 'found'
 
@@ -21,7 +22,10 @@ export default function TheDoThatLac({ doVat }) {
       </div>
 
       <div className="flex flex-1 flex-col gap-3 p-4 sm:p-5">
-        <h3 className="line-clamp-2 text-base font-bold text-gray-900">{doVat.title}</h3>
+        <div className="flex items-start justify-between gap-2">
+          <h3 className="line-clamp-2 pt-2 text-base font-bold text-gray-900">{doVat.title}</h3>
+          <div className="shrink-0"><ThaoTacTinDang tin={doVat} taiLai={taiLai} /></div>
+        </div>
 
         <div className="flex flex-wrap items-center justify-between gap-2">
           <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${laDoNhatDuoc ? 'bg-emerald-50 text-emerald-800' : 'bg-rose-50 text-rose-800'}`}>

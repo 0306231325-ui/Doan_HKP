@@ -21,7 +21,7 @@ export default function DanhSachDoThatLac({ danhSachDo = [], tongTin = danhSachD
       <div role="region" aria-label={tieuDe} className="min-h-64 rounded-2xl border border-[#d6e4db] bg-white">
         {dangTai ? <div role="status" className="flex min-h-64 items-center justify-center p-6 text-sm text-[#607568]">Đang tải tin đăng…</div> : loiTai ? <div role="alert" className="flex min-h-64 flex-col items-center justify-center gap-4 p-6 text-center text-sm text-red-700"><p>{loiTai}</p>{taiLai && <button type="button" onClick={taiLai} className="rounded-xl bg-emerald-900 px-4 py-2.5 font-semibold text-white hover:bg-emerald-800">Thử lại</button>}</div> : danhSachDo.length > 0 ? <div className="grid grid-cols-1 gap-6 p-4 sm:grid-cols-2 sm:p-5 lg:grid-cols-3">
           {danhSachDo.map((doVat) => (
-            <TheDoThatLac key={doVat.id} doVat={doVat} />
+            <TheDoThatLac key={doVat.id} doVat={doVat} taiLai={taiLai} />
           ))}
         </div> : <TrangThaiDanhSachRong loi={loiNgay} coBoLoc={coBoLoc} xoaBoLoc={xoaBoLoc} />}
       </div>

@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 class DatabaseSeeder extends Seeder
 {
@@ -11,6 +12,6 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $this->call(NguoiDungSeeder::class);
+        DB::transaction(fn () => $this->call([NguoiDungSeeder::class, DuLieuTraCuuSeeder::class]));
     }
 }

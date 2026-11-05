@@ -69,15 +69,19 @@ class TraCuuController extends Controller
             'danhMuc:id,ten_danh_muc', 'diaDiem:id,ten_dia_diem', 'nguoiDung:id,ho_ten',
             'hinhAnh' => fn ($anh) => $anh->where('pham_vi', 'cong_khai')->orderBy('thu_tu')->orderBy('id'),
         ])->orderByRaw('COALESCE(thoi_gian_xay_ra, created_at) '.$chieu)->orderBy('id', $chieu)->forPage($trang, 6)->get();
+        $nguoiXem = $request->user('web');
 
         return response()->json([
-            'data' => $cacTin->map(fn ($tin) => $duLieu->congKhai($tin)),
+            'data' => $cacTin->map(fn ($tin) => [
+                ...$duLieu->congKhai($tin),
+                'laChuTin' => $nguoiXem !== null && (string) $tin->nguoi_dung_id === (string) $nguoiXem->id,
+            ]),
             'meta' => [
                 'trangHienTai' => $trang, 'tongTrang' => $tongTrang, 'tongTin' => $tongTin,
                 'tuViTri' => $tongTin ? ($trang - 1) * 6 + 1 : 0,
                 'denViTri' => min($trang * 6, $tongTin),
             ],
-        ]);
+        ])->header('Cache-Control', 'private, no-store');
     }
 
     private function locTuKhoa(Builder $truyVan, string $tuKhoa): void

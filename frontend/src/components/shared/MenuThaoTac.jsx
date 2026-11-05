@@ -22,7 +22,8 @@ export default function MenuThaoTac({ nhan, cacThaoTac }) {
 
   useEffect(function theoDoiMenu() {
     if (!viTri) return
-    menu.current?.querySelector('button:not(:disabled)')?.focus()
+    const nutDauTien = menu.current?.querySelector('button:not(:disabled)') ?? menu.current
+    nutDauTien?.focus()
     function nhanNgoai(suKien) {
       if (!menu.current?.contains(suKien.target) && !nutMo.current?.contains(suKien.target)) datViTri(null)
     }
@@ -47,6 +48,7 @@ export default function MenuThaoTac({ nhan, cacThaoTac }) {
     if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(suKien.key)) return
     suKien.preventDefault()
     const cacNut = [...menu.current.querySelectorAll('button:not(:disabled)')]
+    if (!cacNut.length) return
     const hienTai = cacNut.indexOf(document.activeElement)
     const tiep = suKien.key === 'Home' ? 0 : suKien.key === 'End' ? cacNut.length - 1 : (hienTai + (suKien.key === 'ArrowDown' ? 1 : -1) + cacNut.length) % cacNut.length
     cacNut[tiep]?.focus()
@@ -54,7 +56,7 @@ export default function MenuThaoTac({ nhan, cacThaoTac }) {
 
   return <>
     <button ref={nutMo} type="button" aria-label={nhan} aria-haspopup="menu" aria-expanded={Boolean(viTri)} aria-controls={viTri ? ma : undefined} onClick={doiMoMenu} onKeyDown={(suKien) => { if (suKien.key === 'ArrowDown' && !viTri) { suKien.preventDefault(); doiMoMenu() } }} className="inline-flex h-10 w-10 items-center justify-center rounded-xl text-[#607568] hover:bg-emerald-50 focus-visible:outline-2 focus-visible:outline-emerald-700"><Ellipsis className="h-5 w-5" aria-hidden="true" /></button>
-    {viTri && createPortal(<div ref={menu} id={ma} role="menu" aria-label={nhan} onKeyDown={dieuHuongMenu} onBlur={(suKien) => { if (!suKien.currentTarget.contains(suKien.relatedTarget)) datViTri(null) }} style={viTri} className="fixed z-50 w-48 rounded-xl border border-[#d6e4db] bg-white p-1.5 shadow-xl">
+    {viTri && createPortal(<div ref={menu} id={ma} role="menu" tabIndex={-1} aria-label={nhan} onKeyDown={dieuHuongMenu} onBlur={(suKien) => { if (!suKien.currentTarget.contains(suKien.relatedTarget)) datViTri(null) }} style={viTri} className="fixed z-50 w-48 rounded-xl border border-[#d6e4db] bg-white p-1.5 shadow-xl">
       {cacThaoTac.map(({ id, nhan: ten, khiChon, voHieu = false, lyDo, nguyHiem = false }) => <button key={id} type="button" role="menuitem" disabled={voHieu} title={lyDo} onClick={() => { dongMenu(true); khiChon() }} className={`flex min-h-10 w-full items-center rounded-lg px-3 py-2 text-left text-sm font-medium focus-visible:outline-2 focus-visible:outline-emerald-700 disabled:cursor-not-allowed disabled:opacity-40 ${nguyHiem ? 'text-rose-700 hover:bg-rose-50' : 'text-[#243c30] hover:bg-emerald-50'}`}>{ten}</button>)}
     </div>, document.body)}
   </>
