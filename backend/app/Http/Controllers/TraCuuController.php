@@ -18,7 +18,7 @@ class TraCuuController extends Controller
     public function boLoc(): JsonResponse
     {
         return response()->json([
-            'danhMuc' => DanhMucDoVat::where('trang_thai', true)->orderBy('ten_danh_muc')->get(['id', 'ten_danh_muc'])
+            'danhMuc' => DanhMucDoVat::where('trang_thai', true)->theoThuTu()->get(['id', 'ten_danh_muc'])
                 ->map(fn ($muc) => ['id' => (string) $muc->id, 'name' => $muc->ten_danh_muc]),
             'diaDiem' => DiaDiem::where('trang_thai', true)->orderBy('ten_dia_diem')->get(['id', 'ten_dia_diem'])
                 ->map(fn ($muc) => ['id' => (string) $muc->id, 'name' => $muc->ten_dia_diem]),

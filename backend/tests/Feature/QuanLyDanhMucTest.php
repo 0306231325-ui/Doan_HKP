@@ -29,6 +29,7 @@ class QuanLyDanhMucTest extends TestCase
             $table->id();
             $table->string('ten_danh_muc')->unique();
             $table->text('mo_ta')->nullable();
+            $table->unsignedInteger('thu_tu')->nullable();
             $table->boolean('trang_thai')->default(true);
             $table->timestamps();
         });
@@ -57,7 +58,7 @@ class QuanLyDanhMucTest extends TestCase
 
     public function test_bao_ve_tat_ca_thao_tac_bang_quyen_quan_tri(): void
     {
-        $cacYeuCau = [['GET', '/api/admin/danh-muc'], ['POST', '/api/admin/danh-muc'], ['PATCH', '/api/admin/danh-muc/1/trang-thai'], ['DELETE', '/api/admin/danh-muc/1']];
+        $cacYeuCau = [['GET', '/api/admin/danh-muc'], ['POST', '/api/admin/danh-muc'], ['PATCH', '/api/admin/danh-muc/1/trang-thai'], ['PATCH', '/api/admin/danh-muc/1/thu-tu'], ['DELETE', '/api/admin/danh-muc/1']];
         foreach ($cacYeuCau as [$method, $url]) {
             $this->json($method, $url)->assertUnauthorized();
         }
@@ -78,7 +79,25 @@ class QuanLyDanhMucTest extends TestCase
         $this->assertDatabaseHas('danh_muc_do_vat', ['id' => $id, 'ten_danh_muc' => 'Điện thoại', 'trang_thai' => true]);
         $this->getJson('/api/tra-cuu/bo-loc')->assertOk()->assertJsonPath('danhMuc.0.id', $id);
         $moi = $this->postJson('/api/admin/danh-muc', ['tenDanhMuc' => 'Sách'])->assertCreated()->assertJsonPath('data.moTa', '')->json('data.id');
-        $this->getJson('/api/admin/danh-muc')->assertOk()->assertJsonPath('data.0.id', $moi);
+        $this->getJson('/api/admin/danh-muc')->assertOk()->assertJsonPath('data.1.id', $moi);
+    }
+
+    public function test_doi_thu_tu_luu_db_va_dong_bo_bo_loc_cong_khai(): void
+    {
+        $this->actingAs($this->taiKhoan());
+        $sach = DanhMucDoVat::create(['ten_danh_muc' => 'Sách']);
+        $an = DanhMucDoVat::create(['ten_danh_muc' => 'Đã ẩn', 'trang_thai' => false]);
+        $but = DanhMucDoVat::create(['ten_danh_muc' => 'Bút']);
+        $url = '/api/admin/danh-muc/'.$but->id.'/thu-tu';
+        $mau = ['viTri' => 1, 'danhSachHienTai' => [$sach->id, $an->id, $but->id]];
+
+        $this->patchJson($url, [...$mau, 'viTri' => 4])->assertUnprocessable()->assertJsonValidationErrors('viTri');
+        $this->patchJson($url, $mau)->assertOk()->assertJsonPath('data.0.id', (string) $but->id)->assertJsonPath('data.2.id', (string) $an->id);
+        $this->assertDatabaseHas('danh_muc_do_vat', ['id' => $but->id, 'thu_tu' => 1]);
+        $this->assertDatabaseHas('danh_muc_do_vat', ['id' => $sach->id, 'thu_tu' => 2]);
+        $this->getJson('/api/admin/danh-muc')->assertOk()->assertJsonPath('data.0.id', (string) $but->id);
+        $this->getJson('/api/tra-cuu/bo-loc')->assertOk()->assertJsonCount(2, 'danhMuc')->assertJsonPath('danhMuc.0.id', (string) $but->id)->assertJsonPath('danhMuc.1.id', (string) $sach->id);
+        $this->patchJson($url, [...$mau, 'viTri' => 2])->assertConflict();
     }
 
     public function test_them_chi_nhan_ten_va_mo_ta_hop_le_khong_trung(): void

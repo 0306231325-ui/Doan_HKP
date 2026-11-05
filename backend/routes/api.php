@@ -50,6 +50,7 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::get('/admin/danh-muc', [DanhMucController::class, 'danhSach']);
         Route::post('/admin/danh-muc', [DanhMucController::class, 'them'])->middleware('throttle:30,1');
         Route::patch('/admin/danh-muc/{id}/trang-thai', [DanhMucController::class, 'doiTrangThai'])->whereNumber('id')->middleware('throttle:30,1');
+        Route::patch('/admin/danh-muc/{id}/thu-tu', [DanhMucController::class, 'doiThuTu'])->whereNumber('id')->middleware('throttle:30,1');
         Route::delete('/admin/danh-muc/{id}', [DanhMucController::class, 'xoa'])->whereNumber('id')->middleware('throttle:30,1');
         Route::get('/admin/nguoi-dung', [UserController::class, 'index']);
         Route::patch('/admin/nguoi-dung/{id}/trang-thai', [UserController::class, 'doiTrangThai'])->whereNumber('id')->middleware('throttle:20,1');

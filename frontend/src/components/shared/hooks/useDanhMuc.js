@@ -13,7 +13,10 @@ export default function useDanhMuc(quanTri = false) {
       const danhSach = quanTri ? data.data : data.danhMuc.map((muc) => ({ id: muc.id, tenDanhMuc: muc.name, moTa: '', dangHoatDong: true }))
       datNguon({ lan: lanTai, data: danhSach, diaDiem: quanTri ? [] : data.diaDiem, loi: '' })
     }).catch((loi) => {
-      if (!yeuCau.signal.aborted) datNguon({ lan: lanTai, data: [], loi: loi.response?.data?.message || 'Không tải được danh mục. Vui lòng thử lại.' })
+      if (!yeuCau.signal.aborted) {
+        const thongBao = loi.response?.status < 500 ? loi.response.data?.message : ''
+        datNguon({ lan: lanTai, data: [], loi: thongBao || 'Không tải được danh mục. Vui lòng thử lại.' })
+      }
     })
     return () => yeuCau.abort()
   }, [lanTai, quanTri])

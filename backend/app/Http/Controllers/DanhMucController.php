@@ -15,7 +15,7 @@ class DanhMucController extends Controller
 {
     public function danhSach(): JsonResponse
     {
-        return response()->json(['data' => DanhMucDoVat::orderByDesc('id')->get()->map(fn ($muc) => $this->duLieuDanhMuc($muc))]);
+        return response()->json(['data' => DanhMucDoVat::theoThuTu()->get()->map(fn ($muc) => $this->duLieuDanhMuc($muc))]);
     }
 
     public function them(Request $request): JsonResponse
@@ -42,6 +42,41 @@ class DanhMucController extends Controller
 
             return response()->json(['data' => $this->duLieuDanhMuc($muc)]);
         });
+    }
+
+    public function doiThuTu(Request $request, string $id): JsonResponse
+    {
+        $duLieu = $request->validate([
+            'viTri' => ['required', 'integer', 'min:1'],
+            'danhSachHienTai' => ['required', 'array', 'list'],
+            'danhSachHienTai.*' => ['required', 'integer', 'min:1', 'distinct'],
+        ]);
+
+        return DB::transaction(function () use ($id, $duLieu) {
+            $cacMuc = DanhMucDoVat::theoThuTu()->lockForUpdate()->get();
+            $cacId = $cacMuc->map(fn ($muc) => (string) $muc->id)->all();
+            $viTriCu = array_search($id, $cacId, true);
+            abort_if($viTriCu === false, 404, 'Không tìm thấy danh mục.');
+            abort_if($cacId !== array_map('strval', $duLieu['danhSachHienTai']), 409, 'Thứ tự danh mục đã thay đổi. Vui lòng thử lại sau khi danh sách được tải lại.');
+
+            $viTriMoi = (int) $duLieu['viTri'] - 1;
+            if ($viTriMoi >= $cacMuc->count()) {
+                throw ValidationException::withMessages(['viTri' => 'Vị trí vượt quá số danh mục hiện có.']);
+            }
+
+            if ($viTriCu !== $viTriMoi) {
+                $muc = $cacMuc->splice($viTriCu, 1)->first();
+                $cacMuc->splice($viTriMoi, 0, [$muc]);
+                foreach ($cacMuc as $viTri => $muc) {
+                    if ((int) $muc->thu_tu !== $viTri + 1) {
+                        $muc->thu_tu = $viTri + 1;
+                        $muc->save();
+                    }
+                }
+            }
+
+            return response()->json(['data' => $cacMuc->map(fn ($muc) => $this->duLieuDanhMuc($muc))->values()]);
+        }, 3);
     }
 
     public function xoa(string $id): JsonResponse

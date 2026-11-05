@@ -1220,7 +1220,7 @@
                 "operationId": "3a735e470a4be62b18f40ae3aef36b9a",
                 "responses": {
                     "200": {
-                        "description": "data gồm id (string), tenDanhMuc, moTa, dangHoatDong (boolean)"
+                        "description": "data gồm id (string), tenDanhMuc, moTa, dangHoatDong (boolean), theo thứ tự hiển thị đã lưu"
                     },
                     "401": {
                         "description": "Chưa đăng nhập"
@@ -1360,6 +1360,87 @@
                     },
                     "422": {
                         "description": "Trạng thái không hợp lệ"
+                    },
+                    "429": {
+                        "description": "Tối đa 30 lần/phút"
+                    }
+                }
+            }
+        },
+        "/api/admin/danh-muc/{id}/thu-tu": {
+            "patch": {
+                "tags": [
+                    "Danh mục"
+                ],
+                "summary": "Đổi vị trí danh mục trong danh sách",
+                "operationId": "b68b96105aa32d1b00486ecc00904283",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "X-XSRF-TOKEN",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "viTri",
+                                    "danhSachHienTai"
+                                ],
+                                "properties": {
+                                    "viTri": {
+                                        "description": "Vị trí mới, tính từ 1",
+                                        "type": "integer",
+                                        "minimum": 1
+                                    },
+                                    "danhSachHienTai": {
+                                        "description": "Danh sách ID theo thứ tự hiện tại, gồm cả danh mục ẩn",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "minItems": 1,
+                                        "uniqueItems": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "data là toàn bộ danh mục theo thứ tự mới"
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Không phải quản trị hoạt động"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy danh mục"
+                    },
+                    "409": {
+                        "description": "Danh sách đã thay đổi, cần tải lại"
+                    },
+                    "422": {
+                        "description": "Vị trí hoặc danh sách không hợp lệ"
                     },
                     "429": {
                         "description": "Tối đa 30 lần/phút"
@@ -1743,7 +1824,7 @@
                 "operationId": "5372962e583e5ef1a626180738226568",
                 "responses": {
                     "200": {
-                        "description": "danhMuc và diaDiem gồm id dạng chuỗi, name; lấy từ DB, không cần đăng nhập"
+                        "description": "danhMuc và diaDiem gồm id dạng chuỗi, name; danh mục theo thứ tự đã lưu, không cần đăng nhập"
                     }
                 }
             }

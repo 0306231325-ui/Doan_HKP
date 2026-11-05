@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -20,6 +21,11 @@ class DanhMucDoVat extends Model
         return [
             'trang_thai' => 'boolean',
         ];
+    }
+
+    public function scopeTheoThuTu(Builder $truyVan): Builder
+    {
+        return $truyVan->orderByRaw('thu_tu IS NULL')->orderBy('thu_tu')->orderBy('id');
     }
 
     public function cauHoi(): HasMany

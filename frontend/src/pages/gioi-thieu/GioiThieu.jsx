@@ -1,14 +1,7 @@
-import { ArrowDown, ArrowRight, HeartHandshake, MessageCircle, Search, ShieldCheck, UsersRound } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { HeartHandshake, MessageCircle, Search, ShieldCheck, UsersRound } from 'lucide-react'
+import Hero from '../../components/home/Hero'
 import KhungThongTin from '../../components/shared/KhungThongTin'
-import TrinhChieuAnh from '../../components/shared/TrinhChieuAnh'
 import CauHoiGioiThieu from './CauHoiGioiThieu'
-
-const CAC_ANH_GIOI_THIEU = [
-  { src: '/gioithieu/GTHIEU01.jpg', alt: 'Minh họa trao trả đồ nhặt được và ghi nhận hành động tử tế' },
-  { src: '/gioithieu/GIOITHIEU02.jpg', alt: 'Minh họa việc hoàn trả tài sản' },
-  { src: '/gioithieu/GIOITHIEU03.jpg', alt: 'Minh họa tiếp nhận và kiểm tra đồ vật' },
-]
 
 const CAC_GIA_TRI = [
   { tieuDe: 'Kết nối trong trường', bieuTuong: UsersRound, noiDung: 'Một nơi tập trung thông tin đồ thất lạc, giúp người mất và người nhặt dễ tìm thấy nhau hơn.' },
@@ -25,21 +18,7 @@ const CAC_BUOC = [
 export default function GioiThieu() {
   return (
     <div className="space-y-12 sm:space-y-16">
-      <section aria-labelledby="tieu-de-gioi-thieu" className="relative isolate overflow-hidden rounded-[2rem] border border-[#d1e5d8] bg-white px-6 py-9 sm:px-10 sm:py-12 lg:px-12">
-        <div className="pointer-events-none absolute -top-28 -right-24 h-96 w-96 rounded-full bg-emerald-50 blur-3xl" aria-hidden="true" />
-        <div className="relative grid items-center gap-10 lg:grid-cols-[1.15fr_0.85fr] lg:gap-12">
-          <div>
-            <h1 id="tieu-de-gioi-thieu" className="text-4xl leading-tight font-black tracking-tight text-black sm:text-5xl">Để những món đồ lạc tìm được đường về.</h1>
-            <p className="mt-5 max-w-xl text-sm leading-7 text-[#607568] sm:text-base sm:leading-8">Có những món đồ nhỏ nhưng mang theo rất nhiều kỷ niệm. Lạc Ơi là nơi kết nối người làm mất với người nhặt được, để sự tử tế trong trường trở thành những cuộc gặp gỡ ý nghĩa.</p>
-            <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-              <Link to="/danh-sach-do" className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-900 px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-emerald-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700"><Search className="h-4 w-4" aria-hidden="true" />Tra cứu đồ thất lạc<ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>
-              <a href="#cach-hoat-dong" className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#d6e4db] bg-white px-5 py-3 text-sm font-semibold text-[#344d3e] hover:bg-emerald-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700">Tìm hiểu cách hoạt động<ArrowDown className="h-4 w-4" aria-hidden="true" /></a>
-            </div>
-          </div>
-
-          <TrinhChieuAnh danhSachAnh={CAC_ANH_GIOI_THIEU} nhan="Hình ảnh giới thiệu Lạc Ơi" className="aspect-[4/3] min-w-0 rounded-[2rem] border border-emerald-100 bg-[#f8fbf9]" />
-        </div>
-      </section>
+      <Hero />
 
       <section aria-labelledby="ly-do-lac-oi">
         <div className="mx-auto max-w-2xl text-center"><h2 id="ly-do-lac-oi" className="text-2xl font-extrabold tracking-tight text-emerald-950 sm:text-3xl">Tìm lại đồ thất lạc</h2><p className="mt-4 text-sm leading-7 text-[#607568]">Lạc Ơi giúp người mất đồ và người nhặt được dễ dàng tìm thấy nhau.</p></div>
@@ -58,11 +37,6 @@ export default function GioiThieu() {
       </section>
 
       <CauHoiGioiThieu />
-
-      <section aria-labelledby="cung-lac-oi" className="flex flex-col items-start justify-between gap-6 rounded-[2rem] border border-[#cce3d4] bg-[#dceee2] p-6 sm:p-9 lg:flex-row lg:items-center">
-        <div className="max-w-xl"><h2 id="cung-lac-oi" className="text-2xl font-extrabold tracking-tight text-emerald-950">Bạn có thể là người mang lại một niềm vui.</h2><p className="mt-3 text-sm leading-7 text-[#526c5b]">Nếu vừa nhặt được một món đồ, hãy chia sẻ thông tin để người đang tìm có thêm cơ hội nhận lại.</p></div>
-        <Link to="/dang-tin?loaiTin=found" className="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-emerald-900 px-5 py-3.5 text-sm font-bold text-white hover:bg-emerald-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 sm:w-auto">Đăng tin nhặt được<ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>
-      </section>
     </div>
   )
 }

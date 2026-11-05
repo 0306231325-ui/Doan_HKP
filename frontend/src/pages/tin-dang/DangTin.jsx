@@ -31,7 +31,7 @@ function QuyTrinhDangTin({ loaiBanDau }) {
       </Link>
       <header>
         <p className="mb-2 text-sm font-semibold text-emerald-800">Bước {laBuocNoiDung ? 2 : 1} / 2</p>
-        <h1 className="text-3xl font-extrabold tracking-tight text-emerald-900 sm:text-4xl">{laBuocNoiDung ? 'Đăng tin đồ thất lạc' : 'Thông tin đăng tin'}</h1>
+        <h1 className="text-3xl font-extrabold tracking-tight text-emerald-900 sm:text-4xl">{laBuocNoiDung ? 'Đăng tin đồ thất lạc' : 'Lựa chọn đăng tin'}</h1>
       </header>
       {laBuocNoiDung ? <><HuongDanDangTin /><FormDangTin tin={tin} /></> : <ChonThongTinDangTin tin={tin} />}
     </div>

@@ -43,6 +43,10 @@ class TraCuuTest extends TestCase
             Schema::create($tenBang, function (Blueprint $table) use ($cotTen) {
                 $table->id();
                 $table->string($cotTen)->unique();
+                $table->text('mo_ta')->nullable();
+                if ($cotTen === 'ten_danh_muc') {
+                    $table->unsignedInteger('thu_tu')->nullable();
+                }
                 $table->boolean('trang_thai')->default(true);
                 $table->timestamps();
             });
@@ -178,7 +182,12 @@ class TraCuuTest extends TestCase
         $this->assertDatabaseCount('tin_dang', 5);
         $this->assertDatabaseCount('hinh_anh_tin_dang', 6);
         $this->assertDatabaseCount('lich_su_tin_dang', 5);
-        $this->assertDatabaseCount('danh_muc_do_vat', 6);
+        $this->assertDatabaseCount('danh_muc_do_vat', 7);
+        $this->assertDatabaseHas('danh_muc_do_vat', [
+            'ten_danh_muc' => 'Khác',
+            'mo_ta' => 'Dành cho những đồ vật không phù hợp với các danh mục trên.',
+            'trang_thai' => true,
+        ]);
         $this->assertDatabaseCount('dia_diem', 6);
         $this->assertSame('Da sua boi nguoi dung', $tin->fresh()->tieu_de);
         $this->assertSame(4, TinDang::count());

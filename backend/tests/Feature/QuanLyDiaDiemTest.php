@@ -29,6 +29,7 @@ class QuanLyDiaDiemTest extends TestCase
             $table->id();
             $table->string('ten_danh_muc')->unique();
             $table->text('mo_ta')->nullable();
+            $table->unsignedInteger('thu_tu')->nullable();
             $table->boolean('trang_thai')->default(true);
             $table->timestamps();
         });

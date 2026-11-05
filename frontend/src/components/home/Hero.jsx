@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { FileEdit, Search, ShieldCheck, Clock, Building2 } from 'lucide-react'
+import { FileEdit, Search } from 'lucide-react'
 import TrinhChieuAnh from '../shared/TrinhChieuAnh'
 
 const bannerImages = [
@@ -22,10 +22,10 @@ export default function Hero() {
             Tra cứu đồ bị mất, đồ nhặt được và gửi yêu cầu nhận lại an toàn. Mọi tin đăng đều được bộ phận hỗ trợ sinh viên và ban quản lý kiểm duyệt 24/7.
           </p>
 
-          <div className="flex flex-wrap items-center gap-3 sm:gap-4 mb-10 w-full sm:w-auto">
+          <div className="flex flex-wrap items-center gap-3 sm:gap-4 w-full sm:w-auto">
             <Link
               to="/dang-tin"
-              className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl text-sm font-bold bg-[#a3e635] text-[#12382f] hover:bg-[#bbf758] active:scale-95 transition-all shadow-lg shadow-[#a3e635]/25 cursor-pointer"
+              className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl text-sm font-bold bg-[#86efac] text-emerald-950 hover:bg-[#6ee7a0] active:scale-95 transition-all shadow-sm cursor-pointer"
             >
               <FileEdit className="w-4.5 h-4.5 stroke-[2.2]" />
               <span>Đăng tin ngay</span>
@@ -38,21 +38,6 @@ export default function Hero() {
               <Search className="w-4.5 h-4.5" />
               <span>Tra cứu đồ thất lạc</span>
             </Link>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-6 sm:gap-8 pt-4 border-t border-white/15 w-full text-xs sm:text-sm text-emerald-200/90">
-            <div className="flex items-center gap-2">
-              <ShieldCheck className="w-4.5 h-4.5 text-[#a3e635]" />
-              <span>100% Xác thực SV</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Clock className="w-4.5 h-4.5 text-[#a3e635]" />
-              <span>Lưu kho an toàn</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Building2 className="w-4.5 h-4.5 text-[#a3e635]" />
-              <span>Ngay Tại Cơ Sở Của Bạn</span>
-            </div>
           </div>
         </div>
 

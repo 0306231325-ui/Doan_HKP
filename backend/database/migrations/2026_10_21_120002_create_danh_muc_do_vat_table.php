@@ -16,6 +16,7 @@ return new class extends Migration
               id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
               ten_danh_muc VARCHAR(100) NOT NULL UNIQUE,
               mo_ta TEXT NULL,
+              thu_tu INT UNSIGNED NULL,
               trang_thai TINYINT(1) NOT NULL DEFAULT 1,
               created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
               updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP

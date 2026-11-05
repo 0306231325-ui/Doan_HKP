@@ -23,6 +23,10 @@ class DuLieuTraCuuSeeder extends Seeder
             foreach (['Đồ điện tử', 'Đồ dùng học tập', 'Giấy tờ', 'Chìa khóa và vé xe', 'Ví và túi xách'] as $ten) {
                 $danhMuc[$ten] = DanhMucDoVat::firstOrCreate(['ten_danh_muc' => $ten], ['trang_thai' => true]);
             }
+            DanhMucDoVat::firstOrCreate(['ten_danh_muc' => 'Khác'], [
+                'mo_ta' => 'Dành cho những đồ vật không phù hợp với các danh mục trên.',
+                'trang_thai' => true,
+            ]);
 
             $diaDiem = [];
             foreach (['Thư viện', 'Khoa Công nghệ thông tin', 'Khoa Kế toán', 'Khoa Kỹ thuật ô tô', 'Nhà xe sinh viên'] as $ten) {

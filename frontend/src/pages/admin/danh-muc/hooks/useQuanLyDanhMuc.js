@@ -15,7 +15,7 @@ export default function useQuanLyDanhMuc() {
   const [loiThaoTac, datLoiThaoTac] = useState('')
   const khoaGui = useRef(false)
   const hienThongBao = useThongBaoThaoTac()
-  const cacDanhMuc = locDanhSachDanhMuc(danhSach, boLoc)
+  const cacDanhMuc = locDanhSachDanhMuc(danhSach.map((muc, index) => ({ ...muc, stt: index + 1 })), boLoc)
   const coBoLoc = Boolean(chuanHoaTuKhoa(boLoc.tuKhoa) || boLoc.trangThai !== 'tat_ca')
 
   function doiBoLoc(suKien) {
@@ -66,7 +66,7 @@ export default function useQuanLyDanhMuc() {
     datLoiThaoTac('')
   }
 
-  async function xacNhanThaoTac() {
+  async function xacNhanThaoTac(viTri) {
     if (khoaGui.current || !thaoTacChoXacNhan) return
     const { danhMuc, loai } = thaoTacChoXacNhan
     khoaGui.current = true
@@ -77,20 +77,25 @@ export default function useQuanLyDanhMuc() {
       await prepareCsrf()
       if (loai === 'them') {
         const { data } = await api.post('/admin/danh-muc', danhMuc)
-        datDanhSach((cu) => [data.data, ...cu])
+        datDanhSach((cu) => [...cu, data.data])
         datBieuMau(null)
         if (loiTai || dangTai) taiLai()
       } else if (loai === 'xoa') {
         await api.delete(`/admin/danh-muc/${danhMuc.id}`)
         datDanhSach((cu) => cu.filter((muc) => muc.id !== danhMuc.id))
+      } else if (loai === 'doi-thu-tu') {
+        const { data } = await api.patch(`/admin/danh-muc/${danhMuc.id}/thu-tu`, { viTri, danhSachHienTai: danhSach.map((muc) => muc.id) })
+        datDanhSach(data.data)
       } else {
         const { data } = await api.patch(`/admin/danh-muc/${danhMuc.id}/trang-thai`, { dangHoatDong: loai === 'mo', trangThaiHienTai: danhMuc.dangHoatDong })
         datDanhSach((cu) => cu.map((muc) => muc.id === data.data.id ? data.data : muc))
       }
       datThaoTacChoXacNhan(null)
-      hienThongBao(`Đã ${loai === 'them' ? 'thêm' : loai === 'xoa' ? 'xóa' : loai === 'mo' ? 'mở' : 'ẩn'} danh mục “${danhMuc.tenDanhMuc}”.`, 'success')
+      const nhan = { them: 'thêm', xoa: 'xóa', mo: 'mở', an: 'ẩn', 'doi-thu-tu': 'đổi thứ tự' }
+      hienThongBao(`Đã ${nhan[loai]} danh mục “${danhMuc.tenDanhMuc}”.`, 'success')
     } catch (loi) {
-      const noiDung = loi.response?.data?.message || 'Không thực hiện được thao tác. Vui lòng thử lại.'
+      const thongBao = loi.response?.status < 500 ? loi.response.data?.message : ''
+      const noiDung = thongBao || 'Không thực hiện được thao tác. Vui lòng thử lại.'
       if (loai === 'them' && loi.response?.data?.errors) {
         datLoiBieuMau(Object.fromEntries(Object.entries(loi.response.data.errors).map(([ten, noiDung]) => [ten, noiDung[0]])))
         datThaoTacChoXacNhan(null)
