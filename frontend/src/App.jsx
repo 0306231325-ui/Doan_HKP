@@ -20,6 +20,7 @@ import { AuthProvider, RequireAuth } from './auth/AuthContext'
 import AuthNotice from './auth/AuthNotice'
 import QuanLyNguoiDung from './pages/admin/nguoi-dung/QuanLyNguoiDung'
 import GioiThieu from './pages/gioi-thieu/GioiThieu'
+import TaoCuocHen from './pages/cuoc-hen/TaoCuocHen'
 
 export default function App() {
   return (
@@ -35,6 +36,8 @@ export default function App() {
             <Route path="chi-tiet-tin-dang" element={<ChiTietTinDang />} />
             <Route path="gioi-thieu" element={<GioiThieu />} />
             <Route element={<RequireAuth />}>
+              <Route path="chi-tiet-yeu-cau" element={<TaoCuocHen />} />
+              <Route path="tao-cuoc-hen" element={<TaoCuocHen />} />
               <Route path="yeu-cau-nhan-do" element={<YeuCauNhanDo />} />
               <Route path="dang-tin" element={<DangTin />} />
               <Route path="trang-ca-nhan" element={<TrangCaNhan />} />

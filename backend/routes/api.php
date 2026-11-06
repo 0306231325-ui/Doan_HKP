@@ -17,6 +17,7 @@ Route::get('/anh-dai-dien/{tenAnh}', [ThongTinCaNhanController::class, 'anhDaiDi
     ->where('tenAnh', '[a-zA-Z0-9]{40}\\.(jpg|jpeg|png|webp)');
 
 Route::middleware(['auth:sanctum', 'active'])->group(function () {
+    Route::post('/tin-dang/{tin}/bao-cao', [\App\Http\Controllers\BaoCaoTinDangController::class, 'store'])->whereNumber('tin')->middleware('throttle:5,1');
     Route::get('/me', [AuthController::class, 'me']);
     Route::patch('/me', [ThongTinCaNhanController::class, 'capNhat'])->middleware('throttle:20,1');
     Route::put('/me/mat-khau', [ThongTinCaNhanController::class, 'doiMatKhau'])->middleware('throttle:5,1');

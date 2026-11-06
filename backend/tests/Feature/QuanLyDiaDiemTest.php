@@ -70,8 +70,8 @@ class QuanLyDiaDiemTest extends TestCase
     public function test_them_sua_ngung_kich_hoat_dong_bo_bo_loc(): void
     {
         $this->actingAs($this->taiKhoan());
-        $id = $this->postJson('/api/admin/dia-diem', ['tenDiaDiem' => '  Thư   viện ', 'moTa' => ' Tầng 1 ', 'dangHoatDong' => true])
-            ->assertCreated()->assertJsonPath('data.tenDiaDiem', 'Thư viện')->assertJsonPath('data.moTa', 'Tầng 1')->json('data.id');
+        $id = $this->postJson('/api/admin/dia-diem', ['tenDiaDiem' => '  Thư   viện ', 'moTa' => ' Tầng 1 '])
+            ->assertCreated()->assertJsonPath('data.tenDiaDiem', 'Thư viện')->assertJsonPath('data.moTa', 'Tầng 1')->assertJsonPath('data.dangHoatDong', true)->json('data.id');
         $this->getJson('/api/admin/dia-diem')->assertOk()->assertJsonPath('data.0.id', $id);
         $this->getJson('/api/tra-cuu/bo-loc')->assertOk()->assertJsonPath('diaDiem.0.name', 'Thư viện');
         $this->patchJson("/api/admin/dia-diem/$id", ['tenDiaDiem' => 'Thư viện mới', 'moTa' => '', 'dangHoatDong' => true])->assertOk();
@@ -81,6 +81,9 @@ class QuanLyDiaDiemTest extends TestCase
         $this->assertDatabaseHas('dia_diem', ['id' => $id, 'trang_thai' => false]);
         $this->patchJson("/api/admin/dia-diem/$id/trang-thai", ['dangHoatDong' => true, 'trangThaiHienTai' => false])->assertOk();
         $this->getJson('/api/tra-cuu/bo-loc')->assertOk()->assertJsonPath('diaDiem.0.id', $id);
+        $this->postJson('/api/admin/dia-diem', ['tenDiaDiem' => 'Sân trường', 'dangHoatDong' => false])
+            ->assertCreated()->assertJsonPath('data.dangHoatDong', true);
+        $this->assertDatabaseHas('dia_diem', ['ten_dia_diem' => 'Sân trường', 'trang_thai' => true]);
     }
 
     public function test_kiem_tra_du_lieu_va_ten_trung(): void
@@ -88,7 +91,7 @@ class QuanLyDiaDiemTest extends TestCase
         $this->actingAs($this->taiKhoan());
         $muc = DiaDiem::create(['ten_dia_diem' => 'Thư viện', 'trang_thai' => false]);
         $this->postJson('/api/admin/dia-diem', ['tenDiaDiem' => ' THU  VIEN ', 'dangHoatDong' => true])->assertUnprocessable()->assertJsonValidationErrors('tenDiaDiem');
-        $this->postJson('/api/admin/dia-diem', ['tenDiaDiem' => ' ', 'moTa' => str_repeat('a', 501), 'dangHoatDong' => 'sai'])->assertUnprocessable()->assertJsonValidationErrors(['tenDiaDiem', 'moTa', 'dangHoatDong']);
+        $this->postJson('/api/admin/dia-diem', ['tenDiaDiem' => ' ', 'moTa' => str_repeat('a', 501)])->assertUnprocessable()->assertJsonValidationErrors(['tenDiaDiem', 'moTa']);
         $this->patchJson("/api/admin/dia-diem/{$muc->id}", ['tenDiaDiem' => 'Thư viện', 'dangHoatDong' => false])->assertOk();
         $khac = DiaDiem::create(['ten_dia_diem' => 'Cổng trường', 'trang_thai' => true]);
         $this->patchJson("/api/admin/dia-diem/{$khac->id}", ['tenDiaDiem' => 'Thu vien', 'dangHoatDong' => true])->assertUnprocessable();

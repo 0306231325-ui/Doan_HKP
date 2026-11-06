@@ -96,7 +96,8 @@ export default function useQuanLyDiaDiem() {
     try {
       await prepareCsrf()
       const { data } = await api[laThemMoi ? 'post' : 'patch'](laThemMoi ? '/admin/dia-diem' : `/admin/dia-diem/${bieuMau.id}`, {
-        tenDiaDiem: bieuMau.tenDiaDiem.trim().replace(/\s+/g, ' '), moTa: bieuMau.moTa.trim(), dangHoatDong: bieuMau.dangHoatDong,
+        tenDiaDiem: bieuMau.tenDiaDiem.trim().replace(/\s+/g, ' '), moTa: bieuMau.moTa.trim(),
+        ...(!laThemMoi ? { dangHoatDong: bieuMau.dangHoatDong } : {}),
       })
       datDanhSach((cu) => laThemMoi ? [...cu, data.data] : cu.map((muc) => muc.id === data.data.id ? data.data : muc))
       datThongBao(`Đã ${laThemMoi ? 'thêm' : 'cập nhật'} địa điểm “${data.data.tenDiaDiem}”.`)

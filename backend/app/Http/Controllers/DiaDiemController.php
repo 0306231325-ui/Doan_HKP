@@ -59,7 +59,7 @@ class DiaDiemController extends Controller
         if (is_string($request->input('tenDiaDiem'))) {
             $request->merge(['tenDiaDiem' => Str::squish($request->input('tenDiaDiem'))]);
         }
-        $duLieu = $request->validate(['tenDiaDiem' => ['required', 'string', 'max:150'], 'moTa' => ['nullable', 'string', 'max:500'], 'dangHoatDong' => ['required', 'boolean']], [
+        $duLieu = $request->validate(['tenDiaDiem' => ['required', 'string', 'max:150'], 'moTa' => ['nullable', 'string', 'max:500'], 'dangHoatDong' => $id === null ? ['exclude'] : ['required', 'boolean']], [
             'tenDiaDiem.required' => 'Vui lòng nhập tên địa điểm.', 'tenDiaDiem.max' => 'Tên địa điểm tối đa 150 ký tự.', 'moTa.max' => 'Mô tả tối đa 500 ký tự.',
         ]);
         $tenChuan = Str::lower(Str::ascii($duLieu['tenDiaDiem']));
@@ -69,7 +69,7 @@ class DiaDiemController extends Controller
             throw ValidationException::withMessages(['tenDiaDiem' => 'Tên địa điểm đã tồn tại, kể cả trong danh sách ngừng sử dụng.']);
         }
 
-        return ['ten_dia_diem' => $duLieu['tenDiaDiem'], 'mo_ta' => trim($duLieu['moTa'] ?? ''), 'trang_thai' => (bool) $duLieu['dangHoatDong']];
+        return ['ten_dia_diem' => $duLieu['tenDiaDiem'], 'mo_ta' => trim($duLieu['moTa'] ?? ''), 'trang_thai' => $id === null ? true : (bool) $duLieu['dangHoatDong']];
     }
 
     private function ghiDiaDiem(callable $ghi): DiaDiem

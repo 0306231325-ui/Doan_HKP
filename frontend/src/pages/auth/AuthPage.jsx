@@ -108,8 +108,8 @@ export default function AuthPage({ mode = 'login' }) {
               <FormField required label="Số điện thoại" name="phone" type="tel" autoComplete="tel" inputMode="numeric" maxLength={10} pattern="0[0-9]{0,9}" title="Số điện thoại phải bắt đầu bằng số 0 và chỉ chứa chữ số, tối đa 10 số." />
             </>}
             <FormField required label="Email" name="email" type={isRegister ? 'text' : 'email'} inputMode="email" autoComplete="email" maxLength={191}
-              pattern={isRegister ? '[A-Za-z0-9]+@gmail\\.com' : undefined}
-              title={isRegister ? 'Email phải có đuôi @gmail.com; phần tên chỉ gồm chữ cái không dấu và số, không chứa khoảng trắng hoặc ký tự đặc biệt.' : undefined}
+              pattern={isRegister ? '[A-Za-z0-9]+@(?:[A-Za-z0-9](?:[A-Za-z0-9\\x2d]*[A-Za-z0-9])?\\.)+edu\\.vn' : undefined}
+              title={isRegister ? 'Email phải có đuôi .edu.vn; phần tên chỉ gồm chữ cái không dấu và số, không chứa khoảng trắng hoặc ký tự đặc biệt.' : undefined}
               onInput={isRegister ? (event) => {
                 const value = event.currentTarget.validity.badInput || /\s/.test(event.currentTarget.value)
                 event.currentTarget.setCustomValidity(value ? 'Email không được chứa khoảng trắng.' : '')

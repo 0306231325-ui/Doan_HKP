@@ -1,8 +1,9 @@
-import { ArrowLeft, CalendarDays, ChevronRight, ClipboardList, Flag, HandHeart, ImageOff, Images, Info, MapPin, MessageSquare, Phone, Share2, UserRound } from 'lucide-react'
+import { ArrowLeft, CalendarDays, ChevronRight, ClipboardList, HandHeart, ImageOff, Images, Info, MapPin, MessageSquare, Phone, Share2, UserRound } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import Button from '../../components/shared/Button'
 import KhungThongTin from '../../components/shared/KhungThongTin'
 import ThongBaoTrong from '../../components/shared/ThongBaoTrong'
+import BaoCaoTinDang from './BaoCaoTinDang'
 import useChiTietTinDang from './hooks/useChiTietTinDang'
 import { dinhDangNgay } from '../danh-sach-do/hooks/xuLyDanhSachDo'
 
@@ -67,7 +68,8 @@ export default function ChiTietTinDang() {
           <KhungThongTin tieuDe="Thao tác với tin đăng" bieuTuong={HandHeart}>
             <div className="space-y-3">
               <Button disabled title="Chức năng này chưa được kết nối" className="inline-flex w-full items-center justify-center gap-2"><HandHeart className="h-4 w-4" aria-hidden="true" />Yêu cầu nhận lại đồ</Button>
-              {[{ nhan: 'Tôi đang giữ đồ này', bieuTuong: MessageSquare }, { nhan: 'Chia sẻ tin', bieuTuong: Share2 }, { nhan: 'Báo cáo tin đăng', bieuTuong: Flag }].map(({ nhan, bieuTuong: BieuTuong }) => <button key={nhan} type="button" disabled title="Chức năng này chưa được kết nối" className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl border border-[#ceded3] bg-white px-4 py-3 text-sm font-semibold text-[#526c5b] disabled:cursor-not-allowed disabled:opacity-50"><BieuTuong className="h-4 w-4" aria-hidden="true" />{nhan}</button>)}
+              {[{ nhan: 'Tôi đang giữ đồ này', bieuTuong: MessageSquare }, { nhan: 'Chia sẻ tin', bieuTuong: Share2 }].map(({ nhan, bieuTuong: BieuTuong }) => <button key={nhan} type="button" disabled title="Chức năng này chưa được kết nối" className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl border border-[#ceded3] bg-white px-4 py-3 text-sm font-semibold text-[#526c5b] disabled:cursor-not-allowed disabled:opacity-50"><BieuTuong className="h-4 w-4" aria-hidden="true" />{nhan}</button>)}
+              <BaoCaoTinDang key={tin.id} tin={tin} />
             </div>
           </KhungThongTin>
         </aside>
