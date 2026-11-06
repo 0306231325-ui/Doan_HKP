@@ -577,7 +577,7 @@
                 "tags": [
                     "Tra cứu"
                 ],
-                "summary": "Chi tiết tin công khai và ảnh",
+                "summary": "Chi tiết tin công khai hoặc tin của chính mình",
                 "operationId": "6e80c2f6b3c4246252111e0c156acbba",
                 "parameters": [
                     {
@@ -592,10 +592,10 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "data gồm DTO thẻ, images và gioXayRa (null nếu không có giờ). Điện thoại hiện nửa đầu. Email hiện tối đa hai ký tự đầu và che toàn bộ tên miền. Không có câu trả lời nhận diện."
+                        "description": "data gồm DTO thẻ, images, gioXayRa (null nếu không có giờ), laChuTin và hasClaim theo phiên hiện tại. Liên hệ trong DTO đã che. Không có câu trả lời nhận diện."
                     },
                     "404": {
-                        "description": "Không có tin, đã ẩn hoặc xóa mềm"
+                        "description": "Tin không tồn tại, đã xóa mềm hoặc đã ẩn và người xem không phải chủ tin đang hoạt động"
                     }
                 }
             }
@@ -605,7 +605,7 @@
                 "tags": [
                     "Đăng tin"
                 ],
-                "summary": "Đọc ảnh công khai của tin đang hiển thị",
+                "summary": "Đọc ảnh công khai của tin hiển thị hoặc tin của chính mình",
                 "operationId": "82e945dcfd872e5dcfde192a7499ea8a",
                 "parameters": [
                     {
@@ -622,7 +622,7 @@
                         "description": "Nội dung ảnh ở ổ public theo nhóm tin mất/nhặt hoặc ảnh cũ ở ổ local. no-store/nosniff."
                     },
                     "404": {
-                        "description": "Ảnh không có, riêng tư, tin ẩn hoặc đã xóa"
+                        "description": "Ảnh không có, ảnh riêng tư, tin đã xóa hoặc tin ẩn của người khác"
                     }
                 }
             }
@@ -759,9 +759,9 @@
         "/api/tin-dang/{tin}/lien-he": {
             "get": {
                 "tags": [
-                    "Nhận đồ"
+                    "Đăng tin"
                 ],
-                "summary": "Xem điện thoại/email sau khi đã gửi yêu cầu",
+                "summary": "Chủ tin xem điện thoại và email đã đăng",
                 "operationId": "953625ee982b7fcc38a13b558acb2a2d",
                 "parameters": [
                     {
@@ -776,16 +776,16 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "data.soDienThoai/email/laChuTin/daGui, private no-store. Chỉ chủ tin, admin hoặc người có yêu cầu cho_kiem_tra/can_bo_sung/da_xac_minh; yêu cầu từ chối/đã hủy không mở liên hệ."
+                        "description": "data.soDienThoai/email/laChuTin/daGui, private no-store. Chỉ chủ tin đang hoạt động được xem liên hệ đầy đủ."
                     },
                     "401": {
                         "description": "Chưa đăng nhập"
                     },
                     "403": {
-                        "description": "Chưa gửi yêu cầu hoặc tài khoản bị khóa"
+                        "description": "Không phải chủ tin hoặc tài khoản bị khóa"
                     },
                     "404": {
-                        "description": "Tin không còn hiển thị"
+                        "description": "Tin không tồn tại, đã xóa mềm hoặc là tin ẩn của người khác"
                     }
                 }
             }
@@ -1372,7 +1372,8 @@
                 "tags": [
                     "Danh mục"
                 ],
-                "summary": "Đổi vị trí danh mục trong danh sách",
+                "summary": "Hoán đổi vị trí hai danh mục",
+                "description": "Danh mục được chọn đổi chỗ với danh mục đang ở vị trí đích. Các danh mục khác giữ nguyên vị trí.",
                 "operationId": "b68b96105aa32d1b00486ecc00904283",
                 "parameters": [
                     {
@@ -1404,7 +1405,7 @@
                                 ],
                                 "properties": {
                                     "viTri": {
-                                        "description": "Vị trí mới, tính từ 1",
+                                        "description": "Vị trí của danh mục cần hoán đổi, tính từ 1",
                                         "type": "integer",
                                         "minimum": 1
                                     },
@@ -1667,6 +1668,44 @@
                 }
             }
         },
+        "/api/me/tin-dang": {
+            "get": {
+                "tags": [
+                    "Profile"
+                ],
+                "summary": "Lấy tin đã đăng của tài khoản đang đăng nhập",
+                "operationId": "6f8fc42f7277c3fb8d4a298e44a0b388",
+                "parameters": [
+                    {
+                        "name": "trang",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 1,
+                            "maximum": 1000000,
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "data gồm thẻ tin của chủ phiên, kể cả tin ẩn (biAn=true), loại tin xóa mềm. meta gồm trangHienTai, tongTrang, tongTin, tuViTri, denViTri. Mỗi trang tối đa 6 tin."
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Tài khoản bị khóa"
+                    },
+                    "422": {
+                        "description": "Số trang không hợp lệ"
+                    },
+                    "429": {
+                        "description": "Tối đa 120 lần/phút"
+                    }
+                }
+            }
+        },
         "/api/me/mat-khau": {
             "put": {
                 "tags": [
@@ -1732,7 +1771,7 @@
                 "tags": [
                     "Profile"
                 ],
-                "summary": "Thay ảnh đại diện",
+                "summary": "Thêm hoặc thay ảnh đại diện",
                 "operationId": "cad966cb9810e55f8118cedc650b07e5",
                 "parameters": [
                     {
@@ -1766,10 +1805,41 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Đã lưu ảnh mới, xóa ảnh đại diện cũ do hệ thống quản lý, trả user mới"
+                        "description": "Lưu vào frontend/public/anh-dai-dien. Tên tệp lấy phần email trước dấu @, kèm mã riêng cho từng ảnh. Dọn ảnh cũ do hệ thống quản lý và trả hồ sơ đã cập nhật."
                     },
                     "422": {
                         "description": "Ảnh không hợp lệ"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Profile"
+                ],
+                "summary": "Gỡ ảnh đại diện của tài khoản hiện tại",
+                "operationId": "0da700f0dfef3dfcbd1dde9c89b43846",
+                "parameters": [
+                    {
+                        "name": "X-XSRF-TOKEN",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Trả user có anh_dai_dien null và dọn tệp ảnh không còn được dùng. Gỡ lại khi chưa có ảnh vẫn thành công."
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Tài khoản bị khóa"
+                    },
+                    "429": {
+                        "description": "Tối đa 10 lần/phút"
                     }
                 }
             }
@@ -1779,7 +1849,7 @@
                 "tags": [
                     "Profile"
                 ],
-                "summary": "Đọc ảnh đại diện theo tên ngẫu nhiên do server tạo",
+                "summary": "Đọc ảnh đại diện theo tên do server tạo",
                 "operationId": "225dfc5b527dd6b9f800bbefe765b810",
                 "parameters": [
                     {
@@ -1793,7 +1863,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Luồng nội dung ảnh từ ổ public, có cache và nosniff"
+                        "description": "Luồng nội dung ảnh từ frontend/public/anh-dai-dien hoặc thư mục lưu cũ, có cache và nosniff"
                     },
                     "404": {
                         "description": "Không tìm thấy ảnh"

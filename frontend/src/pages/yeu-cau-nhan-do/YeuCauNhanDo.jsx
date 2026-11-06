@@ -12,7 +12,7 @@ export default function YeuCauNhanDo() {
       <h1 className="text-3xl font-extrabold text-emerald-900">Yêu cầu nhận lại đồ</h1>
       {yeuCau.dangTai ? <p role="status">Đang tải câu hỏi của tin đăng…</p> : yeuCau.loiTai ? <div role="alert" className="space-y-4 rounded-2xl bg-white p-6"><p>{yeuCau.loiTai}</p><Button onClick={yeuCau.taiLai}>Thử lại</Button></div> : yeuCau.tin && <div className="grid items-start gap-6 lg:grid-cols-[18rem_1fr]">
         <ThongTinDoNhanLai item={yeuCau.tin} />
-        {yeuCau.daGui ? <section className="space-y-4 rounded-2xl bg-white p-6"><h2 className="text-lg font-bold">Bạn đã gửi yêu cầu</h2><p className="text-sm text-[#607568]">Yêu cầu đang chờ quản trị viên xác minh. Bạn có thể xem liên hệ tại trang tin.</p><Link to={`/chi-tiet-tin-dang?id=${yeuCau.tin.id}`} className="font-semibold text-emerald-800 underline">Xem tin và thông tin liên hệ</Link></section> : <FormYeuCauNhanDo {...yeuCau} />}
+        {yeuCau.daGui ? <section className="space-y-4 rounded-2xl bg-white p-6"><h2 className="text-lg font-bold">Bạn đã gửi yêu cầu</h2><p className="text-sm text-[#607568]">Quản trị viên sẽ xử lý yêu cầu của bạn.</p><Link to={`/chi-tiet-tin-dang?id=${yeuCau.tin.id}`} className="font-semibold text-emerald-800 underline">Quay lại tin đăng</Link></section> : <FormYeuCauNhanDo {...yeuCau} />}
       </div>}
     </div>
   )

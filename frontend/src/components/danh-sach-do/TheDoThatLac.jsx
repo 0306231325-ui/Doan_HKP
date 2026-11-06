@@ -2,7 +2,7 @@ import { Link, useLocation } from 'react-router-dom'
 import { CalendarDays, MapPin, ArrowRight } from 'lucide-react'
 import ThaoTacTinDang from '../../pages/tin-dang/ThaoTacTinDang'
 
-export default function TheDoThatLac({ doVat, taiLai }) {
+export default function TheDoThatLac({ doVat, taiLai, hienTrangThai = false }) {
   const viTri = useLocation()
   const laDoNhatDuoc = doVat.type === 'found'
 
@@ -32,6 +32,7 @@ export default function TheDoThatLac({ doVat, taiLai }) {
             <span className={`h-1.5 w-1.5 rounded-full ${laDoNhatDuoc ? 'bg-emerald-500' : 'bg-rose-500'}`} aria-hidden="true" />
             {doVat.typeName}
           </span>
+          {hienTrangThai && <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${doVat.biAn ? 'bg-amber-50 text-amber-800' : 'bg-gray-100 text-gray-700'}`}>{doVat.biAn ? 'Đã ẩn' : doVat.statusBadge}</span>}
           <span className="inline-flex items-center gap-1.5 text-xs text-gray-500">
             <CalendarDays className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
             <time dateTime={doVat.date}>{doVat.time}</time>

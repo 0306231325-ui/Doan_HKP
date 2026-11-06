@@ -3,9 +3,39 @@
 namespace App\Services;
 
 use App\Models\TinDang;
+use Illuminate\Database\Eloquent\Builder;
 
 class DuLieuTinDang
 {
+    public function quanHe(): array
+    {
+        return [
+            'danhMuc:id,ten_danh_muc', 'diaDiem:id,ten_dia_diem', 'nguoiDung:id,ho_ten',
+            'hinhAnh' => fn ($anh) => $anh->where('pham_vi', 'cong_khai')->orderBy('thu_tu')->orderBy('id'),
+        ];
+    }
+
+    public function phanTrang(Builder $truyVan, int $trang, ?string $nguoiXem): array
+    {
+        $moiTrang = 6;
+        $tongTin = (clone $truyVan)->reorder()->count();
+        $tongTrang = max(1, (int) ceil($tongTin / $moiTrang));
+        $trang = min($trang, $tongTrang);
+        $cacTin = $truyVan->with($this->quanHe())->forPage($trang, $moiTrang)->get();
+
+        return [
+            'data' => $cacTin->map(fn (TinDang $tin) => [
+                ...$this->congKhai($tin),
+                'laChuTin' => (string) $tin->nguoi_dung_id === $nguoiXem,
+            ]),
+            'meta' => [
+                'trangHienTai' => $trang, 'tongTrang' => $tongTrang, 'tongTin' => $tongTin,
+                'tuViTri' => $tongTin ? ($trang - 1) * $moiTrang + 1 : 0,
+                'denViTri' => min($trang * $moiTrang, $tongTin),
+            ],
+        ];
+    }
+
     public function congKhai(TinDang $tin, bool $chiTiet = false): array
     {
         $laNhatDuoc = $tin->loai_tin === 'nhat_duoc';
@@ -28,6 +58,10 @@ class DuLieuTinDang
         ];
         if ($chiTiet) {
             $duLieu['images'] = $tin->hinhAnh->pluck('duong_dan')->values();
+        }
+        if ($tin->trang_thai_kiem_duyet === 'da_an') {
+            $duLieu['biAn'] = true;
+            $duLieu['canClaim'] = false;
         }
 
         return $duLieu;

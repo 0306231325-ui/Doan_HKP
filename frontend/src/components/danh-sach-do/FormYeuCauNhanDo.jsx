@@ -15,7 +15,7 @@ export default function FormYeuCauNhanDo({ cauHoi, cauTraLoi, doiCauTraLoi, loiN
         <Button type="submit" className="w-full">Gửi yêu cầu nhận lại đồ</Button>
       </fieldset>
     </form>
-    {moXacNhan && <HopThoai tieuDe="Xác nhận gửi yêu cầu" moTa="Yêu cầu sẽ được gửi tới quản trị viên để xác minh. Sau khi gửi, bạn có thể xem liên hệ của người đăng." khiDong={dongXacNhan}>
+    {moXacNhan && <HopThoai tieuDe="Xác nhận gửi yêu cầu" moTa="Yêu cầu sẽ được gửi tới quản trị viên để xác minh." khiDong={dongXacNhan}>
       <div className="space-y-5 p-6">
         {loi && <p role="alert" className="text-sm text-rose-700">{loi}</p>}
         <div className="flex justify-end gap-3"><button type="button" onClick={dongXacNhan} disabled={dangGui} className="rounded-xl border border-[#ceded3] px-4 py-3 text-sm font-semibold">Hủy</button><Button onClick={guiYeuCau} disabled={dangGui}>{dangGui ? 'Đang gửi…' : 'Xác nhận gửi'}</Button></div>

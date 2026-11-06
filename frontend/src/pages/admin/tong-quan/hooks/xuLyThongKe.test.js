@@ -1,13 +1,14 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { layNgayVietNam, laNgayHopLe, taoKhoangThoiGian, kiemTraKhoangNgay, locTinTheoNgay, taoThongKe } from './xuLyThongKe.js'
+import { layNgayVietNam, laNgayHopLe, chuyenNgaySangISO, dinhDangNgay, kiemTraKhoangNgay, locTinTheoNgay, taoThongKe } from './xuLyThongKe.js'
 
-test('Mốc nhanh tính đủ ngày và vượt qua ranh giới tháng, năm', () => {
-  assert.deepEqual(taoKhoangThoiGian('7_ngay', '2026-01-03'), { tuNgay: '2025-12-28', denNgay: '2026-01-03' })
-  assert.deepEqual(taoKhoangThoiGian('30_ngay', '2026-03-01'), { tuNgay: '2026-01-31', denNgay: '2026-03-01' })
-  assert.deepEqual(taoKhoangThoiGian('thang_nay', '2026-10-15'), { tuNgay: '2026-10-01', denNgay: '2026-10-15' })
-  assert.deepEqual(taoKhoangThoiGian('hom_nay', '2026-10-15'), { tuNgay: '2026-10-15', denNgay: '2026-10-15' })
-  assert.deepEqual(taoKhoangThoiGian('tat_ca', '2026-10-15'), { tuNgay: '', denNgay: '' })
+test('Ngày nhập tay và ngày chọn từ lịch quy về cùng định dạng', () => {
+  assert.equal(chuyenNgaySangISO('6/11/2026'), '2026-11-06')
+  assert.equal(dinhDangNgay('2026-11-06'), '06/11/2026')
+  assert.equal(chuyenNgaySangISO(dinhDangNgay('2024-02-29')), '2024-02-29')
+  for (const giaTri of ['', '06/11/26', '29/02/2026', '31/04/2026', '11/13/2026', '01/01/0000']) {
+    assert.equal(chuyenNgaySangISO(giaTri), '')
+  }
 })
 
 test('Lọc cả hai đầu ngày theo múi giờ Việt Nam', () => {

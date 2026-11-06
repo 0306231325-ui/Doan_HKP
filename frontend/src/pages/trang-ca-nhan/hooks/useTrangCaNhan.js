@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { ClipboardList, HandHeart, UserRound } from 'lucide-react'
+import { useSearchParams } from 'react-router-dom'
 
 const CAC_MUC = [
   { id: 'thong-tin', nhan: 'Thông tin cá nhân', bieuTuong: UserRound },
@@ -8,7 +9,8 @@ const CAC_MUC = [
 ]
 
 export default function useTrangCaNhan() {
-  const [mucHienTai, datMucHienTai] = useState(CAC_MUC[0].id)
+  const [thamSo, datThamSo] = useSearchParams()
+  const mucHienTai = CAC_MUC.find((muc) => muc.id === thamSo.get('muc'))?.id ?? CAC_MUC[0].id
   const [moMenu, datMoMenu] = useState(false)
   const khungMenu = useRef(null)
   const nutMenu = useRef(null)
@@ -42,7 +44,15 @@ export default function useTrangCaNhan() {
 
   function chonMuc(id) {
     if (CAC_MUC.some((muc) => muc.id === id)) {
-      datMucHienTai(id)
+      if (id !== mucHienTai) {
+        datThamSo((cu) => {
+          const moi = new URLSearchParams(cu)
+          moi.delete('trang')
+          if (id === CAC_MUC[0].id) moi.delete('muc')
+          else moi.set('muc', id)
+          return moi
+        }, { replace: true })
+      }
       datMoMenu(false)
       nutMenu.current?.focus()
     }

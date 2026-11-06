@@ -22,7 +22,7 @@ class YeuCauNhanDoController extends Controller
         return response()->json([
             'tin' => $duLieu->congKhai($banTin->load(['danhMuc', 'diaDiem', 'nguoiDung', 'hinhAnh' => fn ($q) => $q->where('pham_vi', 'cong_khai')->orderBy('thu_tu')])),
             'data' => $cacLoi->map(fn ($loi) => $traLoi->cauHoi($loi->phienBanCauHoi, (string) $loi->id))->values(),
-            'daGui' => $this->daGui($banTin, $request),
+            'daGui' => $banTin->daGuiYeuCau($request->user()->id),
         ])->header('Cache-Control', 'no-store');
     }
 
@@ -39,7 +39,7 @@ class YeuCauNhanDoController extends Controller
         return DB::transaction(function () use ($request, $tin, $mau, $traLoi) {
             $banTin = $this->timTin($tin, true);
             $this->kiemTraNhan($banTin, $request);
-            if ($this->daGui($banTin, $request)) {
+            if ($banTin->daGuiYeuCau($request->user()->id)) {
                 return response()->json(['message' => 'Bạn đã gửi yêu cầu cho tin này.', 'daGui' => true]);
             }
             $cacLoi = $this->cacLoiKhai($banTin);
@@ -61,11 +61,11 @@ class YeuCauNhanDoController extends Controller
 
     public function lienHe(Request $request, string $tin): JsonResponse
     {
-        $banTin = $this->timTin($tin);
         $user = $request->user();
-        abort_unless($user->id === $banTin->nguoi_dung_id || $user->vai_tro === 'quan_tri' || $this->daGui($banTin, $request), 403, 'Gửi yêu cầu nhận đồ để xem liên hệ.');
+        $banTin = TinDang::xemDuoc($user)->findOrFail($tin);
+        abort_unless((string) $user->id === (string) $banTin->nguoi_dung_id, 403, 'Chỉ người đăng được xem liên hệ của tin.');
 
-        return response()->json(['data' => ['soDienThoai' => $banTin->thong_tin_lien_he, 'email' => $banTin->email_lien_he, 'laChuTin' => $user->id === $banTin->nguoi_dung_id, 'daGui' => $this->daGui($banTin, $request)]])->header('Cache-Control', 'private, no-store');
+        return response()->json(['data' => ['soDienThoai' => $banTin->thong_tin_lien_he, 'email' => $banTin->email_lien_he, 'laChuTin' => true, 'daGui' => false]])->header('Cache-Control', 'private, no-store');
     }
 
     private function timTin(string $id, bool $khoa = false): TinDang
@@ -89,10 +89,5 @@ class YeuCauNhanDoController extends Controller
         return $tin->loiKhai()->with('phienBanCauHoi')->get()
             ->filter(fn ($loi) => $loi->phienBanCauHoi && isset($loi->phienBanCauHoi->du_lieu['danh_muc_id']))
             ->sortBy(fn ($loi) => [(int) $loi->phienBanCauHoi->du_lieu['thu_tu'], $loi->cau_hoi_id]);
-    }
-
-    private function daGui(TinDang $tin, Request $request): bool
-    {
-        return $tin->yeuCauNhanDo()->where('nguoi_yeu_cau_id', $request->user()->id)->whereIn('trang_thai', ['cho_kiem_tra', 'can_bo_sung', 'da_xac_minh'])->exists();
     }
 }

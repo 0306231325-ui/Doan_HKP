@@ -53,7 +53,7 @@ export default function ChonThongTinDangTin({ tin }) {
 
       <fieldset className="space-y-4 border-t border-[#e4ece7] pt-5">
         <legend className="px-1 text-lg font-bold text-[#243c30]">Thông tin liên hệ</legend>
-        <p className="text-xs leading-5 text-[#607568]">Số điện thoại và email được điền từ tài khoản. Bạn có thể sửa cho tin này và cần giữ ít nhất một cách liên hệ. Tin đăng hiện nửa đầu và che phần còn lại bằng dấu sao.{duLieu.loaiTin === 'found' && ' Người gửi yêu cầu nhận đồ có thể xem liên hệ đầy đủ.'}</p>
+        <p className="text-xs leading-5 text-[#607568]">Số điện thoại và email được điền từ tài khoản. Bạn có thể sửa cho tin này và cần giữ ít nhất một cách liên hệ. Trang chi tiết che một phần liên hệ bằng dấu sao. Chỉ bạn có thể xem đầy đủ.</p>
         <div className="grid gap-4 sm:grid-cols-2">
           <FormField label="Số điện thoại" name="soDienThoai" type="tel" autoComplete="tel" value={duLieu.soDienThoai} onChange={doiTruong} required={!duLieu.email.trim()} pattern="[+]?[0-9 ]{9,20}" maxLength={20} title="Nhập từ 9 đến 20 chữ số hoặc dấu cách, có thể có dấu + ở đầu." placeholder="Số điện thoại liên hệ" />
           <FormField label="Email / Gmail" name="email" type="email" autoComplete="email" value={duLieu.email} onChange={doiTruong} required={!duLieu.soDienThoai.trim()} maxLength={254} placeholder="tenban@gmail.com" />

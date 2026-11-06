@@ -13,6 +13,7 @@ import QuanLyCauHoi from './pages/admin/cau-hoi/QuanLyCauHoi'
 import DanhSachDo from './pages/danh-sach-do/DanhSachDo'
 import AuthPage from './pages/auth/AuthPage'
 import YeuCauNhanDo from './pages/yeu-cau-nhan-do/YeuCauNhanDo'
+import TheoDoiYeuCau from './pages/yeu-cau-nhan-do/TheoDoiYeuCau'
 import DangTin from './pages/tin-dang/DangTin'
 import ChiTietTinDang from './pages/tin-dang/ChiTietTinDang'
 import TrangCaNhan from './pages/trang-ca-nhan/TrangCaNhan'
@@ -36,6 +37,7 @@ export default function App() {
             <Route path="gioi-thieu" element={<GioiThieu />} />
             <Route element={<RequireAuth />}>
               <Route path="yeu-cau-nhan-do" element={<YeuCauNhanDo />} />
+              <Route path="theo-doi-yeu-cau" element={<TheoDoiYeuCau />} />
               <Route path="dang-tin/noi-dung?" element={<DangTin />} />
               <Route path="trang-ca-nhan" element={<TrangCaNhan />} />
             </Route>

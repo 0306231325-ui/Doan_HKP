@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState } from 'react'
-import { ChevronDown, LogOut, ShieldCheck, UserRound } from 'lucide-react'
+import { ChevronDown, ClipboardList, LogOut, ShieldCheck, UserRound } from 'lucide-react'
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from './useAuth'
 import useDangXuat from './hooks/useDangXuat'
@@ -63,6 +63,7 @@ export default function AccountDropdown({ showProfile = true }) {
         <p className="mt-1 truncate text-xs text-gray-500">{user.email}</p>
       </div>
       {showProfile && <Link to="/trang-ca-nhan" onClick={() => setOpen(false)} className={itemClass}><UserRound size={18} aria-hidden="true" />Trang cá nhân</Link>}
+      {showProfile && <Link to="/theo-doi-yeu-cau" onClick={() => setOpen(false)} className={itemClass}><ClipboardList size={18} aria-hidden="true" />Theo dõi yêu cầu</Link>}
       {user.vai_tro === 'quan_tri' && !/^\/admin(?:\/|$)/.test(pathname) && <Link to="/admin" onClick={() => setOpen(false)} className={itemClass}><ShieldCheck size={18} aria-hidden="true" />Về trang quản trị</Link>}
       <div className="mt-1 border-t border-gray-100 pt-1">
         <button type="button" onClick={moXacNhanDangXuat} className={`${itemClass} text-red-600 hover:bg-red-50`}><LogOut size={18} aria-hidden="true" />Đăng xuất</button>

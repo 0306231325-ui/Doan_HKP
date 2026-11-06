@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -56,6 +57,16 @@ class TinDang extends Model
         return $this->loai_tin === 'nhat_duoc' ? 'tin/tin-nhat' : 'tin/tin-mat';
     }
 
+    public function scopeXemDuoc(Builder $truyVan, ?NguoiDung $nguoiXem): Builder
+    {
+        return $truyVan->where(function (Builder $q) use ($nguoiXem) {
+            $q->where('trang_thai_kiem_duyet', 'hien_thi');
+            if ($nguoiXem?->trang_thai === 'hoat_dong') {
+                $q->orWhere('nguoi_dung_id', $nguoiXem->id);
+            }
+        });
+    }
+
     public function nguoiDung(): BelongsTo
     {
         return $this->belongsTo(NguoiDung::class, 'nguoi_dung_id');
@@ -89,6 +100,12 @@ class TinDang extends Model
     public function yeuCauNhanDo(): HasMany
     {
         return $this->hasMany(YeuCauNhanDo::class, 'tin_dang_id');
+    }
+
+    public function daGuiYeuCau(int|string $nguoiDungId): bool
+    {
+        return $this->yeuCauNhanDo()->where('nguoi_yeu_cau_id', $nguoiDungId)
+            ->whereIn('trang_thai', ['cho_kiem_tra', 'can_bo_sung', 'da_xac_minh'])->exists();
     }
 
     public function traLoiYeuCau(): HasMany

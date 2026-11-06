@@ -65,8 +65,9 @@ class DanhMucController extends Controller
             }
 
             if ($viTriCu !== $viTriMoi) {
-                $muc = $cacMuc->splice($viTriCu, 1)->first();
-                $cacMuc->splice($viTriMoi, 0, [$muc]);
+                $mucHienTai = $cacMuc[$viTriCu];
+                $cacMuc[$viTriCu] = $cacMuc[$viTriMoi];
+                $cacMuc[$viTriMoi] = $mucHienTai;
                 foreach ($cacMuc as $viTri => $muc) {
                     if ((int) $muc->thu_tu !== $viTri + 1) {
                         $muc->thu_tu = $viTri + 1;
