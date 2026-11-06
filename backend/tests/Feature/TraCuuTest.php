@@ -7,7 +7,7 @@ use App\Models\DiaDiem;
 use App\Models\HinhAnhTinDang;
 use App\Models\NguoiDung;
 use App\Models\TinDang;
-use Database\Seeders\DuLieuTraCuuSeeder;
+use Database\Seeders\DatabaseSeeder;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -32,6 +32,10 @@ class TraCuuTest extends TestCase
             foreach (['ho_ten', 'email', 'mat_khau', 'so_dien_thoai', 'trang_thai'] as $cot) {
                 $table->string($cot);
             }
+            $table->unique('email');
+            foreach (['ma_so', 'khoa', 'lop', 'vai_tro'] as $cot) {
+                $table->string($cot)->nullable();
+            }
             $table->softDeletes();
             $table->timestamps();
         });
@@ -39,6 +43,10 @@ class TraCuuTest extends TestCase
             Schema::create($tenBang, function (Blueprint $table) use ($cotTen) {
                 $table->id();
                 $table->string($cotTen)->unique();
+                $table->text('mo_ta')->nullable();
+                if ($cotTen === 'ten_danh_muc') {
+                    $table->unsignedInteger('thu_tu')->nullable();
+                }
                 $table->boolean('trang_thai')->default(true);
                 $table->timestamps();
             });
@@ -53,8 +61,10 @@ class TraCuuTest extends TestCase
             $table->string('slug')->unique();
             $table->text('mo_ta');
             $table->dateTime('thoi_gian_xay_ra')->nullable();
+            $table->boolean('co_gio_xay_ra')->nullable();
             $table->string('dia_diem_chi_tiet')->nullable();
             $table->string('thong_tin_lien_he')->nullable();
+            $table->string('email_lien_he')->nullable();
             $table->string('trang_thai')->default('dang_mo');
             $table->string('trang_thai_kiem_duyet')->default('hien_thi');
             $table->text('ly_do_an')->nullable();
@@ -68,6 +78,15 @@ class TraCuuTest extends TestCase
             $table->string('duong_dan');
             $table->string('pham_vi')->default('cong_khai');
             $table->unsignedInteger('thu_tu')->default(0);
+            $table->dateTime('created_at')->nullable();
+        });
+        Schema::create('lich_su_tin_dang', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('tin_dang_id');
+            $table->unsignedBigInteger('nguoi_thuc_hien_id');
+            $table->string('hanh_dong');
+            $table->string('trang_thai_moi');
+            $table->text('noi_dung');
             $table->dateTime('created_at')->nullable();
         });
         $this->nguoiDung = NguoiDung::create(['ho_ten' => 'Nguoi dang', 'email' => 'thu@example.test', 'mat_khau' => 'hash-khong-cong-khai', 'so_dien_thoai' => 'SECRET-PHONE', 'trang_thai' => 'hoat_dong']);
@@ -153,17 +172,25 @@ class TraCuuTest extends TestCase
 
     public function test_seed_mau_chay_lai_khong_trung_khong_ghi_de_va_khong_hoi_sinh_tin_da_xoa(): void
     {
-        $this->seed(DuLieuTraCuuSeeder::class);
-        $this->assertDatabaseCount('tin_dang', 8);
-        $tin = TinDang::where('slug', 'mau-tra-cuu-dien-thoai-den')->firstOrFail();
+        $this->seed(DatabaseSeeder::class);
+        $this->assertDatabaseCount('tin_dang', 5);
+        $tin = TinDang::where('slug', 'mau-tra-cuu-laptop-asus')->firstOrFail();
         $tin->update(['tieu_de' => 'Da sua boi nguoi dung']);
-        TinDang::where('slug', 'mau-tra-cuu-vi-da-nau')->firstOrFail()->delete();
-        $this->seed(DuLieuTraCuuSeeder::class);
-        $this->assertDatabaseCount('tin_dang', 8);
-        $this->assertDatabaseCount('danh_muc_do_vat', 6);
+        TinDang::where('slug', 'mau-tra-cuu-vi-da-den')->firstOrFail()->delete();
+        $this->seed(DatabaseSeeder::class);
+        $this->assertDatabaseCount('nguoi_dung', 6);
+        $this->assertDatabaseCount('tin_dang', 5);
+        $this->assertDatabaseCount('hinh_anh_tin_dang', 6);
+        $this->assertDatabaseCount('lich_su_tin_dang', 5);
+        $this->assertDatabaseCount('danh_muc_do_vat', 7);
+        $this->assertDatabaseHas('danh_muc_do_vat', [
+            'ten_danh_muc' => 'Khác',
+            'mo_ta' => 'Dành cho những đồ vật không phù hợp với các danh mục trên.',
+            'trang_thai' => true,
+        ]);
         $this->assertDatabaseCount('dia_diem', 6);
         $this->assertSame('Da sua boi nguoi dung', $tin->fresh()->tieu_de);
-        $this->assertSame(7, TinDang::count());
+        $this->assertSame(4, TinDang::count());
         $this->assertSame('hash-khong-cong-khai', $this->nguoiDung->fresh()->mat_khau);
     }
 }

@@ -12,15 +12,8 @@ class CauHoi extends Model
 
     protected $fillable = [
         'danh_muc_id',
-        'ma_cau_hoi',
-        'phien_ban',
         'noi_dung',
         'kieu_nhap',
-        'lua_chon',
-        'loai_tin',
-        'bat_buoc',
-        'cong_khai',
-        'dung_xac_minh',
         'thu_tu',
         'trang_thai',
     ];
@@ -28,11 +21,6 @@ class CauHoi extends Model
     protected function casts(): array
     {
         return [
-            'phien_ban' => 'integer',
-            'lua_chon' => 'array',
-            'bat_buoc' => 'boolean',
-            'cong_khai' => 'boolean',
-            'dung_xac_minh' => 'boolean',
             'thu_tu' => 'integer',
             'trang_thai' => 'boolean',
         ];
@@ -41,6 +29,11 @@ class CauHoi extends Model
     public function danhMuc(): BelongsTo
     {
         return $this->belongsTo(DanhMucDoVat::class, 'danh_muc_id');
+    }
+
+    public function lichSu(): HasMany
+    {
+        return $this->hasMany(LichSuCauHoi::class, 'cau_hoi_id')->orderBy('phien_ban');
     }
 
     public function loiKhaiTinDang(): HasMany

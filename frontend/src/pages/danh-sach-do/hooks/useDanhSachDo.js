@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import api from '../../../services/api'
+import { useAuth } from '../../../auth/useAuth'
 import { boLocBanDau, dinhDangNgay, docBoLoc, kiemTraNgay, taoThamSoTraCuu } from './xuLyDanhSachDo.js'
 
 const PHAN_TRANG_RONG = { trangHienTai: 1, tongTrang: 1, tongTin: 0, tuViTri: 0, denViTri: 0 }
 
 export default function useDanhSachDo() {
+  const { user } = useAuth()
   const [thamSo, datThamSo] = useSearchParams()
   const [ketQuaBoLoc, datKetQuaBoLoc] = useState({ lan: -1, data: null, loi: '' })
   const [ketQua, datKetQua] = useState({ khoa: '', data: [], meta: PHAN_TRANG_RONG, loi: '' })
@@ -19,7 +21,7 @@ export default function useDanhSachDo() {
   const loiNgay = kiemTraNgay(boLoc.tuNgay, boLoc.denNgay)
   const chuoiTruyVan = taoThamSoTraCuu(boLoc, thamSo.get('trang'))
   const coBoLoc = Boolean(tuKhoaNhap) || Object.entries(boLoc).some(([ten, giaTri]) => ten !== 'sapXep' && giaTri !== boLocBanDau[ten])
-  const khoaYeuCau = `${chuoiTruyVan}#${lanTai}`
+  const khoaYeuCau = `${chuoiTruyVan}#${lanTai}#${user?.id ?? ''}`
   const dangTaiBoLoc = ketQuaBoLoc.lan !== lanTai
   const loiBoLoc = dangTaiBoLoc ? '' : ketQuaBoLoc.loi
   const loiTai = loiBoLoc || (ketQua.khoa === khoaYeuCau ? ketQua.loi : '')

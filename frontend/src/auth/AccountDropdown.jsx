@@ -7,8 +7,8 @@ import XacNhanDangXuat from './XacNhanDangXuat'
 
 export default function AccountDropdown({ showProfile = true }) {
   const { user } = useAuth()
-  const dangXuat = useDangXuat()
   const { pathname } = useLocation()
+  const dangXuat = useDangXuat()
   const [open, setOpen] = useState(false)
   const container = useRef(null)
   const trigger = useRef(null)

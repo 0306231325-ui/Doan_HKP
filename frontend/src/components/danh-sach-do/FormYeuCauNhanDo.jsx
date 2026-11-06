@@ -1,52 +1,25 @@
-import { useEffect, useState } from 'react'
-import { UploadCloud, Send, X } from 'lucide-react'
 import FormField from '../shared/FormField'
 import Button from '../shared/Button'
+import TruongCauHoi from '../shared/TruongCauHoi'
+import HopThoai from '../shared/HopThoai'
 
-export default function FormYeuCauNhanDo({ onSubmit }) {
-  const [file, setFile] = useState(null)
-  const [preview, setPreview] = useState('')
-  const [error, setError] = useState('')
-
-  useEffect(() => () => { if (preview) URL.revokeObjectURL(preview) }, [preview])
-
-  function selectFile(event) {
-    const selected = event.target.files?.[0]
-    setError('')
-    if (!selected) return
-    if (!['image/jpeg', 'image/png', 'image/webp'].includes(selected.type) || selected.size > 5 * 1024 * 1024) {
-      setError('Vui lòng chọn ảnh JPG, PNG hoặc WebP không quá 5 MB.')
-      event.target.value = ''
-      return
-    }
-    setFile(selected)
-    setPreview(URL.createObjectURL(selected))
-    event.target.value = ''
-  }
-
-  return (
-    <form className="claim-card claim-form" onSubmit={(event) => { event.preventDefault(); onSubmit() }}>
-      <div><h2>Thông tin xác minh</h2><p className="claim-muted">Điền thông tin để người giữ đồ có thể đối chiếu và liên hệ bạn.</p></div>
-      <div className="claim-fields">
-        <FormField label="Họ và tên *" name="name" autoComplete="name" required maxLength={100} />
-        <FormField label="MSSV / Mã giảng viên *" name="schoolId" required maxLength={30} />
-        <FormField label="Số điện thoại *" name="phone" type="tel" autoComplete="tel" required pattern="[+]?[0-9 ]{9,20}" title="Nhập từ 9 đến 20 chữ số hoặc dấu cách, có thể có dấu + ở đầu." />
-        <FormField label="Email *" name="email" type="email" autoComplete="email" required maxLength={254} />
-      </div>
-      <div className="claim-textarea">
-        <label htmlFor="claim-proof">Đặc điểm chứng minh quyền sở hữu *</label>
-        <p id="claim-proof-help" className="claim-muted">Mô tả dấu hiệu riêng như vết xước, phụ kiện, đồ bên trong hoặc thời gian bạn làm mất. Không nhập mật khẩu hay mã PIN.</p>
-        <textarea id="claim-proof" name="proof" rows={4} required minLength={20} maxLength={2000} aria-describedby="claim-proof-help" placeholder="Ví dụ: Mặt sau có dán sticker hình mèo, dây đeo màu xanh…" />
-      </div>
-      <div className="claim-upload-section">
-        <label htmlFor="claim-image" className="claim-upload"><UploadCloud size={26} /><strong>Thêm ảnh chứng minh (không bắt buộc)</strong><span>Ảnh đồ vật bạn từng chụp · JPG, PNG, WebP · Tối đa 5 MB</span></label>
-        <input id="claim-image" type="file" accept="image/jpeg,image/png,image/webp" onChange={selectFile} aria-describedby={error ? 'claim-image-error' : undefined} />
-        {error && <p id="claim-image-error" className="claim-error" role="alert">{error}</p>}
-        {preview && <div className="claim-preview"><img src={preview} alt="Ảnh bằng chứng đã chọn" /><span>{file.name}</span><button type="button" onClick={() => { setFile(null); setPreview('') }} aria-label="Xóa ảnh bằng chứng"><X size={18} /></button></div>}
-      </div>
-      <label className="claim-consent"><input type="checkbox" required /> <span>Tôi xác nhận thông tin cung cấp là đúng và tôi là chủ sở hữu của đồ vật này.</span></label>
-      <Button type="submit" className="claim-send"><Send size={18} />Gửi yêu cầu nhận lại đồ</Button>
-      <p className="claim-demo-note">Bản xem thử giao diện: yêu cầu chưa được gửi đến hệ thống.</p>
+export default function FormYeuCauNhanDo({ cauHoi, cauTraLoi, doiCauTraLoi, loiNhan, datLoiNhan, xacNhan, datXacNhan, yeuCauGui, moXacNhan, dongXacNhan, guiYeuCau, dangGui, loi }) {
+  return <>
+    <form onSubmit={yeuCauGui} className="rounded-2xl border border-[#d6e4db] bg-white p-5 sm:p-6">
+      <fieldset disabled={dangGui} className="space-y-5">
+        <div><h2 className="text-lg font-bold text-[#243c30]">Thông tin xác minh</h2><p className="mt-2 text-sm leading-6 text-[#607568]">Trả lời bộ câu hỏi người nhặt đã dùng khi đăng tin. Câu trả lời của bạn được giữ kín để quản trị viên đối chiếu.</p></div>
+        {cauHoi.map((cau) => <TruongCauHoi key={cau.id} cauHoi={cau} giaTri={cauTraLoi[cau.id] ?? ''} khiThayDoi={doiCauTraLoi} />)}
+        <FormField as="textarea" label="Lời nhắn thêm" name="loiNhan" rows={3} maxLength={2000} value={loiNhan} onChange={(suKien) => datLoiNhan(suKien.target.value)} />
+        <label className="flex items-start gap-3 text-sm leading-6 text-[#315a43]"><input type="checkbox" checked={xacNhan} onChange={(suKien) => datXacNhan(suKien.target.checked)} required className="mt-1 h-4 w-4 shrink-0 accent-emerald-800" /><span>Tôi xác nhận thông tin cung cấp là đúng và đây là đồ vật của tôi.</span></label>
+        {loi && <p role="alert" className="text-sm text-rose-700">{loi}</p>}
+        <Button type="submit" className="w-full">Gửi yêu cầu nhận lại đồ</Button>
+      </fieldset>
     </form>
-  )
+    {moXacNhan && <HopThoai tieuDe="Xác nhận gửi yêu cầu" moTa="Yêu cầu sẽ được gửi tới quản trị viên để xác minh. Sau khi gửi, bạn có thể xem liên hệ của người đăng." khiDong={dongXacNhan}>
+      <div className="space-y-5 p-6">
+        {loi && <p role="alert" className="text-sm text-rose-700">{loi}</p>}
+        <div className="flex justify-end gap-3"><button type="button" onClick={dongXacNhan} disabled={dangGui} className="rounded-xl border border-[#ceded3] px-4 py-3 text-sm font-semibold">Hủy</button><Button onClick={guiYeuCau} disabled={dangGui}>{dangGui ? 'Đang gửi…' : 'Xác nhận gửi'}</Button></div>
+      </div>
+    </HopThoai>}
+  </>
 }

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useOutletContext } from 'react-router-dom'
 import { Files, Clock, EyeOff } from 'lucide-react'
-import PhanTrang from '../../../components/shared/PhanTrang'
+import PhanTrang from '../../../components/shared/PhanTrang.jsx'
 import { phanTrangDanhSach } from '../../../components/shared/xuLyPhanTrang.js'
 import BoLocTinDang from './BoLocTinDang'
 import BangTinDang from './BangTinDang'
@@ -25,7 +25,7 @@ export default function DanhSachTinDang() {
     <section className="rounded-2xl border border-[#d6e4db] bg-white"><div className="px-5 py-6 sm:px-6"><h2 className="text-lg font-bold text-[#1d3026]">Danh sách & kiểm duyệt tin đăng</h2><p className="mt-1 text-sm text-[#718276]">Đối chiếu báo cáo và quản lý trạng thái hiển thị của tin.</p></div>
       <BoLocTinDang {...{ tuKhoa, trangThai, loai, coBaoCao, tuNgay, denNgay, loiNgay }} doiTuNgay={(v) => doiBoLoc(datTuNgay, v)} doiDenNgay={(v) => doiBoLoc(datDenNgay, v)} doiTuKhoa={(v) => doiBoLoc(datTuKhoa, v)} doiTrangThai={(v) => doiBoLoc(datTrangThai, v)} doiLoai={(v) => doiBoLoc(datLoai, v)} doiBaoCao={(v) => doiBoLoc(datCoBaoCao, v)} />
       <BangTinDang cacTin={phanTrang.cacMuc} />
-      <div className="px-5"><PhanTrang {...phanTrang} chuyenTrang={datTrang} nhanDieuHuong="Ph?n trang tin ??ng" /></div>
+      <div className="px-5"><PhanTrang {...phanTrang} chuyenTrang={datTrang} nhanDieuHuong="Phân trang tin đăng" /></div>
     </section>
   </>
 }

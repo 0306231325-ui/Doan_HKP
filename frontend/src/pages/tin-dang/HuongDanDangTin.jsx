@@ -2,6 +2,7 @@ import { Info } from 'lucide-react'
 import Button from '../../components/shared/Button'
 import HopThoai from '../../components/shared/HopThoai'
 import useHuongDanDangTin from './hooks/useHuongDanDangTin'
+import { SO_ANH_TOI_DA } from './hooks/xuLyDangTin.js'
 
 export default function HuongDanDangTin() {
   const { dangMo, moHuongDan, dongHuongDan } = useHuongDanDangTin()
@@ -15,10 +16,10 @@ export default function HuongDanDangTin() {
       {dangMo && <HopThoai tieuDe="Hướng dẫn đăng tin" khiDong={dongHuongDan}>
         <div className="space-y-5 p-5 text-sm leading-6 text-[#607568] sm:p-6">
           <ol className="list-decimal space-y-4 pl-5 marker:font-semibold marker:text-emerald-800">
-            <li><span className="font-semibold text-[#243c30]">Chọn loại tin và danh mục.</span> Chọn Báo mất đồ hoặc Nhặt được đồ, rồi chọn danh mục phù hợp.</li>
+            <li><span className="font-semibold text-[#243c30]">Chọn thông tin ban đầu.</span> Chọn loại tin, danh mục và kiểm tra liên hệ ở bước đầu.</li>
             <li><span className="font-semibold text-[#243c30]">Điền thông tin chính xác.</span> Trả lời các câu hỏi hiển thị; mô tả rõ đặc điểm, nơi và thời gian mất hoặc nhặt được đồ.</li>
-            <li><span className="font-semibold text-[#243c30]">Thêm ảnh rõ nét.</span> Chọn tối đa 5 ảnh JPG, PNG hoặc WebP, mỗi ảnh không quá 5 MB.</li>
-            <li><span className="font-semibold text-[#243c30]">Kiểm tra trước khi gửi.</span> Nhập số điện thoại liên hệ và bấm Xem trước tin đăng để kiểm tra nội dung.</li>
+            <li><span className="font-semibold text-[#243c30]">Thêm ảnh rõ nét.</span> Chọn tối đa {SO_ANH_TOI_DA} ảnh JPG, PNG hoặc WebP, mỗi ảnh không quá 5 MB.</li>
+            <li><span className="font-semibold text-[#243c30]">Kiểm tra trước khi gửi.</span> Bấm Xem trước tin đăng để kiểm tra nội dung công khai.</li>
           </ol>
           <p className="border-t border-[#e4ece7] pt-4">Đăng thông tin trung thực và chỉ chia sẻ những thông tin cần thiết để liên hệ, nhận lại đồ.</p>
         </div>

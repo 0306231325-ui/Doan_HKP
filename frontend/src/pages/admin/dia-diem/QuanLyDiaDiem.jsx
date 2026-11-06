@@ -1,4 +1,5 @@
-import { CheckCircle2, Plus, Search, X } from 'lucide-react'
+import { CheckCircle2, Plus, X } from 'lucide-react'
+import BoLocDanhSach from '../../../components/shared/BoLocDanhSach'
 import BangDiaDiem from './BangDiaDiem'
 import FormDiaDiem from './FormDiaDiem'
 import XacNhanTrangThai from './XacNhanTrangThai'
@@ -31,17 +32,7 @@ export default function QuanLyDiaDiem() {
             <div className="flex items-center gap-1.5"><dt>Ngừng sử dụng</dt><dd className="font-semibold text-[#526c5b]">{diaDiem.soNgungSuDung}</dd></div>
           </dl>
         </div>
-        <div className="flex flex-col gap-3 border-t border-[#e8efea] px-5 py-4 sm:flex-row sm:px-6">
-          <div className="relative flex-1">
-            <label htmlFor="tim-dia-diem" className="sr-only">Tìm địa điểm</label>
-            <Search className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-[#8a9f91]" aria-hidden="true" />
-            <input id="tim-dia-diem" type="search" value={diaDiem.tuKhoa} onChange={diaDiem.doiTuKhoa} placeholder="Tìm theo tên hoặc mô tả địa điểm…" className="w-full rounded-xl border border-[#ceded3] bg-[#fafcfb] py-2.5 pl-9 pr-3 text-sm text-[#243c30] outline-none placeholder:text-[#9aaa9f] focus-visible:ring-2 focus-visible:ring-emerald-700" />
-          </div>
-          <div className="sm:w-48">
-            <label htmlFor="loc-trang-thai-dia-diem" className="sr-only">Lọc trạng thái địa điểm</label>
-            <select id="loc-trang-thai-dia-diem" value={diaDiem.trangThai} onChange={diaDiem.doiTrangThaiLoc} className="w-full rounded-xl border border-[#ceded3] bg-white px-3 py-2.5 text-sm text-[#526c5b] outline-none focus-visible:ring-2 focus-visible:ring-emerald-700"><option value="tat_ca">Tất cả trạng thái</option><option value="hoat_dong">Đang hoạt động</option><option value="ngung_su_dung">Ngừng sử dụng</option></select>
-          </div>
-        </div>
+        <BoLocDanhSach tuKhoa={diaDiem.tuKhoa} trangThai={diaDiem.trangThai} doiTuKhoa={diaDiem.doiTuKhoa} doiTrangThai={diaDiem.doiTrangThaiLoc} nhanTimKiem="Tìm địa điểm" goiYTimKiem="Tìm theo tên hoặc mô tả địa điểm…" nhanTrangThai="Lọc trạng thái địa điểm" />
         {diaDiem.dangTai ? <p role="status" className="p-5 text-sm">Đang tải địa điểm…</p> : diaDiem.loiTai ? <div role="alert" className="p-5 text-sm text-red-700">{diaDiem.loiTai} <button type="button" onClick={diaDiem.taiLai}>Thử lại</button></div> : <BangDiaDiem {...diaDiem} />}
       </section>
       {diaDiem.bieuMau && <FormDiaDiem {...diaDiem} />}

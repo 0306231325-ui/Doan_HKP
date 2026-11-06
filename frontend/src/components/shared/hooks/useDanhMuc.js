@@ -11,9 +11,12 @@ export default function useDanhMuc(quanTri = false) {
     api.get(quanTri ? '/admin/danh-muc' : '/tra-cuu/bo-loc', { signal: yeuCau.signal }).then(({ data }) => {
       if (yeuCau.signal.aborted) return
       const danhSach = quanTri ? data.data : data.danhMuc.map((muc) => ({ id: muc.id, tenDanhMuc: muc.name, moTa: '', dangHoatDong: true }))
-      datNguon({ lan: lanTai, data: danhSach, loi: '' })
+      datNguon({ lan: lanTai, data: danhSach, diaDiem: quanTri ? [] : data.diaDiem, loi: '' })
     }).catch((loi) => {
-      if (!yeuCau.signal.aborted) datNguon({ lan: lanTai, data: [], loi: loi.response?.data?.message || 'Không tải được danh mục. Vui lòng thử lại.' })
+      if (!yeuCau.signal.aborted) {
+        const thongBao = loi.response?.status < 500 ? loi.response.data?.message : ''
+        datNguon({ lan: lanTai, data: [], loi: thongBao || 'Không tải được danh mục. Vui lòng thử lại.' })
+      }
     })
     return () => yeuCau.abort()
   }, [lanTai, quanTri])
@@ -26,5 +29,5 @@ export default function useDanhMuc(quanTri = false) {
     datLanTai((cu) => cu + 1)
   }
 
-  return { danhSach: nguon.data, datDanhSach, dangTai, loiTai: dangTai ? '' : nguon.loi, taiLai }
+  return { danhSach: nguon.data, diaDiem: nguon.diaDiem || [], datDanhSach, dangTai, loiTai: dangTai ? '' : nguon.loi, taiLai }
 }

@@ -1,8 +1,15 @@
-import { Outlet } from 'react-router-dom'
+import { useLayoutEffect } from 'react'
+import { Outlet, useLocation } from 'react-router-dom'
 import Navbar from '../components/layout/user/Navbar'
 import Footer from '../components/layout/user/Footer'
 
 function MainLayout() {
+  const { pathname, hash } = useLocation()
+
+  useLayoutEffect(function veDauTrang() {
+    if (!hash) window.scrollTo(0, 0)
+  }, [pathname, hash])
+
   return (
     <div className="bg-[#e8f4ec] min-h-screen text-gray-800 flex flex-col antialiased">
       <Navbar />

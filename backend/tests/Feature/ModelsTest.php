@@ -6,6 +6,7 @@ use App\Models\BanGiao;
 use App\Models\CauHoi;
 use App\Models\CuocHen;
 use App\Models\HinhAnhTinDang;
+use App\Models\LichSuCauHoi;
 use App\Models\LichSuTinDang;
 use App\Models\LichSuYeuCau;
 use App\Models\LoiKhaiTinDang;
@@ -51,16 +52,13 @@ class ModelsTest extends TestCase
 
     public function test_du_lieu_json_ngay_va_so_duoc_chuyen_dung_kieu(): void
     {
-        $cauHoi = new CauHoi([
-            'lua_chon' => ['Den', 'Trang'],
-            'bat_buoc' => 1,
-            'cong_khai' => 0,
-        ]);
-        $cauHoi = $cauHoi->newFromBuilder($cauHoi->getAttributes());
-
-        $this->assertSame(['Den', 'Trang'], $cauHoi->lua_chon);
-        $this->assertTrue($cauHoi->bat_buoc);
-        $this->assertFalse($cauHoi->cong_khai);
+        $cauHoi = new CauHoi(['thu_tu' => '2', 'trang_thai' => 0]);
+        $this->assertSame(2, $cauHoi->thu_tu);
+        $this->assertFalse($cauHoi->trang_thai);
+        $ban = new LichSuCauHoi(['phien_ban' => '3', 'du_lieu' => ['noi_dung' => 'Đặc điểm?']]);
+        $ban = $ban->newFromBuilder($ban->getAttributes());
+        $this->assertSame(3, $ban->phien_ban);
+        $this->assertSame(['noi_dung' => 'Đặc điểm?'], $ban->du_lieu);
         $this->assertSame('12345678901234.5678', (new LoiKhaiTinDang([
             'gia_tri_so' => '12345678901234.5678',
         ]))->gia_tri_so);

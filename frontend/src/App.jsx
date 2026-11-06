@@ -39,7 +39,7 @@ export default function App() {
               <Route path="chi-tiet-yeu-cau" element={<TaoCuocHen />} />
               <Route path="tao-cuoc-hen" element={<TaoCuocHen />} />
               <Route path="yeu-cau-nhan-do" element={<YeuCauNhanDo />} />
-              <Route path="dang-tin" element={<DangTin />} />
+              <Route path="dang-tin/noi-dung?" element={<DangTin />} />
               <Route path="trang-ca-nhan" element={<TrangCaNhan />} />
             </Route>
           </Route>
