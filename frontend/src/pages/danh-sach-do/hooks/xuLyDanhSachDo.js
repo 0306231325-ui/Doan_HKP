@@ -24,21 +24,6 @@ export function docBoLoc(thamSo, danhMuc, diaDiem) {
   }
 }
 
-export function locDoVat(danhSach, boLoc) {
-  if (kiemTraNgay(boLoc.tuNgay, boLoc.denNgay)) return []
-  const cacTu = chuanHoaTimKiem(boLoc.tuKhoa).split(/[^\p{L}\p{N}]+/u).filter(Boolean)
-  return danhSach.filter((muc) => {
-    const noiDung = chuanHoaTimKiem(`${muc.title} ${muc.fullName || ''} ${muc.description} ${muc.location} ${muc.category} ${muc.referenceCode}`)
-    const cacTuTrongTin = new Set(noiDung.split(/[^\p{L}\p{N}]+/u))
-    return cacTu.every((tu) => cacTuTrongTin.has(tu))
-      && (boLoc.loaiTin === 'all' || muc.type === boLoc.loaiTin)
-      && (boLoc.danhMuc === 'all' || muc.categoryId === boLoc.danhMuc)
-      && (boLoc.diaDiem === 'all' || muc.locationId === boLoc.diaDiem)
-      && (!boLoc.tuNgay || muc.date >= boLoc.tuNgay)
-      && (!boLoc.denNgay || muc.date <= boLoc.denNgay)
-  }).sort((a, b) => (boLoc.sapXep === 'cu_nhat' ? a.date.localeCompare(b.date) : b.date.localeCompare(a.date)) || String(a.id).localeCompare(String(b.id), 'vi', { numeric: true }))
-}
-
 export function dinhDangNgay(ngay) {
   return /^\d{4}-\d{2}-\d{2}$/.test(ngay || '') ? ngay.split('-').reverse().join('/') : 'Chưa rõ ngày'
 }

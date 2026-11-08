@@ -2098,6 +2098,140 @@
                     }
                 }
             }
+        },
+        "/api/thong-bao": {
+            "get": {
+                "tags": [
+                    "Thông báo"
+                ],
+                "summary": "Đọc hộp thông báo của tài khoản đang đăng nhập",
+                "operationId": "86b63a667e5915ee162637568ff430cb",
+                "responses": {
+                    "200": {
+                        "description": "Tối đa 20 thông báo mới nhất và tổng số chưa đọc. Chỉ có đường dẫn khi tài khoản xem được tin.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "string"
+                                                    },
+                                                    "tieuDe": {
+                                                        "type": "string"
+                                                    },
+                                                    "noiDung": {
+                                                        "type": "string"
+                                                    },
+                                                    "taoLuc": {
+                                                        "type": "string",
+                                                        "format": "date-time"
+                                                    },
+                                                    "daDoc": {
+                                                        "type": "boolean"
+                                                    },
+                                                    "duongDan": {
+                                                        "type": "string",
+                                                        "example": "/chi-tiet-tin-dang?id=17",
+                                                        "nullable": true
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "soChuaDoc": {
+                                            "type": "integer",
+                                            "minimum": 0
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Tài khoản đã bị khóa"
+                    }
+                }
+            }
+        },
+        "/api/thong-bao/{id}/da-doc": {
+            "patch": {
+                "tags": [
+                    "Thông báo"
+                ],
+                "summary": "Đánh dấu một thông báo đã đọc",
+                "operationId": "cfebc8b5eafc283f7b1fc21e308598fb",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "X-XSRF-TOKEN",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Đã đọc. Gọi lại giữ thời điểm đọc lần đầu."
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Tài khoản đã bị khóa"
+                    },
+                    "404": {
+                        "description": "Thông báo không tồn tại trong hộp thư của phiên hiện tại"
+                    }
+                }
+            }
+        },
+        "/api/thong-bao/da-doc": {
+            "patch": {
+                "tags": [
+                    "Thông báo"
+                ],
+                "summary": "Đánh dấu tất cả thông báo của tài khoản đã đọc",
+                "operationId": "4090235feb32394fbd2e670a8470439b",
+                "parameters": [
+                    {
+                        "name": "X-XSRF-TOKEN",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Đã cập nhật tất cả thông báo chưa đọc của phiên hiện tại"
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Tài khoản đã bị khóa"
+                    }
+                }
+            }
         }
     },
     "components": {
@@ -2181,6 +2315,10 @@
         {
             "name": "Users",
             "description": "Users"
+        },
+        {
+            "name": "Thông báo",
+            "description": "Thông báo"
         }
     ]
 }

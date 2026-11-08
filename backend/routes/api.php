@@ -6,6 +6,7 @@ use App\Http\Controllers\DangTinController;
 use App\Http\Controllers\DanhMucController;
 use App\Http\Controllers\DiaDiemController;
 use App\Http\Controllers\QuanLyTinDangController;
+use App\Http\Controllers\ThongBaoController;
 use App\Http\Controllers\ThongTinCaNhanController;
 use App\Http\Controllers\TraCuuController;
 use App\Http\Controllers\UserController;
@@ -32,6 +33,9 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
     Route::post('/tin-dang/{tin}/nhan-lai', [YeuCauNhanDoController::class, 'them'])->whereNumber('tin')->middleware('throttle:10,1');
     Route::get('/tin-dang/{tin}/lien-he', [YeuCauNhanDoController::class, 'lienHe'])->whereNumber('tin')->middleware('throttle:60,1');
     Route::get('/me', [AuthController::class, 'me']);
+    Route::get('/thong-bao', [ThongBaoController::class, 'danhSach'])->middleware('throttle:120,1');
+    Route::patch('/thong-bao/da-doc', [ThongBaoController::class, 'danhDauTatCaDaDoc'])->middleware('throttle:30,1');
+    Route::patch('/thong-bao/{id}/da-doc', [ThongBaoController::class, 'danhDauDaDoc'])->whereNumber('id')->middleware('throttle:30,1');
     Route::get('/me/tin-dang', [DangTinController::class, 'tinCuaToi'])->middleware('throttle:120,1');
     Route::patch('/me', [ThongTinCaNhanController::class, 'capNhat'])->middleware('throttle:20,1');
     Route::put('/me/mat-khau', [ThongTinCaNhanController::class, 'doiMatKhau'])->middleware('throttle:5,1');
