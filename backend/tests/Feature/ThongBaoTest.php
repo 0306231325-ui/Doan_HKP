@@ -109,4 +109,40 @@ class ThongBaoTest extends TestCase
         $this->getJson('/api/thong-bao')->assertOk()->assertJsonPath('soChuaDoc', 0)->assertJsonPath('data.0.daDoc', true);
         $this->assertNull($mucKhac->fresh()->thoi_gian_doc);
     }
+
+    public function test_chi_xoa_duoc_thong_bao_cua_tai_khoan_dang_dang_nhap(): void
+    {
+        $muc = $this->taoThongBao($this->chu);
+        $mucConLai = $this->taoThongBao($this->chu);
+        $mucKhac = $this->taoThongBao($this->khac);
+
+        $this->deleteJson('/api/thong-bao/'.$muc->id)->assertUnauthorized();
+        $this->actingAs($this->chu)->deleteJson('/api/thong-bao/'.$mucKhac->id)->assertNotFound();
+        $this->deleteJson('/api/thong-bao/'.$muc->id)->assertNoContent();
+        $this->deleteJson('/api/thong-bao/'.$muc->id)->assertNotFound();
+
+        $this->assertModelMissing($muc);
+        $this->assertModelExists($mucKhac);
+        $this->getJson('/api/thong-bao')->assertOk()->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', (string) $mucConLai->id)->assertJsonPath('soChuaDoc', 1);
+    }
+
+    public function test_xoa_tat_ca_gom_ca_thong_bao_ngoai_20_muc_moi(): void
+    {
+        $mucCu = $this->taoThongBao($this->chu);
+        $mucCu->update(['thoi_gian_doc' => now()]);
+        for ($i = 0; $i < 20; $i++) {
+            $this->taoThongBao($this->chu);
+        }
+        $mucKhac = $this->taoThongBao($this->khac);
+
+        $this->deleteJson('/api/thong-bao')->assertUnauthorized();
+        $this->actingAs($this->chu)->deleteJson('/api/thong-bao')->assertNoContent();
+        $this->getJson('/api/thong-bao')->assertOk()->assertJsonPath('data', [])->assertJsonPath('soChuaDoc', 0);
+        $this->deleteJson('/api/thong-bao')->assertNoContent();
+
+        $this->assertModelMissing($mucCu);
+        $this->assertDatabaseCount('thong_bao', 1);
+        $this->assertModelExists($mucKhac);
+    }
 }

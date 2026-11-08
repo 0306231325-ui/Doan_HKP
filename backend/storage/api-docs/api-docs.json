@@ -2195,6 +2195,37 @@
                         "description": "Tài khoản đã bị khóa"
                     }
                 }
+            },
+            "delete": {
+                "tags": [
+                    "Thông báo"
+                ],
+                "summary": "Xóa tất cả thông báo của tài khoản đang đăng nhập",
+                "operationId": "6023d88f9fdc4b3ddf827a00b42263f3",
+                "parameters": [
+                    {
+                        "name": "X-XSRF-TOKEN",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Đã xóa toàn bộ hộp thư, gồm các mục ngoài 20 thông báo mới nhất"
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Tài khoản đã bị khóa"
+                    },
+                    "429": {
+                        "description": "Đã vượt giới hạn thao tác"
+                    }
+                }
             }
         },
         "/api/thong-bao/{id}/da-doc": {
@@ -2265,6 +2296,51 @@
                     },
                     "403": {
                         "description": "Tài khoản đã bị khóa"
+                    }
+                }
+            }
+        },
+        "/api/thong-bao/{id}": {
+            "delete": {
+                "tags": [
+                    "Thông báo"
+                ],
+                "summary": "Xóa một thông báo của tài khoản đang đăng nhập",
+                "operationId": "4ff0e14bf064685489b4c1287f997e58",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "X-XSRF-TOKEN",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Đã xóa thông báo"
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Tài khoản đã bị khóa"
+                    },
+                    "404": {
+                        "description": "Thông báo không tồn tại trong hộp thư của phiên hiện tại"
+                    },
+                    "429": {
+                        "description": "Đã vượt giới hạn thao tác"
                     }
                 }
             }

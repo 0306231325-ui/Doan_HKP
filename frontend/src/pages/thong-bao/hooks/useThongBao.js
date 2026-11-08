@@ -13,6 +13,9 @@ export default function useThongBao() {
   const [dangTai, datDangTai] = useState(true)
   const [loiHopThu, datLoiHopThu] = useState('')
   const [dangDanhDauTatCa, datDangDanhDauTatCa] = useState(false)
+  const [mucChoXoa, datMucChoXoa] = useState(null)
+  const [dangXoa, datDangXoa] = useState(false)
+  const [loiXoa, datLoiXoa] = useState('')
   const thamChieuKhung = useRef(null)
   const thamChieuChuong = useRef(null)
   const thamChieuBang = useRef(null)
@@ -66,8 +69,8 @@ export default function useThongBao() {
   }, [])
 
   useEffect(function theoDoiBang() {
-    if (!moBang) return
-    thamChieuBang.current?.focus()
+    if (!moBang || mucChoXoa) return
+    thamChieuBang.current?.focus({ preventScroll: true })
     function nhanNgoaiBang(suKien) {
       if (!thamChieuKhung.current?.contains(suKien.target)) datMoBang(false)
     }
@@ -83,7 +86,7 @@ export default function useThongBao() {
       document.removeEventListener('pointerdown', nhanNgoaiBang)
       document.removeEventListener('keydown', nhanPhimDong)
     }
-  }, [moBang])
+  }, [moBang, mucChoXoa])
 
   function doiMoBang() {
     datQuyen(layQuyenThongBao())
@@ -106,13 +109,43 @@ export default function useThongBao() {
     }
   }
 
+  function moXacNhanXoa(muc = {}) {
+    datLoiXoa('')
+    datMucChoXoa(muc)
+  }
+
+  function dongXacNhanXoa() {
+    if (!dangXoa) datMucChoXoa(null)
+  }
+
+  async function xacNhanXoa() {
+    const signal = phienHopThu.current?.signal
+    if (!mucChoXoa || dangXoa || !signal || signal.aborted) return
+    const { id } = mucChoXoa
+    datDangXoa(true)
+    datLoiXoa('')
+    try {
+      await prepareCsrf()
+      await api.delete(id ? `/thong-bao/${id}` : '/thong-bao', {
+        signal,
+        validateStatus: (status) => status === 204 || (Boolean(id) && status === 404),
+      })
+      if (!signal.aborted) await taiThongBao()
+      if (!signal.aborted) datMucChoXoa(null)
+    } catch {
+      if (!signal.aborted) datLoiXoa('Chưa xóa được thông báo. Vui lòng thử lại.')
+    } finally {
+      if (!signal.aborted) datDangXoa(false)
+    }
+  }
+
   function dongBang() {
     datMoBang(false)
     thamChieuChuong.current?.focus()
   }
 
   function roiKhung(suKien) {
-    if (!suKien.currentTarget.contains(suKien.relatedTarget)) datMoBang(false)
+    if (!mucChoXoa && !suKien.currentTarget.contains(suKien.relatedTarget)) datMoBang(false)
   }
 
   function moHopThoaiMoi() {
@@ -147,5 +180,6 @@ export default function useThongBao() {
 
   return { moBang, moLoiMoi, quyen, dangXinQuyen, loi, thamChieuKhung, thamChieuChuong, thamChieuBang, maBang, maTieuDe,
     doiMoBang, dongBang, roiKhung, moHopThoaiMoi, dongLoiMoi, batThongBao,
-    danhSach, soChuaDoc, dangTai, loiHopThu, dangDanhDauTatCa, taiThongBao, danhDauDaDoc }
+    danhSach, soChuaDoc, dangTai, loiHopThu, dangDanhDauTatCa, taiThongBao, danhDauDaDoc,
+    mucChoXoa, dangXoa, loiXoa, moXacNhanXoa, dongXacNhanXoa, xacNhanXoa }
 }

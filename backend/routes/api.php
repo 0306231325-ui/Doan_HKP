@@ -41,6 +41,8 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
     Route::get('/thong-bao', [ThongBaoController::class, 'danhSach'])->middleware('throttle:120,1');
     Route::patch('/thong-bao/da-doc', [ThongBaoController::class, 'danhDauTatCaDaDoc'])->middleware('throttle:30,1');
     Route::patch('/thong-bao/{id}/da-doc', [ThongBaoController::class, 'danhDauDaDoc'])->whereNumber('id')->middleware('throttle:30,1');
+    Route::delete('/thong-bao', [ThongBaoController::class, 'xoaTatCa'])->middleware('throttle:30,1');
+    Route::delete('/thong-bao/{id}', [ThongBaoController::class, 'xoa'])->whereNumber('id')->middleware('throttle:30,1');
     Route::get('/me/tin-dang', [DangTinController::class, 'tinCuaToi'])->middleware('throttle:120,1');
     Route::patch('/me', [ThongTinCaNhanController::class, 'capNhat'])->middleware('throttle:20,1');
     Route::put('/me/mat-khau', [ThongTinCaNhanController::class, 'doiMatKhau'])->middleware('throttle:5,1');
