@@ -138,7 +138,7 @@ class DangTinTest extends TestCase
             $t->id();
             $t->foreignId('nguoi_dung_id')->constrained('nguoi_dung');
             $t->foreignId('tin_dang_id')->constrained('tin_dang');
-            $t->foreignId('yeu_cau_id')->constrained('yeu_cau_nhan_do');
+            $t->foreignId('yeu_cau_id')->nullable()->constrained('yeu_cau_nhan_do');
             $t->string('loai_thong_bao');
             $t->string('tieu_de');
             $t->text('noi_dung');
@@ -547,5 +547,65 @@ class DangTinTest extends TestCase
         $this->assertDatabaseCount('tin_dang', 0);
         $this->chuTin->update(['trang_thai' => 'bi_khoa']);
         $this->getJson('/api/dang-tin/cau-hoi?danhMucId=1')->assertForbidden();
+    }
+
+    public function test_nguoi_giu_gui_thong_bao_dan_den_tin_nhat_de_nguoi_mat_gui_yeu_cau(): void
+    {
+        $this->getJson('/api/tin-dang/1/giu-do')->assertUnauthorized();
+        $this->postJson('/api/tin-dang/1/giu-do', [])->assertUnauthorized();
+        $mau = $this->mau();
+        $tinNhat = $this->postJson('/api/tin-dang', $mau)->assertCreated()->json('data.id');
+        $tinMatCuaNguoiGiu = $this->postJson('/api/tin-dang', [...$mau, 'maGui' => (string) Str::uuid(), 'loaiTin' => 'lost'])->assertCreated()->json('data.id');
+        $this->app['auth']->forgetGuards();
+        $this->actingAs($this->nguoiNhan, 'web');
+        $tinMat = $this->postJson('/api/tin-dang', [...$mau, 'maGui' => (string) Str::uuid(), 'loaiTin' => 'lost'])->assertCreated()->json('data.id');
+        $url = '/api/tin-dang/'.$tinMat.'/giu-do';
+        $this->getJson($url)->assertForbidden();
+
+        $this->app['auth']->forgetGuards();
+        $this->actingAs($this->chuTin, 'web');
+        $this->getJson($url)->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.id', $tinNhat)->assertDontSee('SECRET-ANSWER');
+        $this->postJson($url, ['tinNhatId' => $tinMatCuaNguoiGiu])->assertUnprocessable();
+        $this->postJson($url, ['tinNhatId' => $tinNhat])->assertCreated();
+        $this->postJson($url, ['tinNhatId' => $tinNhat])->assertOk();
+        $this->assertDatabaseCount('thong_bao', 1);
+        $this->assertDatabaseCount('yeu_cau_nhan_do', 0);
+        $this->getJson('/api/thong-bao')->assertOk()->assertJsonCount(0, 'data');
+
+        $this->app['auth']->forgetGuards();
+        $this->actingAs($this->nguoiNhan, 'web');
+        $this->getJson('/api/thong-bao')->assertOk()->assertJsonCount(1, 'data')
+            ->assertJsonPath('soChuaDoc', 1)->assertJsonPath('data.0.duongDan', '/chi-tiet-tin-dang?id='.$tinNhat);
+        $this->getJson('/api/tra-cuu/'.$tinNhat)->assertOk()->assertJsonPath('data.canClaim', true);
+        $cauHoi = $this->getJson('/api/tin-dang/'.$tinNhat.'/nhan-lai')->assertOk()->json('data.0.id');
+        $this->postJson('/api/tin-dang/'.$tinNhat.'/nhan-lai', [
+            'xacNhan' => true, 'cauTraLoi' => [['id' => $cauHoi, 'giaTri' => 'Có dấu xước']],
+        ])->assertCreated();
+    }
+
+    public function test_khong_the_gui_tin_nhat_cua_nguoi_khac_an_dong_hoac_thieu_cau_hoi(): void
+    {
+        $mau = $this->mau();
+        $tinMat = $this->postJson('/api/tin-dang', [...$mau, 'loaiTin' => 'lost'])->assertCreated()->json('data.id');
+        $tinNhatKhac = $this->postJson('/api/tin-dang', [...$mau, 'maGui' => (string) Str::uuid()])->assertCreated()->json('data.id');
+        $this->app['auth']->forgetGuards();
+        $this->actingAs($this->nguoiNhan, 'web');
+        $tinNhat = TinDang::findOrFail($this->postJson('/api/tin-dang', [...$mau, 'maGui' => (string) Str::uuid()])->assertCreated()->json('data.id'));
+        $tinCu = $tinNhat->replicate(['ma_gui']);
+        $tinCu->slug = 'tin-cu-khong-co-cau-hoi';
+        $tinCu->save();
+        $url = '/api/tin-dang/'.$tinMat.'/giu-do';
+
+        $this->postJson($url, ['tinNhatId' => $tinNhatKhac])->assertUnprocessable();
+        $this->postJson($url, ['tinNhatId' => $tinCu->id])->assertUnprocessable();
+        $tinNhat->update(['trang_thai' => 'da_dong']);
+        $this->postJson($url, ['tinNhatId' => $tinNhat->id])->assertUnprocessable();
+        $tinNhat->update(['trang_thai' => 'dang_mo', 'trang_thai_kiem_duyet' => 'da_an']);
+        $this->postJson($url, ['tinNhatId' => $tinNhat->id])->assertUnprocessable();
+        $this->getJson($url)->assertOk()->assertJsonCount(0, 'data')->assertJsonPath('meta.tongTin', 0);
+        $tinNhat->update(['trang_thai_kiem_duyet' => 'hien_thi']);
+        TinDang::whereKey($tinMat)->update(['trang_thai' => 'da_dong']);
+        $this->postJson($url, ['tinNhatId' => $tinNhat->id])->assertConflict();
+        $this->assertDatabaseCount('thong_bao', 0);
     }
 }
