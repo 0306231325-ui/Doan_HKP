@@ -7,6 +7,7 @@ use App\Models\DiaDiem;
 use App\Models\HinhAnhTinDang;
 use App\Models\NguoiDung;
 use App\Models\TinDang;
+use Database\Seeders\CauHoiTinMauSeeder;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
@@ -88,6 +89,31 @@ class TraCuuTest extends TestCase
             $table->string('trang_thai_moi');
             $table->text('noi_dung');
             $table->dateTime('created_at')->nullable();
+        });
+        Schema::create('cau_hoi', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('danh_muc_id')->constrained('danh_muc_do_vat');
+            $table->string('noi_dung');
+            $table->string('kieu_nhap');
+            $table->unsignedInteger('thu_tu');
+            $table->boolean('trang_thai');
+            $table->timestamps();
+        });
+        Schema::create('lich_su_cau_hoi', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('cau_hoi_id')->constrained('cau_hoi');
+            $table->unsignedInteger('phien_ban');
+            $table->json('du_lieu');
+            $table->timestamp('created_at')->nullable();
+        });
+        Schema::create('loi_khai_tin_dang', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('tin_dang_id')->constrained('tin_dang');
+            $table->foreignId('cau_hoi_id')->constrained('cau_hoi');
+            $table->foreignId('cau_hoi_phien_ban_id')->constrained('lich_su_cau_hoi');
+            $table->text('gia_tri_text')->nullable();
+            $table->decimal('gia_tri_so', 18, 4)->nullable();
+            $table->timestamps();
         });
         $this->nguoiDung = NguoiDung::create(['ho_ten' => 'Nguoi dang', 'email' => 'thu@example.test', 'mat_khau' => 'hash-khong-cong-khai', 'so_dien_thoai' => 'SECRET-PHONE', 'trang_thai' => 'hoat_dong']);
         $this->danhMuc = DanhMucDoVat::create(['ten_danh_muc' => 'Thiet bi', 'trang_thai' => true]);
@@ -182,6 +208,9 @@ class TraCuuTest extends TestCase
         $this->assertDatabaseCount('tin_dang', 5);
         $this->assertDatabaseCount('hinh_anh_tin_dang', 6);
         $this->assertDatabaseCount('lich_su_tin_dang', 5);
+        $this->assertDatabaseCount('cau_hoi', 6);
+        $this->assertDatabaseCount('lich_su_cau_hoi', 6);
+        $this->assertDatabaseCount('loi_khai_tin_dang', 6);
         $this->assertDatabaseCount('danh_muc_do_vat', 7);
         $this->assertDatabaseHas('danh_muc_do_vat', [
             'ten_danh_muc' => 'Khác',
@@ -192,5 +221,24 @@ class TraCuuTest extends TestCase
         $this->assertSame('Da sua boi nguoi dung', $tin->fresh()->tieu_de);
         $this->assertSame(4, TinDang::count());
         $this->assertSame('hash-khong-cong-khai', $this->nguoiDung->fresh()->mat_khau);
+    }
+
+    public function test_seed_cau_hoi_chi_bo_sung_cho_tin_nhat_duoc_mau(): void
+    {
+        $tinThuong = $this->taoTin(['slug' => 'mau-tra-cuu-tin-khac']);
+        $tinMau = $this->taoTin(['slug' => 'mau-tra-cuu-may-tinh-flexio']);
+        $tinDaXoa = $this->taoTin(['slug' => 'mau-tra-cuu-vi-da-den']);
+        $tinDaXoa->delete();
+
+        $this->seed(CauHoiTinMauSeeder::class);
+
+        $cacLoiKhai = $tinMau->loiKhai()->with('phienBanCauHoi', 'cauHoi')->orderBy('id')->get();
+        $this->assertCount(2, $cacLoiKhai);
+        $this->assertSame('Nắp trượt của máy tính có dấu hiệu nhận biết gì?', $cacLoiKhai[0]->phienBanCauHoi->du_lieu['noi_dung']);
+        $this->assertSame('so', $cacLoiKhai[1]->phienBanCauHoi->du_lieu['kieu_nhap']);
+        $this->assertSame('1.0000', $cacLoiKhai[1]->gia_tri_so);
+        $this->assertFalse($cacLoiKhai[0]->cauHoi->trang_thai);
+        $this->assertFalse($tinThuong->loiKhai()->exists());
+        $this->assertFalse($tinDaXoa->loiKhai()->exists());
     }
 }

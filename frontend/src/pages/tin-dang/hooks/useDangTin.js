@@ -3,8 +3,9 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../../auth/useAuth'
 import api, { prepareCsrf } from '../../../services/api'
 import useDanhMuc from '../../../components/shared/hooks/useDanhMuc'
+import useAnhBieuMau from '../../../components/shared/hooks/useAnhBieuMau'
 import { layNgayVietNam } from '../../admin/tong-quan/hooks/xuLyThongKe.js'
-import { chonAnhDangTin, kiemTraThongTinDangTin, kiemTraTinDang, taoDuLieuGui, layLoiGui } from './xuLyDangTin.js'
+import { kiemTraThongTinDangTin, kiemTraTinDang, taoDuLieuGui, layLoiGui } from './xuLyDangTin.js'
 
 export default function useDangTin(loaiBanDau, duongDanNoiDung) {
   const { user } = useAuth()
@@ -25,15 +26,13 @@ export default function useDangTin(loaiBanDau, duongDanNoiDung) {
   const dangTaiCauHoi = Boolean(duLieu.danhMucId) && nguonCauHoi.khoa !== khoa
   const cauHoi = nguonCauHoi.khoa === khoa ? nguonCauHoi.data : []
   const loiTaiCauHoi = nguonCauHoi.khoa === khoa ? nguonCauHoi.loi : ''
-  const [anh, datAnh] = useState([])
-  const [loiAnh, datLoiAnh] = useState('')
+  const { anh, loiAnh, chonAnh, xoaAnh } = useAnhBieuMau()
   const [loi, datLoi] = useState('')
   const [buoc, datBuoc] = useState('')
   const [dangGui, datDangGui] = useState(false)
   const coTheTiepTuc = !dangTaiDanhMuc && !loiTaiDanhMuc && !loiThongTin && !dangGui
   const khoaGui = useRef(null)
   const dangXuLy = useRef(false)
-  const cacUrl = useRef(new Set())
   const nutGui = useRef(null)
 
   useEffect(function napCauHoi() {
@@ -46,14 +45,6 @@ export default function useDangTin(loaiBanDau, duongDanNoiDung) {
     })
     return () => yeuCau.abort()
   }, [duLieu.danhMucId, khoa])
-
-  useEffect(function quanLyAnh() {
-    const urls = cacUrl.current
-    return function thuHoiAnh() {
-      urls.forEach((url) => URL.revokeObjectURL(url))
-      urls.clear()
-    }
-  }, [])
 
   function taiLaiCauHoi() {
     if (dangXuLy.current) return
@@ -80,30 +71,6 @@ export default function useDangTin(loaiBanDau, duongDanNoiDung) {
     const { name, value } = suKien.target
     datCauTraLoi((cu) => ({ ...cu, [name]: value }))
     datLoi('')
-  }
-
-  function chonAnh(suKien) {
-    const cacTep = Array.from(suKien.target.files || [])
-    suKien.target.value = ''
-    const { anhSeThem, loi: thongBao } = chonAnhDangTin(cacTep, anh.length)
-    datLoiAnh(thongBao)
-    if (!anhSeThem.length) return
-    const anhMoi = anhSeThem.map((tep) => {
-      const url = URL.createObjectURL(tep)
-      cacUrl.current.add(url)
-      return { id: crypto.randomUUID(), tep, url }
-    })
-    datAnh((cu) => [...cu, ...anhMoi])
-  }
-
-  function xoaAnh(ma) {
-    const anhXoa = anh.find((muc) => muc.id === ma)
-    if (anhXoa) {
-      URL.revokeObjectURL(anhXoa.url)
-      cacUrl.current.delete(anhXoa.url)
-    }
-    datAnh((cu) => cu.filter((muc) => muc.id !== ma))
-    datLoiAnh('')
   }
 
   function xuLyGuiBieuMau(suKien) {

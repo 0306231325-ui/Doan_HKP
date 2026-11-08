@@ -88,6 +88,8 @@ class DuLieuTraCuuSeeder extends Seeder
                     'noi_dung' => 'Đã đăng tin.',
                 ]);
             }
+
+            $this->call(CauHoiTinMauSeeder::class);
         });
     }
 }
