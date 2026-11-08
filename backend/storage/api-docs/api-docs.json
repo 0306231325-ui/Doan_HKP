@@ -2,7 +2,7 @@
     "openapi": "3.0.0",
     "info": {
         "title": "Đồ Án HKP API Documentation",
-        "description": "Tài liệu API nội bộ chỉ dùng để test cá nhân (không đưa lên Git).",
+        "description": "Tài liệu API nội bộ. Các thao tác hồ sơ dùng phiên đăng nhập Sanctum và CSRF. Gọi /sanctum/csrf-cookie, đăng nhập rồi truyền giá trị cookie XSRF-TOKEN đã URL-decode vào X-XSRF-TOKEN khi ghi dữ liệu.",
         "version": "1.0.0"
     },
     "servers": [
@@ -12,12 +12,1871 @@
         }
     ],
     "paths": {
+        "/api/admin/dia-diem": {
+            "get": {
+                "tags": [
+                    "Địa điểm"
+                ],
+                "summary": "Danh sách địa điểm DB cho quản trị",
+                "operationId": "5ede844085bb81409d19c04c43f38b77",
+                "responses": {
+                    "200": {
+                        "description": "data gồm id dạng chuỗi, tenDiaDiem, moTa, dangHoatDong; gồm cả ngừng sử dụng. Frontend dùng tìm/lọc và phân trang chung 8 mục/trang."
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Không phải quản trị hoạt động"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Địa điểm"
+                ],
+                "summary": "Thêm địa điểm vào DB",
+                "operationId": "6d269fda28283af39d7e97e015aa0c2e",
+                "parameters": [
+                    {
+                        "name": "X-XSRF-TOKEN",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "tenDiaDiem",
+                                    "dangHoatDong"
+                                ],
+                                "properties": {
+                                    "tenDiaDiem": {
+                                        "type": "string",
+                                        "maxLength": 150
+                                    },
+                                    "moTa": {
+                                        "type": "string",
+                                        "nullable": true,
+                                        "maxLength": 500
+                                    },
+                                    "dangHoatDong": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "data là địa điểm đã lưu; đồng bộ lựa chọn Tra cứu/Đăng tin khi đang hoạt động"
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Không phải quản trị hoạt động"
+                    },
+                    "422": {
+                        "description": "Tên trống/quá dài/trùng kể cả ngừng sử dụng, mô tả quá dài hoặc trạng thái sai"
+                    },
+                    "429": {
+                        "description": "Tối đa 30 lần/phút"
+                    }
+                }
+            }
+        },
+        "/api/admin/dia-diem/{id}": {
+            "patch": {
+                "tags": [
+                    "Địa điểm"
+                ],
+                "summary": "Sửa địa điểm DB",
+                "operationId": "ea62466e25a46465f2512952f18a3f22",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "X-XSRF-TOKEN",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "tenDiaDiem",
+                                    "dangHoatDong"
+                                ],
+                                "properties": {
+                                    "tenDiaDiem": {
+                                        "type": "string",
+                                        "maxLength": 150
+                                    },
+                                    "moTa": {
+                                        "type": "string",
+                                        "nullable": true,
+                                        "maxLength": 500
+                                    },
+                                    "dangHoatDong": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "data là địa điểm sau sửa; giữ ID và các liên kết tin cũ"
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Không phải quản trị hoạt động"
+                    },
+                    "404": {
+                        "description": "Không có địa điểm"
+                    },
+                    "422": {
+                        "description": "Dữ liệu không hợp lệ hoặc tên trùng"
+                    }
+                }
+            }
+        },
+        "/api/admin/dia-diem/{id}/trang-thai": {
+            "patch": {
+                "tags": [
+                    "Địa điểm"
+                ],
+                "summary": "Ẩn/mở địa điểm DB",
+                "operationId": "d998951b869c449d011aeea8620cf090",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "X-XSRF-TOKEN",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "dangHoatDong",
+                                    "trangThaiHienTai"
+                                ],
+                                "properties": {
+                                    "dangHoatDong": {
+                                        "type": "boolean"
+                                    },
+                                    "trangThaiHienTai": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "data đã đổi trạng thái trong transaction/khóa hàng, gửi lặp tới cùng trạng thái thành công; địa điểm ẩn không còn ở bộ lọc nhưng giữ liên kết tin cũ"
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Không phải quản trị hoạt động"
+                    },
+                    "404": {
+                        "description": "Không có địa điểm"
+                    },
+                    "409": {
+                        "description": "Trạng thái hiện tại đã đổi, cần tải lại danh sách"
+                    },
+                    "422": {
+                        "description": "Trạng thái không hợp lệ"
+                    }
+                }
+            }
+        },
+        "/api/dang-tin/cau-hoi": {
+            "get": {
+                "tags": [
+                    "Đăng tin"
+                ],
+                "summary": "Câu hỏi hiện hành để đăng tin theo danh mục",
+                "operationId": "f97c7929bd9619b41e0a0c5edb331e37",
+                "parameters": [
+                    {
+                        "name": "danhMucId",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "data gồm id, phienBanId, danhMucId, nhanDangTin, kieuNhap, thuTu, dangHoatDong. Chỉ câu đang dùng của danh mục đã chọn; bắt buộc trả lời và giữ kín. Không trả lịch sử hoặc đáp án."
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Tài khoản bị khóa"
+                    },
+                    "422": {
+                        "description": "Danh mục không tồn tại hoặc đã ẩn"
+                    }
+                }
+            }
+        },
+        "/api/tin-dang": {
+            "post": {
+                "tags": [
+                    "Đăng tin"
+                ],
+                "summary": "Đăng tin báo mất hoặc nhặt được, hiển thị ngay",
+                "operationId": "34fcee1ef5b71e89eb7aee2b9ea1d01d",
+                "parameters": [
+                    {
+                        "name": "X-XSRF-TOKEN",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "maGui",
+                                    "loaiTin",
+                                    "danhMucId",
+                                    "tieuDe",
+                                    "ngayXayRa",
+                                    "diaDiemChiTiet",
+                                    "cauTraLoi"
+                                ],
+                                "properties": {
+                                    "maGui": {
+                                        "description": "UUID cho một lần đăng; dùng lại cùng mã khi thử gửi lại để tránh trùng tin",
+                                        "type": "string",
+                                        "format": "uuid"
+                                    },
+                                    "loaiTin": {
+                                        "type": "string",
+                                        "enum": [
+                                            "lost",
+                                            "found"
+                                        ]
+                                    },
+                                    "danhMucId": {
+                                        "type": "integer",
+                                        "minimum": 1
+                                    },
+                                    "tieuDe": {
+                                        "type": "string",
+                                        "maxLength": 150
+                                    },
+                                    "moTa": {
+                                        "type": "string",
+                                        "maxLength": 2000
+                                    },
+                                    "ngayXayRa": {
+                                        "description": "Không sau hôm nay theo múi giờ Việt Nam",
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "gioXayRa": {
+                                        "description": "Giờ xảy ra không bắt buộc, định dạng HH:mm theo giờ Việt Nam",
+                                        "type": "string",
+                                        "example": "14:30",
+                                        "nullable": true
+                                    },
+                                    "diaDiemId": {
+                                        "type": "integer",
+                                        "nullable": true,
+                                        "minimum": 1
+                                    },
+                                    "diaDiemChiTiet": {
+                                        "type": "string",
+                                        "maxLength": 255
+                                    },
+                                    "soDienThoai": {
+                                        "description": "Điện thoại hoặc email phải có ít nhất một. Liên hệ bị che trên API công khai.",
+                                        "type": "string",
+                                        "maxLength": 20
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "maxLength": 254
+                                    },
+                                    "cauTraLoi": {
+                                        "description": "Chuỗi JSON hoặc các trường cauTraLoi[0][id], cauTraLoi[0][phienBanId], cauTraLoi[0][giaTri]. Trả lời đầy đủ các câu của danh mục từ API biểu mẫu. Kiểu Số giới hạn 14 chữ số nguyên/4 thập phân.",
+                                        "type": "string",
+                                        "example": "[{\"id\":1,\"phienBanId\":1,\"giaTri\":\"Đen\"}]"
+                                    },
+                                    "anh[]": {
+                                        "description": "Tối đa 3 ảnh JPG/PNG/WebP, 5 MB/ảnh, kích thước tối đa 8192 mỗi chiều",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "format": "binary"
+                                        },
+                                        "maxItems": 3
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "data.id và message. Lưu tin, lời khai đúng snapshot, ảnh và lịch sử trong transaction; lỗi dọn tệp đã lưu. Trạng thái hien_thi/dang_mo do server đặt."
+                    },
+                    "200": {
+                        "description": "Đã đăng bằng cùng maGui của chính người gửi; trả ID cũ, không tạo trùng"
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Tài khoản bị khóa"
+                    },
+                    "409": {
+                        "description": "Câu hỏi/danh mục đã đổi, hoặc mã gửi đã dùng bởi tài khoản khác"
+                    },
+                    "422": {
+                        "description": "Sai dữ liệu, thiếu câu theo danh mục, danh mục chưa có câu hỏi, đáp án số vượt giới hạn, ảnh không hợp lệ"
+                    },
+                    "429": {
+                        "description": "Tối đa 10 lần/phút"
+                    }
+                }
+            }
+        },
+        "/api/tin-dang/{tin}/chinh-sua": {
+            "get": {
+                "tags": [
+                    "Đăng tin"
+                ],
+                "summary": "Lấy nội dung để chủ tin chỉnh sửa",
+                "operationId": "4ca8792d709eed734eb8e17da0eca061",
+                "parameters": [
+                    {
+                        "name": "tin",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Nội dung công khai hiện tại, giờ nếu có và thông tin khu vực để điền vào form"
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Tài khoản bị khóa"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy tin của tài khoản hiện tại"
+                    }
+                }
+            }
+        },
+        "/api/tin-dang/{tin}": {
+            "delete": {
+                "tags": [
+                    "Đăng tin"
+                ],
+                "summary": "Chủ tin xóa mềm tin đăng",
+                "operationId": "8988a53f295295c66689cd48acd988ee",
+                "parameters": [
+                    {
+                        "name": "tin",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "X-XSRF-TOKEN",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Đã gỡ tin khỏi danh sách công khai"
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Tài khoản bị khóa"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy tin của tài khoản hiện tại"
+                    },
+                    "429": {
+                        "description": "Tối đa 30 lần/phút"
+                    }
+                }
+            },
+            "patch": {
+                "tags": [
+                    "Đăng tin"
+                ],
+                "summary": "Chủ tin cập nhật nội dung công khai",
+                "operationId": "dc5bc20d16acfd9a8ae9f072346759bc",
+                "parameters": [
+                    {
+                        "name": "tin",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "X-XSRF-TOKEN",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "tieuDe",
+                                    "ngayXayRa",
+                                    "diaDiemChiTiet"
+                                ],
+                                "properties": {
+                                    "tieuDe": {
+                                        "type": "string",
+                                        "maxLength": 150
+                                    },
+                                    "moTa": {
+                                        "type": "string",
+                                        "nullable": true,
+                                        "maxLength": 2000
+                                    },
+                                    "ngayXayRa": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "gioXayRa": {
+                                        "description": "Giờ xảy ra không bắt buộc, định dạng HH:mm theo giờ Việt Nam",
+                                        "type": "string",
+                                        "example": "14:30",
+                                        "nullable": true
+                                    },
+                                    "diaDiemId": {
+                                        "type": "integer",
+                                        "nullable": true,
+                                        "minimum": 1
+                                    },
+                                    "diaDiemChiTiet": {
+                                        "type": "string",
+                                        "maxLength": 255
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Đã lưu nội dung tin đăng"
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Tài khoản bị khóa"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy tin của tài khoản hiện tại"
+                    },
+                    "422": {
+                        "description": "Nội dung hoặc khu vực không hợp lệ"
+                    },
+                    "429": {
+                        "description": "Tối đa 30 lần/phút"
+                    }
+                }
+            }
+        },
+        "/api/tra-cuu/{tin}": {
+            "get": {
+                "tags": [
+                    "Tra cứu"
+                ],
+                "summary": "Chi tiết tin công khai hoặc tin của chính mình",
+                "operationId": "6e80c2f6b3c4246252111e0c156acbba",
+                "parameters": [
+                    {
+                        "name": "tin",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "data gồm DTO thẻ, images, gioXayRa (null nếu không có giờ), laChuTin và hasClaim theo phiên hiện tại. Liên hệ trong DTO đã che. Không có câu trả lời nhận diện."
+                    },
+                    "404": {
+                        "description": "Tin không tồn tại, đã xóa mềm hoặc đã ẩn và người xem không phải chủ tin đang hoạt động"
+                    }
+                }
+            }
+        },
+        "/api/tin-dang/anh/{tenAnh}": {
+            "get": {
+                "tags": [
+                    "Đăng tin"
+                ],
+                "summary": "Đọc ảnh công khai của tin hiển thị hoặc tin của chính mình",
+                "operationId": "82e945dcfd872e5dcfde192a7499ea8a",
+                "parameters": [
+                    {
+                        "name": "tenAnh",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Nội dung ảnh ở ổ public theo nhóm tin mất/nhặt hoặc ảnh cũ ở ổ local. no-store/nosniff."
+                    },
+                    "404": {
+                        "description": "Ảnh không có, ảnh riêng tư, tin đã xóa hoặc tin ẩn của người khác"
+                    }
+                }
+            }
+        },
+        "/api/tin-dang/{tin}/nhan-lai": {
+            "get": {
+                "tags": [
+                    "Nhận đồ"
+                ],
+                "summary": "Biểu mẫu nhận lại từ bộ câu hỏi đã gắn với tin gốc",
+                "operationId": "b6687bd65fcace81237f8079b5720a8d",
+                "parameters": [
+                    {
+                        "name": "tin",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "tin, daGui và data câu hỏi riêng từ snapshot gốc, id là ID lời khai gốc; không trả đáp án người đăng. Không lấy câu mới hoặc kiểu mới từ cấu hình danh mục hiện tại."
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Tài khoản bị khóa hoặc tin của chính mình"
+                    },
+                    "404": {
+                        "description": "Tin không còn hiển thị"
+                    },
+                    "409": {
+                        "description": "Không phải tin nhặt được đang mở, hoặc không có câu hỏi nhận diện"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Nhận đồ"
+                ],
+                "summary": "Gửi yêu cầu nhận đồ chờ quản trị viên xác minh",
+                "operationId": "af855d233a6e11098d780f08c79184cb",
+                "parameters": [
+                    {
+                        "name": "tin",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "X-XSRF-TOKEN",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "xacNhan",
+                                    "cauTraLoi"
+                                ],
+                                "properties": {
+                                    "xacNhan": {
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "loiNhan": {
+                                        "type": "string",
+                                        "maxLength": 2000
+                                    },
+                                    "cauTraLoi": {
+                                        "type": "array",
+                                        "items": {
+                                            "required": [
+                                                "id",
+                                                "giaTri"
+                                            ],
+                                            "properties": {
+                                                "id": {
+                                                    "description": "ID lời khai từ form nhận lại",
+                                                    "type": "integer"
+                                                },
+                                                "giaTri": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Lưu yêu cầu cho_kiem_tra, đáp án riêng và lịch sử. Chỉ quản trị viên duyệt; gửi không tự xác minh hoặc bàn giao."
+                    },
+                    "200": {
+                        "description": "Đã có yêu cầu đang xử lý của tài khoản này, không gửi trùng"
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Tài khoản bị khóa hoặc tin của chính mình"
+                    },
+                    "404": {
+                        "description": "Tin không còn hiển thị"
+                    },
+                    "409": {
+                        "description": "Tin không còn nhận yêu cầu"
+                    },
+                    "422": {
+                        "description": "Thiếu câu hỏi gốc, đáp án sai kiểu hoặc chưa xác nhận"
+                    }
+                }
+            }
+        },
+        "/api/tin-dang/{tin}/lien-he": {
+            "get": {
+                "tags": [
+                    "Đăng tin"
+                ],
+                "summary": "Chủ tin xem điện thoại và email đã đăng",
+                "operationId": "953625ee982b7fcc38a13b558acb2a2d",
+                "parameters": [
+                    {
+                        "name": "tin",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "data.soDienThoai/email/laChuTin/daGui, private no-store. Chỉ chủ tin đang hoạt động được xem liên hệ đầy đủ."
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Không phải chủ tin hoặc tài khoản bị khóa"
+                    },
+                    "404": {
+                        "description": "Tin không tồn tại, đã xóa mềm hoặc là tin ẩn của người khác"
+                    }
+                }
+            }
+        },
+        "/api/admin/tin-dang": {
+            "get": {
+                "tags": [
+                    "Kiểm duyệt"
+                ],
+                "summary": "Danh sách tin và dữ liệu kiểm duyệt cho quản trị",
+                "operationId": "fdfb75cb2d9ef3213618b1bf3714463a",
+                "responses": {
+                    "200": {
+                        "description": "data gồm tin chưa xóa mềm, báo cáo và lịch sử; chỉ ảnh công khai. Frontend tìm/lọc ngày và chia 5 tin mỗi trang"
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Không phải quản trị hoạt động"
+                    }
+                }
+            }
+        },
+        "/api/admin/tin-dang/{tin}": {
+            "get": {
+                "tags": [
+                    "Kiểm duyệt"
+                ],
+                "summary": "Chi tiết kiểm duyệt tin đăng",
+                "operationId": "e6a6b29b4c7b48e40a09d7a01969dbf2",
+                "parameters": [
+                    {
+                        "name": "tin",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "data là tin kèm báo cáo, lịch sử và người thực hiện"
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Không phải quản trị hoạt động"
+                    },
+                    "404": {
+                        "description": "Tin không tồn tại hoặc đã xóa mềm"
+                    }
+                }
+            },
+            "patch": {
+                "tags": [
+                    "Kiểm duyệt"
+                ],
+                "summary": "Ẩn, khôi phục tin hoặc xử lý báo cáo",
+                "operationId": "cdec31cf0ac9fe84aa0ca8cefc533d67",
+                "parameters": [
+                    {
+                        "name": "tin",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "X-XSRF-TOKEN",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "hanh_dong"
+                                ],
+                                "properties": {
+                                    "hanh_dong": {
+                                        "type": "string",
+                                        "enum": [
+                                            "an_tin",
+                                            "khoi_phuc",
+                                            "chap_nhan_bao_cao",
+                                            "tu_choi_bao_cao"
+                                        ]
+                                    },
+                                    "ly_do": {
+                                        "description": "Bắt buộc ít nhất 5 ký tự có nội dung, trừ khôi phục",
+                                        "type": "string",
+                                        "nullable": true,
+                                        "maxLength": 2000,
+                                        "minLength": 5
+                                    },
+                                    "bao_cao_id": {
+                                        "description": "Bắt buộc khi xử lý báo cáo thuộc tin này",
+                                        "type": "integer",
+                                        "nullable": true,
+                                        "minimum": 1
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "data là tin sau xử lý, lưu lịch sử trong transaction; xử lý báo cáo không tự ẩn tin"
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Không phải quản trị hoạt động"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy tin hoặc báo cáo thuộc tin"
+                    },
+                    "409": {
+                        "description": "Tin đã ở trạng thái yêu cầu hoặc báo cáo đã xử lý"
+                    },
+                    "422": {
+                        "description": "Hành động, lý do hoặc báo cáo không hợp lệ"
+                    },
+                    "429": {
+                        "description": "Tối đa 30 lần/phút"
+                    }
+                }
+            }
+        },
+        "/api/admin/cau-hoi": {
+            "get": {
+                "tags": [
+                    "Câu hỏi"
+                ],
+                "summary": "Câu hỏi theo danh mục và lịch sử từ DB",
+                "operationId": "c788de789a25e58928f98d189d5614d0",
+                "responses": {
+                    "200": {
+                        "description": "data gồm một dòng hiện hành mỗi câu: id ổn định, phienBan mới nhất tính từ lich_su_cau_hoi, danhMucId, nhanDangTin, kieuNhap, thuTu, dangHoatDong, coCauTraLoi và mảng lichSu. Câu hỏi có hai kiểu trả lời van_ban/so, lịch sử thiếu kiểu dùng van_ban. Dùng cả hai loại tin, không nhận cấu hình từ client. Chỉ trả câu hỏi có danh mục. Đáp án giữ kín, bắt buộc lúc đăng/nhận lại; form nhận lại dùng phiên bản gắn với tin nhặt được. Frontend chia 8 câu/trang."
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Không phải quản trị hoạt động"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Câu hỏi"
+                ],
+                "summary": "Lưu câu hỏi mới vào DB",
+                "operationId": "fd08cd031bbc1a0e3162a0f93e427a95",
+                "parameters": [
+                    {
+                        "name": "X-XSRF-TOKEN",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CauHoiInput"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "data là câu đã lưu, daThayDoi=true; ID/phiên bản/trạng thái tạo mới do server cấp. Danh mục là bắt buộc."
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Không phải quản trị hoạt động"
+                    },
+                    "422": {
+                        "description": "Dữ liệu/cấu hình/danh mục không hợp lệ hoặc câu hỏi trùng trong cùng danh mục"
+                    },
+                    "429": {
+                        "description": "Tối đa 30 lần/phút"
+                    }
+                }
+            }
+        },
+        "/api/admin/cau-hoi/{id}": {
+            "put": {
+                "tags": [
+                    "Câu hỏi"
+                ],
+                "summary": "Sửa câu hỏi bằng phiên bản mới, giữ lịch sử và câu trả lời cũ",
+                "operationId": "652a18afd38585762fa1d5f06d48160c",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "X-XSRF-TOKEN",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "allOf": [
+                                    {
+                                        "$ref": "#/components/schemas/CauHoiInput"
+                                    },
+                                    {
+                                        "required": [
+                                            "phienBan"
+                                        ],
+                                        "properties": {
+                                            "phienBan": {
+                                                "type": "integer",
+                                                "minimum": 1
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "data giữ nguyên ID, nội dung hiện hành được cập nhật và thêm snapshot vào lich_su_cau_hoi; daThayDoi=false không thêm lịch sử. phienBan gửi lên phải trùng bản mới nhất."
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Không phải quản trị hoạt động"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy câu hỏi"
+                    },
+                    "409": {
+                        "description": "Phiên bản hoặc trạng thái đã thay đổi, cần tải lại"
+                    },
+                    "422": {
+                        "description": "Dữ liệu không hợp lệ hoặc trùng câu hỏi"
+                    },
+                    "429": {
+                        "description": "Tối đa 30 lần/phút"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Câu hỏi"
+                ],
+                "summary": "Xóa câu hỏi chưa có lịch sử và chưa có câu trả lời",
+                "operationId": "ebebf95ec2b6adadfca56293b1cf05f0",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "X-XSRF-TOKEN",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "phienBan"
+                                ],
+                                "properties": {
+                                    "phienBan": {
+                                        "type": "integer",
+                                        "minimum": 1
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Đã xóa khỏi DB, không xóa dây chuyền"
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Không phải quản trị hoạt động"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy câu hỏi"
+                    },
+                    "409": {
+                        "description": "Bản cũ, có lịch sử hoặc câu trả lời; giữ dữ liệu và dùng Ẩn"
+                    },
+                    "429": {
+                        "description": "Tối đa 30 lần/phút"
+                    }
+                }
+            }
+        },
+        "/api/admin/cau-hoi/{id}/trang-thai": {
+            "patch": {
+                "tags": [
+                    "Câu hỏi"
+                ],
+                "summary": "Ẩn/mở câu hỏi hiện hành trong DB",
+                "operationId": "0e54ff7d424788d2fbd2ef2cd9f3ff4e",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "X-XSRF-TOKEN",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "phienBan",
+                                    "dangHoatDong",
+                                    "trangThaiHienTai"
+                                ],
+                                "properties": {
+                                    "phienBan": {
+                                        "type": "integer",
+                                        "minimum": 1
+                                    },
+                                    "dangHoatDong": {
+                                        "type": "boolean"
+                                    },
+                                    "trangThaiHienTai": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "data là câu đã lưu trạng thái; yêu cầu lặp đạt đích trả thành công"
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Không phải quản trị hoạt động"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy câu hỏi"
+                    },
+                    "409": {
+                        "description": "Bản cũ/trạng thái cũ hoặc danh mục đang ngừng khi mở lại"
+                    },
+                    "422": {
+                        "description": "Trạng thái không hợp lệ"
+                    },
+                    "429": {
+                        "description": "Tối đa 30 lần/phút"
+                    }
+                }
+            }
+        },
+        "/api/admin/danh-muc": {
+            "get": {
+                "tags": [
+                    "Danh mục"
+                ],
+                "summary": "Danh mục từ CSDL, gồm cả ngừng sử dụng",
+                "operationId": "3a735e470a4be62b18f40ae3aef36b9a",
+                "responses": {
+                    "200": {
+                        "description": "data gồm id (string), tenDanhMuc, moTa, dangHoatDong (boolean), theo thứ tự hiển thị đã lưu"
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Không phải quản trị hoạt động"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Danh mục"
+                ],
+                "summary": "Thêm danh mục đang hoạt động",
+                "operationId": "3d19c9349e91458dbc394e1447578a56",
+                "parameters": [
+                    {
+                        "name": "X-XSRF-TOKEN",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "tenDanhMuc"
+                                ],
+                                "properties": {
+                                    "tenDanhMuc": {
+                                        "type": "string",
+                                        "maxLength": 100
+                                    },
+                                    "moTa": {
+                                        "type": "string",
+                                        "nullable": true,
+                                        "maxLength": 500
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "data là danh mục đã lưu vào CSDL"
+                    },
+                    "422": {
+                        "description": "Tên trống, vượt giới hạn hoặc trùng kể cả danh mục ngừng sử dụng"
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Không phải quản trị hoạt động"
+                    },
+                    "429": {
+                        "description": "Tối đa 30 lần/phút"
+                    }
+                }
+            }
+        },
+        "/api/admin/danh-muc/{id}/trang-thai": {
+            "patch": {
+                "tags": [
+                    "Danh mục"
+                ],
+                "summary": "Ẩn hoặc mở danh mục",
+                "operationId": "1d1db50500d356b94f3208af8b441016",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "X-XSRF-TOKEN",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "phienBan",
+                                    "dangHoatDong",
+                                    "trangThaiHienTai"
+                                ],
+                                "properties": {
+                                    "phienBan": {
+                                        "type": "integer",
+                                        "minimum": 1
+                                    },
+                                    "dangHoatDong": {
+                                        "description": "false để ẩn, true để mở",
+                                        "type": "boolean"
+                                    },
+                                    "trangThaiHienTai": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "data là danh mục đã lưu; yêu cầu lặp cùng trạng thái trả thành công. Mục ẩn không xuất hiện trong lựa chọn đăng tin/Tra cứu, giữ nguyên tin cũ"
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Không phải quản trị hoạt động"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy danh mục"
+                    },
+                    "409": {
+                        "description": "Trạng thái đã thay đổi, tải lại danh sách trước khi thử lại"
+                    },
+                    "422": {
+                        "description": "Trạng thái không hợp lệ"
+                    },
+                    "429": {
+                        "description": "Tối đa 30 lần/phút"
+                    }
+                }
+            }
+        },
+        "/api/admin/danh-muc/{id}/thu-tu": {
+            "patch": {
+                "tags": [
+                    "Danh mục"
+                ],
+                "summary": "Hoán đổi vị trí hai danh mục",
+                "description": "Danh mục được chọn đổi chỗ với danh mục đang ở vị trí đích. Các danh mục khác giữ nguyên vị trí.",
+                "operationId": "b68b96105aa32d1b00486ecc00904283",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "X-XSRF-TOKEN",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "viTri",
+                                    "danhSachHienTai"
+                                ],
+                                "properties": {
+                                    "viTri": {
+                                        "description": "Vị trí của danh mục cần hoán đổi, tính từ 1",
+                                        "type": "integer",
+                                        "minimum": 1
+                                    },
+                                    "danhSachHienTai": {
+                                        "description": "Danh sách ID theo thứ tự hiện tại, gồm cả danh mục ẩn",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "minItems": 1,
+                                        "uniqueItems": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "data là toàn bộ danh mục theo thứ tự mới"
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Không phải quản trị hoạt động"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy danh mục"
+                    },
+                    "409": {
+                        "description": "Danh sách đã thay đổi, cần tải lại"
+                    },
+                    "422": {
+                        "description": "Vị trí hoặc danh sách không hợp lệ"
+                    },
+                    "429": {
+                        "description": "Tối đa 30 lần/phút"
+                    }
+                }
+            }
+        },
+        "/api/admin/danh-muc/{id}": {
+            "delete": {
+                "tags": [
+                    "Danh mục"
+                ],
+                "summary": "Xóa danh mục chưa được sử dụng",
+                "operationId": "5fbc6fd726069ae647073d6464c4bd31",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "X-XSRF-TOKEN",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Đã xóa danh mục khỏi CSDL"
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Không phải quản trị hoạt động"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy danh mục"
+                    },
+                    "409": {
+                        "description": "Danh mục còn tin đăng kể cả xóa mềm, câu hỏi hoặc dữ liệu liên quan; giữ nguyên dữ liệu và có thể chọn ẩn"
+                    },
+                    "429": {
+                        "description": "Tối đa 30 lần/phút"
+                    }
+                }
+            }
+        },
+        "/sanctum/csrf-cookie": {
+            "get": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Khởi tạo cookie CSRF",
+                "operationId": "5a112393458c5f610ea5ca4ab0ffb393",
+                "responses": {
+                    "204": {
+                        "description": "Cookie CSRF đã được gửi"
+                    }
+                }
+            }
+        },
+        "/login": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Đăng nhập bằng phiên cookie",
+                "operationId": "4c72e998fc609fc8d6ac09991d375623",
+                "parameters": [
+                    {
+                        "name": "X-XSRF-TOKEN",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Đăng nhập thành công, trả hồ sơ và giữ nguyên mật khẩu đã băm"
+                    },
+                    "422": {
+                        "description": "Thông tin đăng nhập không đúng"
+                    },
+                    "403": {
+                        "description": "Tài khoản bị khóa"
+                    },
+                    "429": {
+                        "description": "Tối đa 5 lần sai mỗi phút theo email và IP; đăng nhập thành công xóa bộ đếm"
+                    }
+                }
+            }
+        },
+        "/api/me": {
+            "get": {
+                "tags": [
+                    "Profile"
+                ],
+                "summary": "Đọc hồ sơ tài khoản đang đăng nhập",
+                "operationId": "aacbcfc38e46c39c0c9807f03b7ca5d9",
+                "responses": {
+                    "200": {
+                        "description": "user gồm id, ho_ten, email, ma_so, so_dien_thoai, khoa, lop, anh_dai_dien, vai_tro, trang_thai, created_at; không có mật khẩu"
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Tài khoản bị khóa"
+                    }
+                }
+            },
+            "patch": {
+                "tags": [
+                    "Profile"
+                ],
+                "summary": "Lưu hồ sơ của chính mình",
+                "operationId": "118b732fd4d6b88ecb294b2e33753adc",
+                "parameters": [
+                    {
+                        "name": "X-XSRF-TOKEN",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "ho_ten",
+                                    "email"
+                                ],
+                                "properties": {
+                                    "ho_ten": {
+                                        "type": "string",
+                                        "maxLength": 150
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "maxLength": 191
+                                    },
+                                    "ma_so": {
+                                        "type": "string",
+                                        "nullable": true,
+                                        "maxLength": 50
+                                    },
+                                    "so_dien_thoai": {
+                                        "type": "string",
+                                        "nullable": true,
+                                        "maxLength": 20
+                                    },
+                                    "khoa": {
+                                        "type": "string",
+                                        "nullable": true,
+                                        "maxLength": 100
+                                    },
+                                    "lop": {
+                                        "type": "string",
+                                        "nullable": true,
+                                        "maxLength": 50
+                                    },
+                                    "current_password": {
+                                        "description": "Bắt buộc đúng mật khẩu hiện tại khi đổi email",
+                                        "type": "string",
+                                        "format": "password"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Trả user và updated; updated=true khi có thay đổi, updated=false và thông báo chưa thay đổi khi dữ liệu giữ nguyên"
+                    },
+                    "422": {
+                        "description": "Dữ liệu không hợp lệ, email trùng hoặc mật khẩu hiện tại sai"
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Tài khoản bị khóa"
+                    }
+                }
+            }
+        },
+        "/api/me/tin-dang": {
+            "get": {
+                "tags": [
+                    "Profile"
+                ],
+                "summary": "Lấy tin đã đăng của tài khoản đang đăng nhập",
+                "operationId": "6f8fc42f7277c3fb8d4a298e44a0b388",
+                "parameters": [
+                    {
+                        "name": "trang",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 1,
+                            "maximum": 1000000,
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "data gồm thẻ tin của chủ phiên, kể cả tin ẩn (biAn=true), loại tin xóa mềm. meta gồm trangHienTai, tongTrang, tongTin, tuViTri, denViTri. Mỗi trang tối đa 6 tin."
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Tài khoản bị khóa"
+                    },
+                    "422": {
+                        "description": "Số trang không hợp lệ"
+                    },
+                    "429": {
+                        "description": "Tối đa 120 lần/phút"
+                    }
+                }
+            }
+        },
+        "/api/me/mat-khau": {
+            "put": {
+                "tags": [
+                    "Profile"
+                ],
+                "summary": "Đổi mật khẩu của chính mình",
+                "operationId": "f80a132fe358e140fb463502c589327d",
+                "parameters": [
+                    {
+                        "name": "X-XSRF-TOKEN",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "current_password",
+                                    "password",
+                                    "password_confirmation"
+                                ],
+                                "properties": {
+                                    "current_password": {
+                                        "type": "string",
+                                        "format": "password"
+                                    },
+                                    "password": {
+                                        "description": "Ít nhất 8 ký tự, tối đa 72 byte, khác mật khẩu hiện tại",
+                                        "type": "string",
+                                        "format": "password"
+                                    },
+                                    "password_confirmation": {
+                                        "type": "string",
+                                        "format": "password"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Mật khẩu mới được băm, không trả mật khẩu trong response"
+                    },
+                    "422": {
+                        "description": "Mật khẩu hiện tại sai hoặc mật khẩu mới không hợp lệ"
+                    },
+                    "429": {
+                        "description": "Giới hạn 5 lần mỗi phút"
+                    }
+                }
+            }
+        },
+        "/api/me/anh-dai-dien": {
+            "post": {
+                "tags": [
+                    "Profile"
+                ],
+                "summary": "Thêm hoặc thay ảnh đại diện",
+                "operationId": "cad966cb9810e55f8118cedc650b07e5",
+                "parameters": [
+                    {
+                        "name": "X-XSRF-TOKEN",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "anh_dai_dien"
+                                ],
+                                "properties": {
+                                    "anh_dai_dien": {
+                                        "description": "JPG/PNG/WebP, tối đa 2 MB, tối đa 4096 × 4096 pixel",
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Lưu vào frontend/public/anh-dai-dien. Tên tệp lấy phần email trước dấu @, kèm mã riêng cho từng ảnh. Dọn ảnh cũ do hệ thống quản lý và trả hồ sơ đã cập nhật."
+                    },
+                    "422": {
+                        "description": "Ảnh không hợp lệ"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Profile"
+                ],
+                "summary": "Gỡ ảnh đại diện của tài khoản hiện tại",
+                "operationId": "0da700f0dfef3dfcbd1dde9c89b43846",
+                "parameters": [
+                    {
+                        "name": "X-XSRF-TOKEN",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Trả user có anh_dai_dien null và dọn tệp ảnh không còn được dùng. Gỡ lại khi chưa có ảnh vẫn thành công."
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Tài khoản bị khóa"
+                    },
+                    "429": {
+                        "description": "Tối đa 10 lần/phút"
+                    }
+                }
+            }
+        },
+        "/api/anh-dai-dien/{tenAnh}": {
+            "get": {
+                "tags": [
+                    "Profile"
+                ],
+                "summary": "Đọc ảnh đại diện theo tên do server tạo",
+                "operationId": "225dfc5b527dd6b9f800bbefe765b810",
+                "parameters": [
+                    {
+                        "name": "tenAnh",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Luồng nội dung ảnh từ frontend/public/anh-dai-dien hoặc thư mục lưu cũ, có cache và nosniff"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy ảnh"
+                    }
+                }
+            }
+        },
         "/api/users": {
             "get": {
                 "tags": [
                     "Users"
                 ],
-                "summary": "Lấy danh sách người dùng giả lập",
+                "summary": "Danh sách tài khoản DB cho quản trị (alias)",
                 "operationId": "d4eb66d954f05a9c21d4412fb86b2a0a",
                 "responses": {
                     "200": {
@@ -25,12 +1884,441 @@
                     }
                 }
             }
+        },
+        "/api/tra-cuu/bo-loc": {
+            "get": {
+                "tags": [
+                    "Tra cứu"
+                ],
+                "summary": "Danh mục và địa điểm đang hoạt động cho bộ lọc công khai",
+                "operationId": "5372962e583e5ef1a626180738226568",
+                "responses": {
+                    "200": {
+                        "description": "danhMuc và diaDiem gồm id dạng chuỗi, name; danh mục theo thứ tự đã lưu, không cần đăng nhập"
+                    }
+                }
+            }
+        },
+        "/api/tra-cuu": {
+            "get": {
+                "tags": [
+                    "Tra cứu"
+                ],
+                "summary": "Tìm tin báo mất/nhặt được công khai, 6 tin mỗi trang",
+                "operationId": "09f3acbcb1f19f5337ddd748782615af",
+                "parameters": [
+                    {
+                        "name": "tuKhoa",
+                        "in": "query",
+                        "description": "Tên, mô tả, địa điểm, danh mục hoặc mã TIN-000001; khớp từng từ đầy đủ, hỗ trợ tìm không dấu trên MySQL Unicode collation",
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 200
+                        }
+                    },
+                    {
+                        "name": "loaiTin",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "all",
+                                "lost",
+                                "found"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "danhMuc",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "diaDiem",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "tuNgay",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "denNgay",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "sapXep",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "moi_nhat",
+                                "cu_nhat"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "trang",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "data gồm thông tin công khai cho thẻ và cờ laChuTin theo phiên hiện tại. meta gồm trangHienTai, tongTrang, tongTin, tuViTri, denViTri. Tin ẩn và xóa mềm được loại khỏi kết quả. Điện thoại hiện nửa đầu. Email hiện tối đa hai ký tự đầu và che toàn bộ tên miền. Ngày lọc ưu tiên ngày xảy ra. Trang vượt biên về trang cuối."
+                    },
+                    "422": {
+                        "description": "Bộ lọc hoặc khoảng ngày không hợp lệ"
+                    },
+                    "429": {
+                        "description": "Giới hạn 120 lần mỗi phút"
+                    }
+                }
+            }
+        },
+        "/api/admin/nguoi-dung": {
+            "get": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Danh sách và thông tin tài khoản cho quản trị đang hoạt động",
+                "operationId": "ecf86bb1e6913b57d1af60fb267181c2",
+                "responses": {
+                    "200": {
+                        "description": "data gồm hồ sơ, vai trò, trạng thái, lý do/hạn khóa, ngày tạo/cập nhật và co_the_doi_trang_thai. Không trả mật khẩu, tài khoản xóa mềm hoặc chính tài khoản đang đăng nhập; thống kê/lọc/phân trang chỉ tính các tài khoản còn lại. Frontend tìm kiếm/lọc trạng thái/phân trang 8 tài khoản từ danh sách này."
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Không phải quản trị đang hoạt động"
+                    }
+                }
+            }
+        },
+        "/api/admin/nguoi-dung/{id}/trang-thai": {
+            "patch": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Khóa hoặc mở khóa tài khoản",
+                "operationId": "c851430f7741c4f56c7eaa7d734daaee",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "X-XSRF-TOKEN",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "trang_thai",
+                                    "trang_thai_hien_tai"
+                                ],
+                                "properties": {
+                                    "trang_thai": {
+                                        "type": "string",
+                                        "enum": [
+                                            "hoat_dong",
+                                            "bi_khoa"
+                                        ]
+                                    },
+                                    "trang_thai_hien_tai": {
+                                        "type": "string",
+                                        "enum": [
+                                            "hoat_dong",
+                                            "bi_khoa"
+                                        ]
+                                    },
+                                    "ly_do_khoa": {
+                                        "description": "Bắt buộc khi khóa",
+                                        "type": "string",
+                                        "maxLength": 1000
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "user mới, updated và message; khóa không thời hạn, mở khóa xóa lý do/hạn khóa; không sửa vai trò hoặc mật khẩu"
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Thiếu quyền, tài khoản quản trị bị khóa hoặc tự đổi trạng thái"
+                    },
+                    "404": {
+                        "description": "Tài khoản không tồn tại hoặc đã xóa mềm"
+                    },
+                    "409": {
+                        "description": "Trạng thái đã thay đổi, cần tải lại danh sách"
+                    },
+                    "422": {
+                        "description": "Dữ liệu không hợp lệ"
+                    },
+                    "429": {
+                        "description": "Giới hạn 20 lần/phút"
+                    }
+                }
+            }
+        },
+        "/api/thong-bao": {
+            "get": {
+                "tags": [
+                    "Thông báo"
+                ],
+                "summary": "Đọc hộp thông báo của tài khoản đang đăng nhập",
+                "operationId": "86b63a667e5915ee162637568ff430cb",
+                "responses": {
+                    "200": {
+                        "description": "Tối đa 20 thông báo mới nhất và tổng số chưa đọc. Chỉ có đường dẫn khi tài khoản xem được tin.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "string"
+                                                    },
+                                                    "tieuDe": {
+                                                        "type": "string"
+                                                    },
+                                                    "noiDung": {
+                                                        "type": "string"
+                                                    },
+                                                    "taoLuc": {
+                                                        "type": "string",
+                                                        "format": "date-time"
+                                                    },
+                                                    "daDoc": {
+                                                        "type": "boolean"
+                                                    },
+                                                    "duongDan": {
+                                                        "type": "string",
+                                                        "example": "/chi-tiet-tin-dang?id=17",
+                                                        "nullable": true
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "soChuaDoc": {
+                                            "type": "integer",
+                                            "minimum": 0
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Tài khoản đã bị khóa"
+                    }
+                }
+            }
+        },
+        "/api/thong-bao/{id}/da-doc": {
+            "patch": {
+                "tags": [
+                    "Thông báo"
+                ],
+                "summary": "Đánh dấu một thông báo đã đọc",
+                "operationId": "cfebc8b5eafc283f7b1fc21e308598fb",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "X-XSRF-TOKEN",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Đã đọc. Gọi lại giữ thời điểm đọc lần đầu."
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Tài khoản đã bị khóa"
+                    },
+                    "404": {
+                        "description": "Thông báo không tồn tại trong hộp thư của phiên hiện tại"
+                    }
+                }
+            }
+        },
+        "/api/thong-bao/da-doc": {
+            "patch": {
+                "tags": [
+                    "Thông báo"
+                ],
+                "summary": "Đánh dấu tất cả thông báo của tài khoản đã đọc",
+                "operationId": "4090235feb32394fbd2e670a8470439b",
+                "parameters": [
+                    {
+                        "name": "X-XSRF-TOKEN",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Đã cập nhật tất cả thông báo chưa đọc của phiên hiện tại"
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Tài khoản đã bị khóa"
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "CauHoiInput": {
+                "required": [
+                    "danhMucId",
+                    "nhanDangTin",
+                    "kieuNhap",
+                    "thuTu",
+                    "dangHoatDong"
+                ],
+                "properties": {
+                    "danhMucId": {
+                        "description": "ID danh mục bắt buộc cho câu hỏi",
+                        "type": "integer",
+                        "minimum": 1
+                    },
+                    "nhanDangTin": {
+                        "type": "string",
+                        "maxLength": 250
+                    },
+                    "kieuNhap": {
+                        "description": "Kiểu câu trả lời: Văn bản hoặc Số; được lưu trong snapshot lịch sử",
+                        "type": "string",
+                        "enum": [
+                            "van_ban",
+                            "so"
+                        ]
+                    },
+                    "thuTu": {
+                        "type": "integer",
+                        "maximum": 999,
+                        "minimum": 1
+                    },
+                    "dangHoatDong": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            }
         }
     },
     "tags": [
         {
+            "name": "Địa điểm",
+            "description": "Địa điểm"
+        },
+        {
+            "name": "Đăng tin",
+            "description": "Đăng tin"
+        },
+        {
+            "name": "Tra cứu",
+            "description": "Tra cứu"
+        },
+        {
+            "name": "Nhận đồ",
+            "description": "Nhận đồ"
+        },
+        {
+            "name": "Kiểm duyệt",
+            "description": "Kiểm duyệt"
+        },
+        {
+            "name": "Câu hỏi",
+            "description": "Câu hỏi"
+        },
+        {
+            "name": "Danh mục",
+            "description": "Danh mục"
+        },
+        {
+            "name": "Auth",
+            "description": "Auth"
+        },
+        {
+            "name": "Profile",
+            "description": "Profile"
+        },
+        {
             "name": "Users",
             "description": "Users"
+        },
+        {
+            "name": "Thông báo",
+            "description": "Thông báo"
         }
     ]
 }

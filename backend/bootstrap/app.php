@@ -12,7 +12,14 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        //
+        $middleware->statefulApi();
+        $middleware->trimStrings(except: [
+            fn (\Illuminate\Http\Request $request) => $request->is('api/register'),
+        ]);
+        $middleware->alias([
+            'active' => \App\Http\Middleware\ActiveAccount::class,
+            'admin' => \App\Http\Middleware\AdminOnly::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //
