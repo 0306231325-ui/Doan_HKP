@@ -46,7 +46,9 @@ function QuyTrinhNhanDo({ idTin }) {
         <section className="space-y-3 rounded-2xl bg-white p-6">
           <h1 className="text-xl font-bold">Bạn đã gửi yêu cầu</h1>
           <p className="text-sm text-[#607568]">Quản trị viên sẽ xử lý yêu cầu của bạn.</p>
-          <Link to={duongDanQuayLai} className="font-semibold text-emerald-800 underline">{nhanQuayLai}</Link>
+          <Link to={`/chi-tiet-yeu-cau?id=${yeuCau.yeuCauId}`} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-emerald-900 px-4 py-3 text-sm font-semibold text-white hover:bg-emerald-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700">
+            Xem trạng thái yêu cầu<ArrowRight className="h-4 w-4" aria-hidden="true" />
+          </Link>
         </section>
       ) : (
         <KhungBuoc onSubmit={buoc > 1 ? yeuCau.yeuCauGui : undefined} className="min-w-0 space-y-6">

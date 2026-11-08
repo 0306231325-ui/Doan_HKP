@@ -647,7 +647,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "tin, daGui và data câu hỏi riêng từ snapshot gốc, id là ID lời khai gốc; không trả đáp án người đăng. Không lấy câu mới hoặc kiểu mới từ cấu hình danh mục hiện tại."
+                        "description": "tin, daGui, yeuCauId (ID yêu cầu đang xử lý của tài khoản hiện tại hoặc null) và data câu hỏi từ snapshot gốc. ID trong data là ID lời khai gốc."
                     },
                     "401": {
                         "description": "Chưa đăng nhập"
@@ -766,10 +766,10 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "Lưu yêu cầu cho_kiem_tra, đáp án, lịch sử và ảnh xác minh nếu có. Ảnh lưu trong backend/public/minh-chung-yeu-cau; phản hồi chỉ trả trạng thái gửi."
+                        "description": "Lưu yêu cầu cho_kiem_tra, đáp án, lịch sử, ảnh xác minh nếu có và thông báo cho người gửi. Ảnh lưu trong backend/public/minh-chung-yeu-cau. Trả message, daGui và yeuCauId."
                     },
                     "200": {
-                        "description": "Đã có yêu cầu đang xử lý của tài khoản này, không gửi trùng"
+                        "description": "Trả message, daGui và yeuCauId của yêu cầu đang xử lý, không tạo yêu cầu hoặc thông báo trùng."
                     },
                     "401": {
                         "description": "Chưa đăng nhập"

@@ -106,8 +106,10 @@ export default function useGuiYeuCauNhanDo(id) {
       mau.append('cauTraLoi', JSON.stringify(cauHoi.map((cau) => ({ id: cau.id, giaTri: cauTraLoi[cau.id] }))))
       anhBieuMau.anh.forEach(({ tep }) => mau.append('anh[]', tep))
       await prepareCsrf()
-      const { data: ketQua } = await api.post(`/tin-dang/${id}/nhan-lai`, mau, { headers: { 'Content-Type': undefined } })
-      dieuHuong('/theo-doi-yeu-cau', { replace: true, state: { authMessage: ketQua.message, authType: 'success' } })
+      const { data: ketQua, status } = await api.post(`/tin-dang/${id}/nhan-lai`, mau, { headers: { 'Content-Type': undefined } })
+      if (status === 201) window.dispatchEvent(new Event('thong-bao:cap-nhat'))
+      const authAction = ketQua.yeuCauId ? { to: `/chi-tiet-yeu-cau?id=${ketQua.yeuCauId}`, label: 'Xem trạng thái yêu cầu' } : undefined
+      dieuHuong('/theo-doi-yeu-cau', { replace: true, state: { authMessage: ketQua.message, authType: 'success', authAction } })
     } catch (loiGui) {
       datLoi(layLoiGui(loiGui))
     } finally {
@@ -118,5 +120,5 @@ export default function useGuiYeuCauNhanDo(id) {
 
   const loiTai = !hopLe ? 'Vui lòng chọn một tin nhặt được.' : nguon.khoa === khoa ? nguon.loi : ''
   const coTheTaiLai = hopLe && nguon.maLoi !== 409
-  return { idTin: hopLe ? id : null, tin: data?.tin, daGui: data?.daGui, cauHoi, cauTraLoi, anhBieuMau, loiNhan, datLoiNhan, xacNhan, datXacNhan, buoc, duongDanVeBuoc, quayLaiBuocTruoc, moXacNhan: buoc === 3 && moXacNhan, dongXacNhan, guiYeuCau, yeuCauGui, doiCauTraLoi, dangGui, loi, dangTai, loiTai, coTheTaiLai, taiLai }
+  return { idTin: hopLe ? id : null, tin: data?.tin, daGui: data?.daGui, yeuCauId: data?.yeuCauId, cauHoi, cauTraLoi, anhBieuMau, loiNhan, datLoiNhan, xacNhan, datXacNhan, buoc, duongDanVeBuoc, quayLaiBuocTruoc, moXacNhan: buoc === 3 && moXacNhan, dongXacNhan, guiYeuCau, yeuCauGui, doiCauTraLoi, dangGui, loi, dangTai, loiTai, coTheTaiLai, taiLai }
 }

@@ -44,10 +44,12 @@ export default function useThongBao() {
     phienHopThu.current = phien
     taiThongBao()
     window.addEventListener('focus', taiThongBao)
+    window.addEventListener('thong-bao:cap-nhat', taiThongBao)
     return function huyHopThu() {
       phien.abort()
       yeuCauTai.current?.abort()
       window.removeEventListener('focus', taiThongBao)
+      window.removeEventListener('thong-bao:cap-nhat', taiThongBao)
     }
   }, [taiThongBao])
 
