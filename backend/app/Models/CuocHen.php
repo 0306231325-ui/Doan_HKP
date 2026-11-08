@@ -21,6 +21,8 @@ class CuocHen extends Model
         'dia_diem_id',
         'trang_thai',
         'ly_do_huy',
+        'nguoi_giu_xac_nhan_luc',
+        'nguoi_nhan_xac_nhan_luc',
     ];
 
     protected function casts(): array
@@ -28,6 +30,8 @@ class CuocHen extends Model
         return [
             'thoi_gian_xac_nhan' => 'datetime',
             'thoi_gian_hen_gap' => 'datetime',
+            'nguoi_giu_xac_nhan_luc' => 'datetime',
+            'nguoi_nhan_xac_nhan_luc' => 'datetime',
         ];
     }
 

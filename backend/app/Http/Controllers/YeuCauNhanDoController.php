@@ -95,9 +95,10 @@ class YeuCauNhanDoController extends Controller
     {
         $user = $request->user();
         $banTin = TinDang::xemDuoc($user)->findOrFail($tin);
-        abort_unless((string) $user->id === (string) $banTin->nguoi_dung_id, 403, 'Chỉ người đăng được xem liên hệ của tin.');
-
-        return response()->json(['data' => ['soDienThoai' => $banTin->thong_tin_lien_he, 'email' => $banTin->email_lien_he, 'laChuTin' => true, 'daGui' => false]])->header('Cache-Control', 'private, no-store');
+        $laChuTin = (string) $user->id === (string) $banTin->nguoi_dung_id;
+        $daDuyet = $banTin->yeuCauNhanDo()->where('nguoi_yeu_cau_id', $user->id)->where('trang_thai', 'da_xac_minh')->exists();
+        abort_unless($laChuTin || $daDuyet, 403, 'Liên hệ chỉ mở cho người đăng và người có yêu cầu đã được duyệt.');
+        return response()->json(['data' => ['soDienThoai' => $banTin->thong_tin_lien_he, 'email' => $banTin->email_lien_he, 'laChuTin' => $laChuTin, 'daGui' => $daDuyet]])->header('Cache-Control', 'private, no-store');
     }
 
     private function timTin(string $id, bool $khoa = false): TinDang

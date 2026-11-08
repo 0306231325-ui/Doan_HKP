@@ -115,6 +115,7 @@ class TraCuuController extends Controller
         return response()->json(['data' => [
             ...$duLieuTin,
             'laChuTin' => $laChuTin,
+            'coTheLienHe' => $laChuTin || ($nguoiXem?->trang_thai === 'hoat_dong' && in_array($banTin->trang_thai, ['cho_ban_giao', 'da_hoan_tat']) && $banTin->yeuCauNhanDo()->where('nguoi_yeu_cau_id', $nguoiXem->id)->where('trang_thai', 'da_xac_minh')->exists()),
             'hasClaim' => $duLieuTin['canClaim'] && ! $laChuTin && $nguoiXem?->trang_thai === 'hoat_dong'
                 && $banTin->daGuiYeuCau($nguoiXem->id),
         ]])->header('Cache-Control', 'private, no-store');

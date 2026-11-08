@@ -34,13 +34,16 @@ class ModelsTest extends TestCase
         DB::purge('sqlite');
     }
 
-    public function test_mat_khau_giu_nguyen_va_khong_lo_khi_chuyen_json(): void
+    public function test_mat_khau_duoc_bam_va_khong_lo_khi_chuyen_json(): void
     {
         $nguoiDung = new NguoiDung(['mat_khau' => 'MatKhauThu@123']);
         $matKhauDaBam = $nguoiDung->getAuthPassword();
 
         $this->assertSame('mat_khau', $nguoiDung->getAuthPasswordName());
-        $this->assertSame('MatKhauThu@123', $matKhauDaBam);
+        $this->assertNotSame('MatKhauThu@123', $matKhauDaBam);
+        $this->assertTrue($nguoiDung->kiemTraMatKhau('MatKhauThu@123'));
+        $this->assertFalse($nguoiDung->kiemTraMatKhau('sai-mat-khau'));
+        $this->assertFalse($nguoiDung->kiemTraMatKhau($matKhauDaBam));
         $this->assertArrayNotHasKey('mat_khau', $nguoiDung->toArray());
 
         $nguoiDung->mat_khau = $matKhauDaBam;
@@ -48,6 +51,27 @@ class ModelsTest extends TestCase
         $this->assertArrayNotHasKey('ma_ban_giao_hash', (new BanGiao([
             'ma_ban_giao_hash' => 'hash-thu',
         ]))->toArray());
+    }
+
+    public function test_migration_hashes_legacy_passwords_and_preserves_existing_hashes(): void
+    {
+        Schema::create('nguoi_dung', function (Blueprint $table) {
+            $table->id();
+            $table->string('mat_khau');
+        });
+        $hash = password_hash('Seed@123', PASSWORD_BCRYPT, ['cost' => 4]);
+        DB::table('nguoi_dung')->insert([
+            ['id' => 1, 'mat_khau' => 'Legacy@123'],
+            ['id' => 2, 'mat_khau' => $hash],
+        ]);
+        $migration = require database_path('migrations/2026_11_06_000001_hash_existing_passwords.php');
+        $migration->up();
+        $converted = DB::table('nguoi_dung')->where('id', 1)->value('mat_khau');
+        $this->assertNotSame('Legacy@123', $converted);
+        $this->assertTrue(password_verify('Legacy@123', $converted));
+        $this->assertSame($hash, DB::table('nguoi_dung')->where('id', 2)->value('mat_khau'));
+        $migration->up();
+        $this->assertSame($converted, DB::table('nguoi_dung')->where('id', 1)->value('mat_khau'));
     }
 
     public function test_du_lieu_json_ngay_va_so_duoc_chuyen_dung_kieu(): void

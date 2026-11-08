@@ -71,7 +71,7 @@ class QuanLyNguoiDungTest extends TestCase
         $this->actingAs($admin)->patchJson($url, ['trang_thai' => 'bi_khoa', 'trang_thai_hien_tai' => 'hoat_dong', 'ly_do_khoa' => ' Vi pham ', 'vai_tro' => 'quan_tri', 'mat_khau' => 'overwrite'])
             ->assertOk()->assertJsonPath('updated', true)->assertJsonPath('user.trang_thai', 'bi_khoa')->assertJsonPath('user.ly_do_khoa', 'Vi pham');
         $this->assertSame('nguoi_dung', $user->fresh()->vai_tro);
-        $this->assertSame('SECRET-HASH', $user->fresh()->mat_khau);
+        $this->assertSame($user->mat_khau, $user->fresh()->mat_khau);
         $this->actingAs($user->fresh())->getJson('/api/me')->assertForbidden();
         $this->actingAs($admin)->patchJson($url, ['trang_thai' => 'hoat_dong', 'trang_thai_hien_tai' => 'bi_khoa'])->assertOk()->assertJsonPath('user.ly_do_khoa', null)->assertJsonPath('user.khoa_den_ngay', null);
         $this->actingAs($user->fresh())->getJson('/api/me')->assertOk();

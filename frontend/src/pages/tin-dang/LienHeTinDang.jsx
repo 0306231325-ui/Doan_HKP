@@ -4,18 +4,19 @@ import api from '../../services/api'
 
 export default function LienHeTinDang({ tin }) {
   const { id, laChuTin, contactPhone, contactEmail } = tin
+  const coTheLienHe = laChuTin || tin.coTheLienHe
   const [dangMo, datDangMo] = useState(false)
   const [ketQua, datKetQua] = useState(null)
   const BieuTuong = dangMo ? EyeOff : Eye
   const nhanNut = dangMo ? 'Che thông tin liên hệ' : 'Hiện thông tin liên hệ đầy đủ'
-  const lienHe = laChuTin && dangMo ? ketQua?.lienHe : null
+  const lienHe = coTheLienHe && dangMo ? ketQua?.lienHe : null
   const cacTruong = [
     ['Số điện thoại', lienHe ? lienHe.soDienThoai : contactPhone],
     ['Email / Gmail', lienHe ? lienHe.email : contactEmail],
   ]
 
   useEffect(function napLienHe() {
-    if (!laChuTin || !dangMo) return
+    if (!coTheLienHe || !dangMo) return
     const yeuCau = new AbortController()
     api.get(`/tin-dang/${id}/lien-he`, { signal: yeuCau.signal }).then(({ data }) => {
       if (!yeuCau.signal.aborted) datKetQua({ lienHe: data.data })
@@ -23,7 +24,7 @@ export default function LienHeTinDang({ tin }) {
       if (!yeuCau.signal.aborted) datKetQua({ loi: 'Không tải được liên hệ. Bấm ẩn rồi mở lại để thử.' })
     })
     return () => yeuCau.abort()
-  }, [dangMo, id, laChuTin])
+  }, [dangMo, id, coTheLienHe])
 
   function doiHienThi() {
     datKetQua(null)
@@ -32,7 +33,7 @@ export default function LienHeTinDang({ tin }) {
 
   return (
     <div className="mt-4">
-      {laChuTin && (
+      {coTheLienHe && (
         <button type="button" aria-pressed={dangMo} aria-label="Hiện thông tin liên hệ đầy đủ" title={nhanNut} onClick={doiHienThi} className="mb-3 inline-flex size-11 items-center justify-center rounded-xl border border-[#ceded3] text-emerald-900 hover:bg-emerald-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700">
           <BieuTuong className="size-5" aria-hidden="true" />
         </button>
@@ -45,8 +46,8 @@ export default function LienHeTinDang({ tin }) {
           </div>
         ))}
       </dl>
-      {laChuTin && dangMo && !ketQua && <p role="status" className="mt-3 text-sm text-[#607568]">Đang tải thông tin liên hệ…</p>}
-      {laChuTin && dangMo && ketQua?.loi && <p role="alert" className="mt-3 text-sm text-rose-700">{ketQua.loi}</p>}
+      {coTheLienHe && dangMo && !ketQua && <p role="status" className="mt-3 text-sm text-[#607568]">Đang tải thông tin liên hệ…</p>}
+      {coTheLienHe && dangMo && ketQua?.loi && <p role="alert" className="mt-3 text-sm text-rose-700">{ketQua.loi}</p>}
     </div>
   )
 }

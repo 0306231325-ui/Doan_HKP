@@ -51,7 +51,7 @@ class ThongBaoController extends Controller
             'noiDung' => $muc->noi_dung,
             'taoLuc' => $muc->created_at?->toISOString(),
             'daDoc' => $muc->thoi_gian_doc !== null,
-            'duongDan' => $muc->co_the_xem_tin ? '/chi-tiet-tin-dang?id='.$muc->tin_dang_id : null,
+            'duongDan' => $muc->yeu_cau_id ? '/chi-tiet-yeu-cau?id='.$muc->yeu_cau_id : ($muc->co_the_xem_tin ? '/chi-tiet-tin-dang?id='.$muc->tin_dang_id : null),
         ];
     }
 }

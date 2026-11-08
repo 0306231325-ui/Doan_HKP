@@ -107,7 +107,7 @@ export default function useGuiYeuCauNhanDo(id) {
       anhBieuMau.anh.forEach(({ tep }) => mau.append('anh[]', tep))
       await prepareCsrf()
       const { data: ketQua } = await api.post(`/tin-dang/${id}/nhan-lai`, mau, { headers: { 'Content-Type': undefined } })
-      dieuHuong(`/chi-tiet-tin-dang?id=${id}`, { replace: true, state: { authMessage: ketQua.message, authType: 'success' } })
+      dieuHuong('/theo-doi-yeu-cau', { replace: true, state: { authMessage: ketQua.message, authType: 'success' } })
     } catch (loiGui) {
       datLoi(layLoiGui(loiGui))
     } finally {

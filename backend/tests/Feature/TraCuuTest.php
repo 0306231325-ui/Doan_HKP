@@ -226,7 +226,7 @@ class TraCuuTest extends TestCase
         $this->assertDatabaseCount('dia_diem', 6);
         $this->assertSame('Da sua boi nguoi dung', $tin->fresh()->tieu_de);
         $this->assertSame(4, TinDang::count());
-        $this->assertSame('hash-khong-cong-khai', $this->nguoiDung->fresh()->mat_khau);
+        $this->assertSame($this->nguoiDung->mat_khau, $this->nguoiDung->fresh()->mat_khau);
     }
 
     public function test_seed_cau_hoi_chi_bo_sung_cho_tin_nhat_duoc_mau(): void

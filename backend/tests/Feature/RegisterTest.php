@@ -35,7 +35,7 @@ class RegisterTest extends TestCase
         ];
     }
 
-    public function test_registration_stores_plain_password_and_prevents_privilege_escalation(): void
+    public function test_registration_hashes_password_and_prevents_privilege_escalation(): void
     {
         $this->postJson('/api/register', array_merge($this->payload(), [
             'vai_tro' => 'quan_tri', 'da_xac_minh' => true, 'trang_thai' => 'bi_khoa',
@@ -46,7 +46,8 @@ class RegisterTest extends TestCase
         $this->assertSame('nguoi_dung', $user->vai_tro);
         $this->assertSame('hoat_dong', $user->trang_thai);
         $this->assertArrayNotHasKey('da_xac_minh', $user->getAttributes());
-        $this->assertSame('MatKhau@123', $user->mat_khau);
+        $this->assertNotSame('MatKhau@123', $user->mat_khau);
+        $this->assertTrue($user->kiemTraMatKhau('MatKhau@123'));
         $this->assertGuest();
     }
 

@@ -25,6 +25,9 @@ Route::get('/anh-dai-dien/{tenAnh}', [ThongTinCaNhanController::class, 'anhDaiDi
     ->where('tenAnh', ThongTinCaNhanController::MAU_TEN_ANH);
 
 Route::middleware(['auth:sanctum', 'active'])->group(function () {
+    Route::get('/me/yeu-cau', [\App\Http\Controllers\CuocHenController::class, 'danhSach']);
+    Route::get('/me/yeu-cau/{id}', [\App\Http\Controllers\CuocHenController::class, 'chiTiet'])->whereNumber('id');
+    Route::post('/me/yeu-cau/{id}/bo-sung', [\App\Http\Controllers\QuanLyYeuCauController::class, 'boSung'])->whereNumber('id');
     Route::post('/tin-dang/{tin}/bao-cao', [\App\Http\Controllers\BaoCaoTinDangController::class, 'store'])->whereNumber('tin')->middleware('throttle:5,1');
     Route::get('/dang-tin/cau-hoi', [DangTinController::class, 'bieuMau'])->middleware('throttle:120,1');
     Route::post('/tin-dang', [DangTinController::class, 'them'])->middleware('throttle:10,1');
@@ -45,6 +48,10 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
     Route::delete('/me/anh-dai-dien', [ThongTinCaNhanController::class, 'goAnhDaiDien'])->middleware('throttle:10,1');
     Route::get('/user', [AuthController::class, 'me']);
     Route::middleware('admin')->group(function () {
+        Route::get('/admin/yeu-cau', [\App\Http\Controllers\QuanLyYeuCauController::class, 'danhSach']);
+        Route::get('/admin/yeu-cau/{id}', [\App\Http\Controllers\QuanLyYeuCauController::class, 'chiTiet'])->whereNumber('id');
+        Route::get('/admin/yeu-cau/{id}/anh/{anh}', [\App\Http\Controllers\QuanLyYeuCauController::class, 'anh'])->whereNumber(['id', 'anh']);
+        Route::patch('/admin/yeu-cau/{id}', [\App\Http\Controllers\QuanLyYeuCauController::class, 'xuLy'])->whereNumber('id')->middleware('throttle:30,1');
         Route::get('/admin/me', [AuthController::class, 'me']);
         Route::get('/admin/cau-hoi', [CauHoiController::class, 'danhSach']);
         Route::post('/admin/cau-hoi', [CauHoiController::class, 'them'])->middleware('throttle:30,1');
