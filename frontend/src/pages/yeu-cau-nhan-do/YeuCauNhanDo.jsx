@@ -3,7 +3,6 @@ import { Link, Navigate, Outlet, useSearchParams } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, Send } from 'lucide-react'
 import { useAuth } from '../../auth/useAuth'
 import Button from '../../components/shared/Button'
-import useAnhBieuMau from '../../components/shared/hooks/useAnhBieuMau'
 import useGuiYeuCauNhanDo from './hooks/useGuiYeuCauNhanDo'
 
 export default function YeuCauNhanDo() {
@@ -16,7 +15,6 @@ export default function YeuCauNhanDo() {
 
 function QuyTrinhNhanDo({ idTin }) {
   const yeuCau = useGuiYeuCauNhanDo(idTin)
-  const anhBieuMau = useAnhBieuMau()
   const { buoc, dangGui, duongDanVeBuoc } = yeuCau
   const buocTruoc = useRef(buoc)
   const tieuDeTrang = useRef(null)
@@ -53,8 +51,8 @@ function QuyTrinhNhanDo({ idTin }) {
       ) : (
         <KhungBuoc onSubmit={buoc > 1 ? yeuCau.yeuCauGui : undefined} className="min-w-0 space-y-6">
           <p className="text-sm font-semibold text-emerald-800">Yêu cầu nhận lại đồ · Bước {buoc}/3</p>
-          <Outlet context={{ ...yeuCau, duongDanQuayLai, anhBieuMau, tieuDeTrang }} />
-          {yeuCau.loi && <p role="alert" className="rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-700">{yeuCau.loi}</p>}
+          <Outlet context={{ ...yeuCau, duongDanQuayLai, tieuDeTrang }} />
+          {yeuCau.loi && !yeuCau.moXacNhan && <p role="alert" className="rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-700">{yeuCau.loi}</p>}
           {buoc > 1 && (
             <div className="flex flex-col-reverse gap-4 sm:flex-row sm:justify-between">
               <button type="button" onClick={yeuCau.quayLaiBuocTruoc} disabled={dangGui} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-white px-5 py-3 font-semibold text-emerald-900 hover:bg-emerald-50 focus-visible:outline-2 focus-visible:outline-emerald-700 disabled:opacity-60">

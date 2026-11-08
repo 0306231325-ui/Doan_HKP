@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import api, { prepareCsrf } from '../../../services/api'
+import useAnhBieuMau from '../../../components/shared/hooks/useAnhBieuMau'
 import { kiemTraCauTraLoi } from '../../../components/shared/quyTacCauHoi.js'
 import { layLoiGui } from '../../tin-dang/hooks/xuLyDangTin.js'
 
@@ -10,6 +11,7 @@ export default function useGuiYeuCauNhanDo(id) {
   const { pathname } = useLocation()
   const buoc = cacBuoc.indexOf(pathname.toLowerCase().replace(/\/+$/, '')) + 1
   const dieuHuong = useNavigate()
+  const anhBieuMau = useAnhBieuMau()
   const [lanTai, datLanTai] = useState(0)
   const khoa = `${id}#${lanTai}`
   const [nguon, datNguon] = useState({ khoa: '', data: null, loi: '' })
@@ -98,8 +100,13 @@ export default function useGuiYeuCauNhanDo(id) {
     datDangGui(true)
     datLoi('')
     try {
+      const mau = new FormData()
+      mau.append('xacNhan', xacNhan ? '1' : '0')
+      mau.append('loiNhan', loiNhan)
+      mau.append('cauTraLoi', JSON.stringify(cauHoi.map((cau) => ({ id: cau.id, giaTri: cauTraLoi[cau.id] }))))
+      anhBieuMau.anh.forEach(({ tep }) => mau.append('anh[]', tep))
       await prepareCsrf()
-      const { data: ketQua } = await api.post(`/tin-dang/${id}/nhan-lai`, { loiNhan, xacNhan, cauTraLoi: cauHoi.map((cau) => ({ id: cau.id, giaTri: cauTraLoi[cau.id] })) })
+      const { data: ketQua } = await api.post(`/tin-dang/${id}/nhan-lai`, mau, { headers: { 'Content-Type': undefined } })
       dieuHuong(`/chi-tiet-tin-dang?id=${id}`, { replace: true, state: { authMessage: ketQua.message, authType: 'success' } })
     } catch (loiGui) {
       datLoi(layLoiGui(loiGui))
@@ -111,5 +118,5 @@ export default function useGuiYeuCauNhanDo(id) {
 
   const loiTai = !hopLe ? 'Vui lòng chọn một tin nhặt được.' : nguon.khoa === khoa ? nguon.loi : ''
   const coTheTaiLai = hopLe && nguon.maLoi !== 409
-  return { idTin: hopLe ? id : null, tin: data?.tin, daGui: data?.daGui, cauHoi, cauTraLoi, loiNhan, datLoiNhan, xacNhan, datXacNhan, buoc, duongDanVeBuoc, quayLaiBuocTruoc, moXacNhan: buoc === 3 && moXacNhan, dongXacNhan, guiYeuCau, yeuCauGui, doiCauTraLoi, dangGui, loi, dangTai, loiTai, coTheTaiLai, taiLai }
+  return { idTin: hopLe ? id : null, tin: data?.tin, daGui: data?.daGui, cauHoi, cauTraLoi, anhBieuMau, loiNhan, datLoiNhan, xacNhan, datXacNhan, buoc, duongDanVeBuoc, quayLaiBuocTruoc, moXacNhan: buoc === 3 && moXacNhan, dongXacNhan, guiYeuCau, yeuCauGui, doiCauTraLoi, dangGui, loi, dangTai, loiTai, coTheTaiLai, taiLai }
 }

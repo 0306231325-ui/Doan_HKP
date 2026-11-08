@@ -49,7 +49,7 @@ class DuLieuTinDang
             'location' => $tin->diaDiem?->ten_dia_diem ?? 'Chưa rõ địa điểm', 'locationDetail' => $tin->dia_diem_chi_tiet,
             'date' => ($tin->thoi_gian_xay_ra ?? $tin->created_at)?->format('Y-m-d'),
             'gioXayRa' => $tin->gioXayRa(),
-            'imageUrl' => $tin->hinhAnh->first()?->duong_dan ?? '/do-vat-trong.svg',
+            'imageUrl' => $tin->hinhAnh->first()?->duongDanHienThi() ?? '/do-vat-trong.svg',
             'statusBadge' => $trangThai[$tin->trang_thai] ?? 'Đang mở', 'canClaim' => $laNhatDuoc && $tin->trang_thai === 'dang_mo',
             'statusType' => $tin->trang_thai === 'dang_mo' ? ($laNhatDuoc ? 'safe' : 'urgent') : 'secure',
             'contactPerson' => $tin->nguoiDung?->ho_ten ?? 'Người đăng',
@@ -57,7 +57,7 @@ class DuLieuTinDang
             'contactEmail' => $this->cheLienHe($tin->email_lien_he, laEmail: true),
         ];
         if ($chiTiet) {
-            $duLieu['images'] = $tin->hinhAnh->pluck('duong_dan')->values();
+            $duLieu['images'] = $tin->hinhAnh->map->duongDanHienThi()->values();
         }
         if ($tin->trang_thai_kiem_duyet === 'da_an') {
             $duLieu['biAn'] = true;

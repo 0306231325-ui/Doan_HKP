@@ -201,6 +201,12 @@ class TraCuuTest extends TestCase
         $this->seed(DatabaseSeeder::class);
         $this->assertDatabaseCount('tin_dang', 5);
         $tin = TinDang::where('slug', 'mau-tra-cuu-laptop-asus')->firstOrFail();
+        $urlAnh = '/api/tin-dang/anh/anhtin1.webp';
+        $this->getJson('/api/tra-cuu/'.$tin->id)->assertJsonPath('data.imageUrl', $urlAnh);
+        $this->get($urlAnh)->assertOk()->assertHeader('Content-Type', 'image/webp');
+        $tin->hinhAnh()->update(['duong_dan' => '/tin/tin-mat/anhtin1.webp']);
+        $this->getJson('/api/tra-cuu/'.$tin->id)->assertJsonPath('data.images.0', $urlAnh);
+        $this->get($urlAnh)->assertOk();
         $tin->update(['tieu_de' => 'Da sua boi nguoi dung']);
         TinDang::where('slug', 'mau-tra-cuu-vi-da-den')->firstOrFail()->delete();
         $this->seed(DatabaseSeeder::class);

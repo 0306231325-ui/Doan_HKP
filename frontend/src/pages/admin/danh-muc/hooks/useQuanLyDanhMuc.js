@@ -66,7 +66,7 @@ export default function useQuanLyDanhMuc() {
     datLoiThaoTac('')
   }
 
-  async function xacNhanThaoTac(viTri) {
+  async function xacNhanThaoTac() {
     if (khoaGui.current || !thaoTacChoXacNhan) return
     const { danhMuc, loai } = thaoTacChoXacNhan
     khoaGui.current = true
@@ -83,15 +83,12 @@ export default function useQuanLyDanhMuc() {
       } else if (loai === 'xoa') {
         await api.delete(`/admin/danh-muc/${danhMuc.id}`)
         datDanhSach((cu) => cu.filter((muc) => muc.id !== danhMuc.id))
-      } else if (loai === 'doi-thu-tu') {
-        const { data } = await api.patch(`/admin/danh-muc/${danhMuc.id}/thu-tu`, { viTri, danhSachHienTai: danhSach.map((muc) => muc.id) })
-        datDanhSach(data.data)
       } else {
         const { data } = await api.patch(`/admin/danh-muc/${danhMuc.id}/trang-thai`, { dangHoatDong: loai === 'mo', trangThaiHienTai: danhMuc.dangHoatDong })
         datDanhSach((cu) => cu.map((muc) => muc.id === data.data.id ? data.data : muc))
       }
       datThaoTacChoXacNhan(null)
-      const nhan = { them: 'thêm', xoa: 'xóa', mo: 'mở', an: 'ẩn', 'doi-thu-tu': 'đổi thứ tự' }
+      const nhan = { them: 'thêm', xoa: 'xóa', mo: 'mở', an: 'ẩn' }
       hienThongBao(`Đã ${nhan[loai]} danh mục “${danhMuc.tenDanhMuc}”.`, 'success')
     } catch (loi) {
       const thongBao = loi.response?.status < 500 ? loi.response.data?.message : ''
@@ -111,5 +108,5 @@ export default function useQuanLyDanhMuc() {
     }
   }
 
-  return { danhSach, cacDanhMuc, boLoc, coBoLoc, doiBoLoc, xoaBoLoc, dangTai, loiTai, taiLai, bieuMau, loiBieuMau, dangLuu, danhMucDangDoi, thaoTacChoXacNhan, loiThaoTac, moXacNhanThaoTac, dongXacNhanThaoTac, xacNhanThaoTac, moThemDanhMuc, dongBieuMau, thayDoiBieuMau, yeuCauThemDanhMuc }
+  return { cacDanhMuc, boLoc, coBoLoc, doiBoLoc, xoaBoLoc, dangTai, loiTai, taiLai, bieuMau, loiBieuMau, dangLuu, danhMucDangDoi, thaoTacChoXacNhan, loiThaoTac, moXacNhanThaoTac, dongXacNhanThaoTac, xacNhanThaoTac, moThemDanhMuc, dongBieuMau, thayDoiBieuMau, yeuCauThemDanhMuc }
 }

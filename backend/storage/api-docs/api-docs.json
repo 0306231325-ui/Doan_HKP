@@ -619,7 +619,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Nội dung ảnh ở ổ public theo nhóm tin mất/nhặt hoặc ảnh cũ ở ổ local. no-store/nosniff."
+                        "description": "Nội dung ảnh ở backend/public/tin hoặc ổ cũ. API kiểm tra quyền xem tin và trả no-store/nosniff."
                     },
                     "404": {
                         "description": "Ảnh không có, ảnh riêng tư, tin đã xóa hoặc tin ẩn của người khác"
@@ -691,6 +691,39 @@
                 "requestBody": {
                     "required": true,
                     "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "xacNhan",
+                                    "cauTraLoi"
+                                ],
+                                "properties": {
+                                    "xacNhan": {
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "loiNhan": {
+                                        "type": "string",
+                                        "maxLength": 2000
+                                    },
+                                    "cauTraLoi": {
+                                        "description": "Chuỗi JSON chứa đủ ID lời khai và giá trị từ biểu mẫu nhận lại",
+                                        "type": "string",
+                                        "example": "[{\"id\":1,\"giaTri\":\"Đen\"}]"
+                                    },
+                                    "anh[]": {
+                                        "description": "Tùy chọn, tối đa 3 ảnh JPG/PNG/WebP, 5 MB/ảnh, tối đa 8192 pixel mỗi chiều",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "format": "binary"
+                                        },
+                                        "maxItems": 3
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        },
                         "application/json": {
                             "schema": {
                                 "required": [
@@ -733,7 +766,7 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "Lưu yêu cầu cho_kiem_tra, đáp án riêng và lịch sử. Chỉ quản trị viên duyệt; gửi không tự xác minh hoặc bàn giao."
+                        "description": "Lưu yêu cầu cho_kiem_tra, đáp án, lịch sử và ảnh xác minh nếu có. Ảnh lưu trong backend/public/minh-chung-yeu-cau; phản hồi chỉ trả trạng thái gửi."
                     },
                     "200": {
                         "description": "Đã có yêu cầu đang xử lý của tài khoản này, không gửi trùng"
@@ -750,8 +783,11 @@
                     "409": {
                         "description": "Tin không còn nhận yêu cầu"
                     },
+                    "413": {
+                        "description": "Tổng dữ liệu vượt giới hạn máy chủ"
+                    },
                     "422": {
-                        "description": "Thiếu câu hỏi gốc, đáp án sai kiểu hoặc chưa xác nhận"
+                        "description": "Thiếu câu hỏi gốc, đáp án sai kiểu, chưa xác nhận hoặc ảnh không hợp lệ"
                     }
                 }
             }
@@ -1805,7 +1841,7 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Lưu vào frontend/public/anh-dai-dien. Tên tệp lấy phần email trước dấu @, kèm mã riêng cho từng ảnh. Dọn ảnh cũ do hệ thống quản lý và trả hồ sơ đã cập nhật."
+                        "description": "Lưu vào backend/public/anh-dai-dien. Tên tệp lấy phần email trước dấu @, kèm mã riêng cho từng ảnh. Dọn ảnh cũ do hệ thống quản lý và trả hồ sơ đã cập nhật."
                     },
                     "422": {
                         "description": "Ảnh không hợp lệ"
@@ -1863,7 +1899,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Luồng nội dung ảnh từ frontend/public/anh-dai-dien hoặc thư mục lưu cũ, có cache và nosniff"
+                        "description": "Luồng nội dung ảnh từ backend/public/anh-dai-dien hoặc thư mục lưu cũ, có cache và nosniff"
                     },
                     "404": {
                         "description": "Không tìm thấy ảnh"

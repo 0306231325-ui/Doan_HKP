@@ -11,12 +11,13 @@ use App\Http\Controllers\ThongTinCaNhanController;
 use App\Http\Controllers\TraCuuController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\YeuCauNhanDoController;
+use App\Models\HinhAnhTinDang;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/tra-cuu/bo-loc', [TraCuuController::class, 'boLoc']);
 Route::get('/tra-cuu', [TraCuuController::class, 'danhSach'])->middleware('throttle:120,1');
 Route::get('/tra-cuu/{tin}', [TraCuuController::class, 'chiTiet'])->whereNumber('tin')->middleware('throttle:120,1');
-Route::get('/tin-dang/anh/{tenAnh}', [DangTinController::class, 'anh'])->where('tenAnh', '[a-zA-Z0-9]{40}\.(jpg|jpeg|png|webp)');
+Route::get('/tin-dang/anh/{tenAnh}', [DangTinController::class, 'anh'])->where('tenAnh', HinhAnhTinDang::MAU_TEN_ANH);
 
 Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:5,1');
 

@@ -8,6 +8,8 @@ import { SO_ANH_TOI_DA } from '../../pages/tin-dang/hooks/xuLyDangTin.js'
 
 export default function FormYeuCauNhanDo() {
   const { anhBieuMau, loiNhan, datLoiNhan, xacNhan, datXacNhan, moXacNhan, dongXacNhan, guiYeuCau, dangGui, loi, tieuDeTrang } = useOutletContext()
+  const soAnh = anhBieuMau.anh.length
+  const noiDungGui = soAnh ? `Quản trị viên sẽ nhận câu trả lời, lời nhắn và ${soAnh} ảnh xác minh.` : 'Quản trị viên sẽ nhận câu trả lời và lời nhắn bạn đã nhập.'
 
   return (
     <>
@@ -18,8 +20,8 @@ export default function FormYeuCauNhanDo() {
             <ImagePlus className="h-5 w-5 text-emerald-700" aria-hidden="true" />Ảnh xác minh
             <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-800">Không bắt buộc</span>
           </h2>
-          <p className="text-base leading-7 text-[#607568]">Chọn ảnh giúp nhận diện đồ vật, chẳng hạn ảnh chụp trước khi bị mất. Hiện ảnh chỉ được xem trước trên trang này.</p>
-          <ChonAnh {...anhBieuMau} nhan="Chọn ảnh xác minh" maLoi="loi-anh-xac-minh" disabled={anhBieuMau.anh.length >= SO_ANH_TOI_DA} />
+          <p className="text-base leading-7 text-[#607568]">Bạn có thể đính kèm ảnh giúp nhận diện đồ vật, chẳng hạn ảnh chụp trước khi bị mất. Ảnh xác minh được lưu riêng cùng yêu cầu.</p>
+          <ChonAnh {...anhBieuMau} nhan="Chọn ảnh xác minh" maLoi="loi-anh-xac-minh" disabled={soAnh >= SO_ANH_TOI_DA} />
         </section>
 
         <section className="space-y-6 rounded-2xl border border-emerald-100 bg-white p-5 shadow-sm sm:p-8 [&_.form-field]:gap-3 [&_.form-field_label]:text-lg!">
@@ -32,7 +34,7 @@ export default function FormYeuCauNhanDo() {
       </fieldset>
 
       {moXacNhan && (
-        <HopThoai tieuDe="Xác nhận gửi yêu cầu" moTa="Quản trị viên sẽ nhận câu trả lời và lời nhắn. Ảnh xác minh và thông tin liên hệ chưa được gửi." khiDong={dongXacNhan}>
+        <HopThoai tieuDe="Xác nhận gửi yêu cầu" moTa={noiDungGui} khiDong={dongXacNhan}>
           <div className="space-y-5 p-6">
             {loi && <p role="alert" className="text-sm text-rose-700">{loi}</p>}
             <div className="flex justify-end gap-3">

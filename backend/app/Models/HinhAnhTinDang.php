@@ -7,7 +7,16 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class HinhAnhTinDang extends Model
 {
+    public const MAU_TEN_ANH = '(?:[a-zA-Z0-9]{40}|anhtin[0-9]+(?:_[a-z])?)\.(jpg|jpeg|png|webp)';
+
     public const UPDATED_AT = null;
+
+    public function duongDanHienThi(): string
+    {
+        return preg_match('~\A/tin/tin-(?:mat|nhat)/('.self::MAU_TEN_ANH.')\z~', $this->duong_dan)
+            ? '/api/tin-dang/anh/'.basename($this->duong_dan)
+            : $this->duong_dan;
+    }
 
     protected $table = 'hinh_anh_tin_dang';
 

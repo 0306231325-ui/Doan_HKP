@@ -9,6 +9,9 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use RuntimeException;
+use Throwable;
 
 class YeuCauNhanDoController extends Controller
 {
@@ -28,35 +31,64 @@ class YeuCauNhanDoController extends Controller
 
     public function them(Request $request, string $tin, CauTraLoiTinDang $traLoi): JsonResponse
     {
+        if (! $request->isJson() && is_string($request->input('cauTraLoi'))) {
+            $request->merge(['cauTraLoi' => json_decode($request->input('cauTraLoi'), true)]);
+        }
         $mau = $request->validate([
             'loiNhan' => ['nullable', 'string', 'max:2000'],
             'xacNhan' => ['accepted'], 'cauTraLoi' => ['required', 'array', 'max:500'],
             'cauTraLoi.*' => ['required', 'array:id,giaTri'],
             'cauTraLoi.*.id' => ['required', 'integer', 'distinct', 'min:1'],
             'cauTraLoi.*.giaTri' => ['present', 'nullable'],
+            'anh' => ['nullable', 'array', 'max:3'],
+            'anh.*' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120', 'dimensions:max_width=8192,max_height=8192'],
+        ], [
+            'anh.max' => 'Mỗi yêu cầu tối đa 3 ảnh xác minh.',
+            'anh.*.uploaded' => 'Không tải được ảnh. Hãy kiểm tra dung lượng và thử lại.',
+            'anh.*.image' => 'Tệp xác minh tải lên phải là hình ảnh.',
+            'anh.*.mimes' => 'Chỉ nhận ảnh JPG, PNG hoặc WebP.',
+            'anh.*.max' => 'Mỗi ảnh tối đa 5 MB.',
+            'anh.*.dimensions' => 'Ảnh xác minh tối đa 8192 pixel mỗi chiều.',
         ]);
 
-        return DB::transaction(function () use ($request, $tin, $mau, $traLoi) {
-            $banTin = $this->timTin($tin, true);
-            $this->kiemTraNhan($banTin, $request);
-            if ($banTin->daGuiYeuCau($request->user()->id)) {
-                return response()->json(['message' => 'Bạn đã gửi yêu cầu cho tin này.', 'daGui' => true]);
-            }
-            $cacLoi = $this->cacLoiKhai($banTin);
-            $dapAn = collect($mau['cauTraLoi'])->keyBy('id');
-            abort_unless($cacLoi->isNotEmpty() && $cacLoi->count() === $dapAn->count() && $cacLoi->every(fn ($loi) => $dapAn->has($loi->id)), 422, 'Vui lòng trả lời đúng bộ câu hỏi của tin đăng.');
-            $cotTraLoi = $cacLoi->map(fn ($loi) => [
-                'tin_dang_id' => $banTin->id, 'loi_khai_tin_dang_id' => $loi->id,
-                ...$traLoi->giaTri($traLoi->cauHoi($loi->phienBanCauHoi, (string) $loi->id), $dapAn[$loi->id]['giaTri'], 'cauTraLoi.'.$loi->id),
-            ]);
-            $yeuCau = $banTin->yeuCauNhanDo()->create([
-                'nguoi_yeu_cau_id' => $request->user()->id, 'loi_nhan' => $mau['loiNhan'] ?? null, 'trang_thai' => 'cho_kiem_tra',
-            ]);
-            $yeuCau->traLoi()->createMany($cotTraLoi);
-            $yeuCau->lichSu()->create(['nguoi_thuc_hien_id' => $request->user()->id, 'hanh_dong' => 'gui_yeu_cau', 'trang_thai_moi' => 'cho_kiem_tra']);
+        $tepDaLuu = [];
+        try {
+            return DB::transaction(function () use ($request, $tin, $mau, $traLoi, &$tepDaLuu) {
+                $banTin = $this->timTin($tin, true);
+                $this->kiemTraNhan($banTin, $request);
+                if ($banTin->daGuiYeuCau($request->user()->id)) {
+                    return response()->json(['message' => 'Bạn đã gửi yêu cầu cho tin này.', 'daGui' => true]);
+                }
+                $cacLoi = $this->cacLoiKhai($banTin);
+                $dapAn = collect($mau['cauTraLoi'])->keyBy('id');
+                abort_unless($cacLoi->isNotEmpty() && $cacLoi->count() === $dapAn->count() && $cacLoi->every(fn ($loi) => $dapAn->has($loi->id)), 422, 'Vui lòng trả lời đúng bộ câu hỏi của tin đăng.');
+                $cotTraLoi = $cacLoi->map(fn ($loi) => [
+                    'tin_dang_id' => $banTin->id, 'loi_khai_tin_dang_id' => $loi->id,
+                    ...$traLoi->giaTri($traLoi->cauHoi($loi->phienBanCauHoi, (string) $loi->id), $dapAn[$loi->id]['giaTri'], 'cauTraLoi.'.$loi->id),
+                ]);
+                $yeuCau = $banTin->yeuCauNhanDo()->create([
+                    'nguoi_yeu_cau_id' => $request->user()->id, 'loi_nhan' => $mau['loiNhan'] ?? null, 'trang_thai' => 'cho_kiem_tra',
+                ]);
+                $yeuCau->traLoi()->createMany($cotTraLoi);
+                $thuMuc = (string) $yeuCau->id;
+                foreach (array_values($mau['anh'] ?? []) as $thuTu => $tep) {
+                    $tepDaLuu[] = $tep->hashName($thuMuc);
+                    $duongDan = $tep->store($thuMuc, 'minh-chung-yeu-cau');
+                    if (! $duongDan) {
+                        throw new RuntimeException('Không lưu được ảnh xác minh.');
+                    }
+                    $yeuCau->minhChung()->create(['duong_dan' => 'minh-chung-yeu-cau/'.$duongDan, 'thu_tu' => $thuTu]);
+                }
+                $yeuCau->lichSu()->create(['nguoi_thuc_hien_id' => $request->user()->id, 'hanh_dong' => 'gui_yeu_cau', 'trang_thai_moi' => 'cho_kiem_tra']);
 
-            return response()->json(['message' => 'Đã gửi yêu cầu. Vui lòng chờ quản trị viên xác minh.', 'daGui' => true], 201);
-        });
+                return response()->json(['message' => 'Đã gửi yêu cầu. Vui lòng chờ quản trị viên xác minh.', 'daGui' => true], 201);
+            });
+        } catch (Throwable $loi) {
+            if ($tepDaLuu) {
+                Storage::disk('minh-chung-yeu-cau')->delete($tepDaLuu);
+            }
+            throw $loi;
+        }
     }
 
     public function lienHe(Request $request, string $tin): JsonResponse
