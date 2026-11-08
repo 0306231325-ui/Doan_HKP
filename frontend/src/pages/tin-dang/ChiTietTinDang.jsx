@@ -1,4 +1,4 @@
-import { ArrowLeft, CalendarDays, ChevronRight, ClipboardList, HandHeart, ImageOff, Images, Info, MapPin, MessageSquare, Share2, UserRound, ZoomIn } from 'lucide-react'
+import { ArrowLeft, CalendarDays, ChevronRight, ClipboardList, HandHeart, ImageOff, Images, Info, MapPin, MessageSquare, UserRound, ZoomIn } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import Button from '../../components/shared/Button'
@@ -9,11 +9,6 @@ import BaoCaoTinDang from './BaoCaoTinDang'
 import LienHeTinDang from './LienHeTinDang'
 import useChiTietTinDang from './hooks/useChiTietTinDang'
 import { dinhDangNgay } from '../danh-sach-do/hooks/xuLyDanhSachDo'
-
-const cacThaoTacSapCo = [
-  { nhan: 'Tôi đang giữ đồ này', bieuTuong: MessageSquare, loaiTin: 'lost' },
-  { nhan: 'Chia sẻ tin', bieuTuong: Share2 },
-]
 
 export default function ChiTietTinDang() {
   const { tin, dangTai, loi, taiLai, quayLai } = useChiTietTinDang()
@@ -107,11 +102,9 @@ export default function ChiTietTinDang() {
           <h2 className={lopTieuDeMuc}><HandHeart className="h-5 w-5 text-emerald-700" aria-hidden="true" />Thao tác với tin đăng</h2>
           <div className="flex flex-wrap gap-3">
             {tin.canClaim && <Link to={`/yeu-cau-nhan-do?id=${tin.id}`} className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-emerald-900 px-4 py-3 text-center text-sm font-bold text-white hover:bg-emerald-800 sm:w-auto"><HandHeart className="h-4 w-4" aria-hidden="true" />{tin.hasClaim ? 'Xem yêu cầu đã gửi' : 'Yêu cầu nhận lại đồ'}</Link>}
-            {cacThaoTacSapCo
-              .filter(({ loaiTin }) => !loaiTin || tin.type === loaiTin)
-              .map(({ nhan, bieuTuong: BieuTuong }) => (
-                <button key={nhan} type="button" disabled title="Chức năng này chưa được kết nối" className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl border border-[#ceded3] bg-white px-4 py-3 text-sm font-semibold text-[#526c5b] disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"><BieuTuong className="h-4 w-4" aria-hidden="true" />{nhan}</button>
-              ))}
+            {tin.type === 'lost' && (
+              <button type="button" disabled title="Chức năng này chưa được kết nối" className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl border border-[#ceded3] bg-white px-4 py-3 text-sm font-semibold text-[#526c5b] disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"><MessageSquare className="h-4 w-4" aria-hidden="true" />Tôi đang giữ đồ này</button>
+            )}
             <BaoCaoTinDang key={tin.id} tin={tin} />
           </div>
         </section>}

@@ -1,11 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
-import { ClipboardList, HandHeart, UserRound } from 'lucide-react'
+import { ClipboardList, UserRound } from 'lucide-react'
 import { useSearchParams } from 'react-router-dom'
 
 const CAC_MUC = [
   { id: 'thong-tin', nhan: 'Thông tin cá nhân', bieuTuong: UserRound },
   { id: 'tin-dang', nhan: 'Tin đã đăng', bieuTuong: ClipboardList },
-  { id: 'yeu-cau', nhan: 'Yêu cầu nhận đồ', bieuTuong: HandHeart },
 ]
 
 export default function useTrangCaNhan() {
