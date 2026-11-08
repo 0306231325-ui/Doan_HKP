@@ -1,6 +1,6 @@
 const LOP_NUT = 'whitespace-nowrap rounded-lg border px-3 py-2 text-xs font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-50'
 
-export default function BangDanhMuc({ cacDanhMuc, coBoLoc, danhSach, danhMucDangDoi, moXacNhanThaoTac }) {
+export default function BangDanhMuc({ cacDanhMuc, coBoLoc, danhMucDangDoi, moXacNhanThaoTac }) {
   return (
     <div className="overflow-x-auto">
       <table className="w-full min-w-[880px] table-fixed text-left text-sm">
@@ -24,7 +24,6 @@ export default function BangDanhMuc({ cacDanhMuc, coBoLoc, danhSach, danhMucDang
               <td className="px-4 py-4 text-center"><span className={`inline-flex whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium ${muc.dangHoatDong ? 'bg-[#eaf6ee] text-emerald-800' : 'bg-gray-100 text-gray-500'}`}>{muc.dangHoatDong ? 'Đang hoạt động' : 'Ngừng sử dụng'}</span></td>
               <td className="px-4 py-4 text-center">
                 <div className="flex flex-wrap justify-center gap-2">
-                  <button type="button" disabled={Boolean(danhMucDangDoi) || danhSach.length < 2} aria-label={`Đổi thứ tự danh mục ${muc.tenDanhMuc}`} onClick={() => moXacNhanThaoTac(muc, 'doi-thu-tu')} className={`${LOP_NUT} border-[#ceded3] text-[#526c5b] hover:bg-[#f0f6f2] focus-visible:outline-emerald-700`}>Đổi thứ tự</button>
                   <button type="button" disabled={Boolean(danhMucDangDoi)} aria-label={`${muc.dangHoatDong ? 'Ẩn' : 'Mở'} danh mục ${muc.tenDanhMuc}`} onClick={() => moXacNhanThaoTac(muc, muc.dangHoatDong ? 'an' : 'mo')} className={`${LOP_NUT} focus-visible:outline-emerald-700 ${muc.dangHoatDong ? 'border-amber-200 text-amber-800 hover:bg-amber-50' : 'border-emerald-200 text-emerald-800 hover:bg-emerald-50'}`}>{muc.dangHoatDong ? 'Ẩn' : 'Mở'}</button>
                   <button type="button" disabled={Boolean(danhMucDangDoi)} aria-label={`Xóa danh mục ${muc.tenDanhMuc}`} onClick={() => moXacNhanThaoTac(muc, 'xoa')} className={`${LOP_NUT} border-rose-200 text-rose-700 hover:bg-rose-50 focus-visible:outline-rose-700`}>Xóa</button>
                 </div>

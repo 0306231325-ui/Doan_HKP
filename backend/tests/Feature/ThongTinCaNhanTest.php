@@ -102,6 +102,7 @@ class ThongTinCaNhanTest extends TestCase
         $this->patchJson('/api/me', $this->duLieuHoSo($user))->assertForbidden();
         $this->putJson('/api/me/mat-khau', [])->assertForbidden();
         $this->postJson('/api/me/anh-dai-dien', [])->assertForbidden();
+        $this->deleteJson('/api/me/anh-dai-dien')->assertForbidden();
     }
 
     public function test_khach_khong_duoc_doi_thong_tin(): void
@@ -109,6 +110,7 @@ class ThongTinCaNhanTest extends TestCase
         $this->patchJson('/api/me', [])->assertUnauthorized();
         $this->putJson('/api/me/mat-khau', [])->assertUnauthorized();
         $this->postJson('/api/me/anh-dai-dien', [])->assertUnauthorized();
+        $this->deleteJson('/api/me/anh-dai-dien')->assertUnauthorized();
     }
 
     public function test_doi_mat_khau_bam_va_dang_nhap_lai_giu_hash(): void
@@ -154,20 +156,22 @@ class ThongTinCaNhanTest extends TestCase
 
     public function test_anh_duoc_luu_hien_thi_va_xoa_anh_cu_khi_thay(): void
     {
+        Storage::fake('anh-dai-dien');
         Storage::fake('public');
         $user = $this->taoTaiKhoan();
         $this->actingAs($user)->postJson('/api/me/anh-dai-dien', ['anh_dai_dien' => UploadedFile::fake()->image('anh.jpg')])->assertOk();
         $anhCu = $user->fresh()->anh_dai_dien;
         $this->get($anhCu)->assertOk()->assertHeader('X-Content-Type-Options', 'nosniff');
         $this->postJson('/api/me/anh-dai-dien', ['anh_dai_dien' => UploadedFile::fake()->image('anh.png')])->assertOk();
-        Storage::disk('public')->assertMissing('anh-dai-dien/'.basename($anhCu));
-        Storage::disk('public')->assertExists('anh-dai-dien/'.basename($user->fresh()->anh_dai_dien));
+        Storage::disk('anh-dai-dien')->assertMissing(basename($anhCu));
+        Storage::disk('anh-dai-dien')->assertExists(basename($user->fresh()->anh_dai_dien));
+        $this->assertSame([], Storage::disk('public')->allFiles());
         $this->get($anhCu)->assertNotFound();
     }
 
     public function test_tu_choi_anh_gia_anh_lon_va_duong_dan_la(): void
     {
-        Storage::fake('public');
+        Storage::fake('anh-dai-dien');
         $user = $this->taoTaiKhoan();
         $this->actingAs($user)->postJson('/api/me/anh-dai-dien', ['anh_dai_dien' => UploadedFile::fake()->create('anh.jpg', 10, 'text/plain')])
             ->assertUnprocessable()->assertJsonValidationErrors('anh_dai_dien');
@@ -175,6 +179,51 @@ class ThongTinCaNhanTest extends TestCase
             ->assertUnprocessable()->assertJsonValidationErrors('anh_dai_dien');
         $this->get('/api/anh-dai-dien/.env')->assertNotFound();
         $this->assertNull($user->fresh()->anh_dai_dien);
-        $this->assertSame([], Storage::disk('public')->allFiles());
+        $this->assertSame([], Storage::disk('anh-dai-dien')->allFiles());
+    }
+
+    public function test_go_anh_cua_phien_don_tep_va_co_the_them_lai(): void
+    {
+        Storage::fake('anh-dai-dien');
+        Storage::fake('public');
+        $user = $this->taoTaiKhoan('ho.so+anh@example.test');
+        $nguoiKhac = $this->taoTaiKhoan('ho.so+anh@example.org');
+        $url = '/api/me/anh-dai-dien';
+        $anhKhac = $this->actingAs($nguoiKhac, 'web')->postJson($url, ['anh_dai_dien' => UploadedFile::fake()->image('khac.jpg')])
+            ->assertOk()->json('user.anh_dai_dien');
+        $this->app['auth']->forgetGuards();
+        $anhCu = $this->actingAs($user, 'web')->postJson($url, ['anh_dai_dien' => UploadedFile::fake()->image('cu.jpg')])
+            ->assertOk()->json('user.anh_dai_dien');
+        $this->assertMatchesRegularExpression('/^ho\.so\+anh-[a-zA-Z0-9]{40}\.(jpg|jpeg)$/', basename($anhCu));
+        $this->assertStringStartsWith('ho.so+anh-', basename($anhKhac));
+        $this->assertNotSame($anhCu, $anhKhac);
+        $this->get($anhCu)->assertOk();
+
+        $this->deleteJson($url, ['id' => $nguoiKhac->id])->assertOk()->assertJsonPath('user.anh_dai_dien', null);
+        $this->assertNull($user->fresh()->anh_dai_dien);
+        $this->assertSame($anhKhac, $nguoiKhac->fresh()->anh_dai_dien);
+        Storage::disk('anh-dai-dien')->assertMissing(basename($anhCu));
+        Storage::disk('anh-dai-dien')->assertExists(basename($anhKhac));
+        $this->get($anhCu)->assertNotFound();
+        $this->deleteJson($url)->assertOk()->assertJsonPath('user.anh_dai_dien', null);
+        $this->postJson($url, ['anh_dai_dien' => UploadedFile::fake()->image('moi.png')])
+            ->assertOk()->assertJsonPath('message', 'Đã thêm ảnh đại diện.');
+        $this->assertNotNull($user->fresh()->anh_dai_dien);
+    }
+
+    public function test_anh_trong_thu_muc_cu_van_doc_va_go_duoc(): void
+    {
+        Storage::fake('anh-dai-dien');
+        Storage::fake('public');
+        $user = $this->taoTaiKhoan();
+        $anh = UploadedFile::fake()->image('anh-cu.png');
+        $duongDan = $anh->store('anh-dai-dien', 'public');
+        $url = '/api/'.$duongDan;
+        $user->update(['anh_dai_dien' => $url]);
+
+        $this->get($url)->assertOk();
+        $this->actingAs($user)->deleteJson('/api/me/anh-dai-dien')->assertOk()->assertJsonPath('user.anh_dai_dien', null);
+        Storage::disk('public')->assertMissing($duongDan);
+        $this->get($url)->assertNotFound();
     }
 }

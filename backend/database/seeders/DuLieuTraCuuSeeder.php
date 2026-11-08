@@ -70,12 +70,12 @@ class DuLieuTraCuuSeeder extends Seeder
 
                 foreach ($cacAnh as $thuTu => $tenAnh) {
                     $duongDan = '/'.$tin->thuMucAnh().'/'.$tenAnh;
-                    if (! is_file(base_path('../frontend/public'.$duongDan))) {
+                    if (! is_file(public_path(ltrim($duongDan, '/')))) {
                         throw new RuntimeException('Thiếu ảnh tin mẫu: '.$tenAnh);
                     }
                     $tin->hinhAnh()->create([
                         'nguoi_tai_len_id' => $nguoiDang->id,
-                        'duong_dan' => $duongDan,
+                        'duong_dan' => '/api/tin-dang/anh/'.$tenAnh,
                         'pham_vi' => 'cong_khai',
                         'thu_tu' => $thuTu,
                     ]);
@@ -88,6 +88,8 @@ class DuLieuTraCuuSeeder extends Seeder
                     'noi_dung' => 'Đã đăng tin.',
                 ]);
             }
+
+            $this->call(CauHoiTinMauSeeder::class);
         });
     }
 }

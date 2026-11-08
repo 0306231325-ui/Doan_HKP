@@ -61,27 +61,12 @@ class TraCuuController extends Controller
             $truyVan->whereRaw('DATE(COALESCE(thoi_gian_xay_ra, created_at)) <= ?', [$boLoc['denNgay']]);
         }
         $this->locTuKhoa($truyVan, trim($boLoc['tuKhoa'] ?? ''));
-        $tongTin = (clone $truyVan)->count();
-        $tongTrang = max(1, (int) ceil($tongTin / 6));
-        $trang = min((int) ($boLoc['trang'] ?? 1), $tongTrang);
         $chieu = ($boLoc['sapXep'] ?? 'moi_nhat') === 'cu_nhat' ? 'asc' : 'desc';
-        $cacTin = $truyVan->with([
-            'danhMuc:id,ten_danh_muc', 'diaDiem:id,ten_dia_diem', 'nguoiDung:id,ho_ten',
-            'hinhAnh' => fn ($anh) => $anh->where('pham_vi', 'cong_khai')->orderBy('thu_tu')->orderBy('id'),
-        ])->orderByRaw('COALESCE(thoi_gian_xay_ra, created_at) '.$chieu)->orderBy('id', $chieu)->forPage($trang, 6)->get();
+        $truyVan->orderByRaw('COALESCE(thoi_gian_xay_ra, created_at) '.$chieu)->orderBy('id', $chieu);
         $nguoiXem = $request->user('web');
 
-        return response()->json([
-            'data' => $cacTin->map(fn ($tin) => [
-                ...$duLieu->congKhai($tin),
-                'laChuTin' => $nguoiXem !== null && (string) $tin->nguoi_dung_id === (string) $nguoiXem->id,
-            ]),
-            'meta' => [
-                'trangHienTai' => $trang, 'tongTrang' => $tongTrang, 'tongTin' => $tongTin,
-                'tuViTri' => $tongTin ? ($trang - 1) * 6 + 1 : 0,
-                'denViTri' => min($trang * 6, $tongTin),
-            ],
-        ])->header('Cache-Control', 'private, no-store');
+        return response()->json($duLieu->phanTrang($truyVan, (int) ($boLoc['trang'] ?? 1), $nguoiXem ? (string) $nguoiXem->id : null))
+            ->header('Cache-Control', 'private, no-store');
     }
 
     private function locTuKhoa(Builder $truyVan, string $tuKhoa): void
@@ -120,13 +105,18 @@ class TraCuuController extends Controller
         return "({$noiChuoi}) LIKE ?";
     }
 
-    public function chiTiet(string $tin, DuLieuTinDang $duLieu): JsonResponse
+    public function chiTiet(Request $request, string $tin, DuLieuTinDang $duLieu): JsonResponse
     {
-        $banTin = TinDang::where('trang_thai_kiem_duyet', 'hien_thi')->with([
-            'danhMuc:id,ten_danh_muc', 'diaDiem:id,ten_dia_diem', 'nguoiDung:id,ho_ten',
-            'hinhAnh' => fn ($anh) => $anh->where('pham_vi', 'cong_khai')->orderBy('thu_tu')->orderBy('id'),
-        ])->findOrFail($tin);
+        $nguoiXem = $request->user('web');
+        $banTin = TinDang::xemDuoc($nguoiXem)->with($duLieu->quanHe())->findOrFail($tin);
+        $laChuTin = $nguoiXem !== null && (string) $banTin->nguoi_dung_id === (string) $nguoiXem->id;
+        $duLieuTin = $duLieu->congKhai($banTin, true);
 
-        return response()->json(['data' => $duLieu->congKhai($banTin, true)])->header('Cache-Control', 'no-store');
+        return response()->json(['data' => [
+            ...$duLieuTin,
+            'laChuTin' => $laChuTin,
+            'hasClaim' => $duLieuTin['canClaim'] && ! $laChuTin && $nguoiXem?->trang_thai === 'hoat_dong'
+                && $banTin->daGuiYeuCau($nguoiXem->id),
+        ]])->header('Cache-Control', 'private, no-store');
     }
 }

@@ -8,6 +8,7 @@ use App\Models\DiaDiem;
 use App\Models\HinhAnhTinDang;
 use App\Models\TinDang;
 use App\Services\CauTraLoiTinDang;
+use App\Services\DuLieuTinDang;
 use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -21,6 +22,16 @@ use Throwable;
 
 class DangTinController extends Controller
 {
+    public function tinCuaToi(Request $request, DuLieuTinDang $duLieu): JsonResponse
+    {
+        $mau = $request->validate(['trang' => ['nullable', 'integer', 'min:1', 'max:1000000']]);
+        $id = $request->user()->id;
+        $truyVan = TinDang::where('nguoi_dung_id', $id)->latest()->orderByDesc('id');
+
+        return response()->json($duLieu->phanTrang($truyVan, (int) ($mau['trang'] ?? 1), (string) $id))
+            ->header('Cache-Control', 'private, no-store');
+    }
+
     public function bieuMau(Request $request, CauTraLoiTinDang $traLoi): JsonResponse
     {
         $mau = $request->validate(['danhMucId' => ['required', 'integer', Rule::exists('danh_muc_do_vat', 'id')->where('trang_thai', true)]]);
@@ -98,7 +109,7 @@ class DangTinController extends Controller
                 ]);
                 $tin->loiKhai()->createMany($loiKhai);
                 foreach ($request->file('anh', []) as $thuTu => $tep) {
-                    $duongDan = $tep->store($tin->thuMucAnh(), 'public');
+                    $duongDan = $tep->store($tin->thuMucAnh(), 'anh-tin-dang');
                     if (! $duongDan) {
                         throw new LogicException('Không lưu được ảnh. Vui lòng thử lại.');
                     }
@@ -110,7 +121,7 @@ class DangTinController extends Controller
                 return response()->json(['data' => ['id' => $tin->id], 'message' => 'Đăng tin thành công.'], 201);
             });
         } catch (Throwable $loi) {
-            Storage::disk('public')->delete($tepDaLuu);
+            Storage::disk('anh-tin-dang')->delete($tepDaLuu);
             throw $loi;
         }
     }
@@ -199,24 +210,30 @@ class DangTinController extends Controller
         ];
     }
 
-    public function anh(string $tenAnh): StreamedResponse
+    public function anh(Request $request, string $tenAnh): StreamedResponse
     {
-        $anh = HinhAnhTinDang::where('duong_dan', '/api/tin-dang/anh/'.$tenAnh)
+        $anh = HinhAnhTinDang::whereIn('duong_dan', [
+            '/api/tin-dang/anh/'.$tenAnh,
+            '/tin/tin-mat/'.$tenAnh,
+            '/tin/tin-nhat/'.$tenAnh,
+        ])
             ->where('pham_vi', 'cong_khai')
-            ->whereHas('tinDang', fn ($q) => $q->where('trang_thai_kiem_duyet', 'hien_thi'))
+            ->whereHas('tinDang', fn ($q) => $q->xemDuoc($request->user('web')))
             ->with('tinDang:id,loai_tin')
             ->firstOrFail();
         $duongDan = $anh->tinDang->thuMucAnh().'/'.$tenAnh;
-        $oDia = Storage::disk('public');
-        if (! $oDia->exists($duongDan)) {
-            $oDia = Storage::disk('local');
-            $duongDan = 'tin-dang/'.$tenAnh;
+        foreach ([
+            ['anh-tin-dang', $duongDan],
+            ['anh-tin-dang', 'tin/anh-cu/'.$tenAnh],
+            ['public', $duongDan],
+            ['local', 'tin-dang/'.$tenAnh],
+        ] as [$tenODia, $tep]) {
+            $oDia = Storage::disk($tenODia);
+            if ($oDia instanceof FilesystemAdapter && $oDia->exists($tep)) {
+                return $oDia->response($tep, null, ['X-Content-Type-Options' => 'nosniff', 'Cache-Control' => 'private, no-store']);
+            }
         }
-        if (! $oDia instanceof FilesystemAdapter) {
-            throw new LogicException('Ổ lưu trữ không hỗ trợ trả tệp.');
-        }
-        abort_unless($oDia->exists($duongDan), 404);
 
-        return $oDia->response($duongDan, null, ['X-Content-Type-Options' => 'nosniff', 'Cache-Control' => 'no-store']);
+        abort(404);
     }
 }

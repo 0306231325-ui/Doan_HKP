@@ -6,8 +6,14 @@ import HopThoai from '../../components/shared/HopThoai'
 import KhungThongTin from '../../components/shared/KhungThongTin'
 import ThongBaoTrong from '../../components/shared/ThongBaoTrong'
 import BaoCaoTinDang from './BaoCaoTinDang'
+import LienHeTinDang from './LienHeTinDang'
 import useChiTietTinDang from './hooks/useChiTietTinDang'
 import { dinhDangNgay } from '../danh-sach-do/hooks/xuLyDanhSachDo'
+
+const cacThaoTacSapCo = [
+  { nhan: 'Tôi đang giữ đồ này', bieuTuong: MessageSquare, loaiTin: 'lost' },
+  { nhan: 'Chia sẻ tin', bieuTuong: Share2 },
+]
 
 export default function ChiTietTinDang() {
   const { tin, dangTai, loi, taiLai, quayLai } = useChiTietTinDang()
@@ -40,6 +46,7 @@ export default function ChiTietTinDang() {
         <div>
           <h1 className="text-3xl font-extrabold tracking-tight text-emerald-900 sm:text-4xl">Chi tiết tin đăng</h1>
           <p className="mt-3 text-sm leading-6 text-[#607568]">Thông tin đồ vật, hình ảnh và cách liên hệ với người đăng.</p>
+          {tin?.biAn && <p className="mt-2 text-sm font-semibold text-amber-800">Tin đã bị ẩn khỏi danh sách công khai.</p>}
         </div>
         <Link to={quayLai} className="inline-flex shrink-0 items-center gap-2 self-start rounded-xl border border-[#ceded3] bg-white px-4 py-2.5 text-sm font-semibold text-[#315a43] transition-colors hover:bg-emerald-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700"><ArrowLeft className="h-4 w-4" aria-hidden="true" />Quay lại danh sách</Link>
       </header>
@@ -92,21 +99,22 @@ export default function ChiTietTinDang() {
               <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#edf5ef] text-[#9bb3a2]"><UserRound className="h-6 w-6" aria-hidden="true" /></span>
               <p className="text-sm font-medium leading-6 text-[#718276]">{tin.contactPerson}</p>
             </div>
-            <dl className="mt-5 grid gap-4 sm:grid-cols-2">
-              {[['Số điện thoại', tin.contactPhone], ['Email / Gmail', tin.contactEmail]].map(([nhan, giaTri]) => <div key={nhan} className="space-y-1 text-sm"><dt className="text-[#718276]">{nhan}</dt><dd className="break-words font-medium text-[#315a43]">{giaTri || 'Không cung cấp'}</dd></div>)}
-            </dl>
-            {tin.contactError ? <p role="alert" className="mt-4 text-sm text-rose-700">{tin.contactError} <button type="button" onClick={taiLai} className="underline">Thử lại</button></p> : !tin.contactUnlocked && <p className="mt-4 text-xs leading-5 text-[#718276]">{tin.type === 'found' ? 'Gửi yêu cầu nhận đồ để xem liên hệ đầy đủ.' : 'Tin đăng hiển thị một phần thông tin liên hệ.'}</p>}
+            <LienHeTinDang key={tin.id} tin={tin} />
           </section>
         </div>
 
-        <section className="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-5 sm:px-5">
+        {!tin.laChuTin && <section className="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-5 sm:px-5">
           <h2 className={lopTieuDeMuc}><HandHeart className="h-5 w-5 text-emerald-700" aria-hidden="true" />Thao tác với tin đăng</h2>
           <div className="flex flex-wrap gap-3">
             {tin.canClaim && <Link to={`/yeu-cau-nhan-do?id=${tin.id}`} className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-emerald-900 px-4 py-3 text-center text-sm font-bold text-white hover:bg-emerald-800 sm:w-auto"><HandHeart className="h-4 w-4" aria-hidden="true" />{tin.hasClaim ? 'Xem yêu cầu đã gửi' : 'Yêu cầu nhận lại đồ'}</Link>}
-            {[{ nhan: 'Tôi đang giữ đồ này', bieuTuong: MessageSquare }, { nhan: 'Chia sẻ tin', bieuTuong: Share2 }].map(({ nhan, bieuTuong: BieuTuong }) => <button key={nhan} type="button" disabled title="Chức năng này chưa được kết nối" className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl border border-[#ceded3] bg-white px-4 py-3 text-sm font-semibold text-[#526c5b] disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"><BieuTuong className="h-4 w-4" aria-hidden="true" />{nhan}</button>)}
+            {cacThaoTacSapCo
+              .filter(({ loaiTin }) => !loaiTin || tin.type === loaiTin)
+              .map(({ nhan, bieuTuong: BieuTuong }) => (
+                <button key={nhan} type="button" disabled title="Chức năng này chưa được kết nối" className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl border border-[#ceded3] bg-white px-4 py-3 text-sm font-semibold text-[#526c5b] disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"><BieuTuong className="h-4 w-4" aria-hidden="true" />{nhan}</button>
+              ))}
             <BaoCaoTinDang key={tin.id} tin={tin} />
           </div>
-        </section>
+        </section>}
       </KhungThongTin>}
       {anhDangXem && anhDangXem.tinId === tin?.id && (
         <HopThoai rong tieuDe={`Ảnh ${anhDangXem.viTri} / ${anh.length}`} khiDong={dongAnh}>

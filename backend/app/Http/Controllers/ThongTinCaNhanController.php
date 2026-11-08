@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\NguoiDung;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
@@ -16,6 +18,8 @@ use Throwable;
 
 class ThongTinCaNhanController extends Controller
 {
+    public const MAU_TEN_ANH = '(?:[a-zA-Z0-9]{40}|[a-zA-Z0-9][a-zA-Z0-9._+-]{0,63}-[a-zA-Z0-9]{40})\.(?:jpg|jpeg|png|webp)';
+
     public function capNhat(Request $request): JsonResponse
     {
         if (is_string($request->input('email'))) {
@@ -93,32 +97,67 @@ class ThongTinCaNhanController extends Controller
             'anh_dai_dien.max' => 'Ảnh không được lớn hơn 2 MB.',
             'anh_dai_dien.dimensions' => 'Kích thước ảnh tối đa là 4096 × 4096 pixel.',
         ]);
-        $nguoiDung = $request->user();
-        $anhCu = $nguoiDung->anh_dai_dien;
-        $duongDan = $request->file('anh_dai_dien')->store('anh-dai-dien', 'public');
+        $taiKhoan = $request->user();
+        $anh = $request->file('anh_dai_dien');
+        $phanEmail = explode('@', $taiKhoan->email, 2)[0];
+        $tienTo = trim(substr(preg_replace('/[^a-zA-Z0-9._+-]+/', '-', $phanEmail), 0, 64), '._+-');
+        $tenAnh = ($tienTo === '' ? 'tai-khoan' : $tienTo).'-'.$anh->hashName();
+        $duongDan = $anh->storeAs('', $tenAnh, 'anh-dai-dien');
         if (! $duongDan) {
             throw ValidationException::withMessages(['anh_dai_dien' => 'Chưa thể lưu ảnh. Vui lòng thử lại.']);
         }
         try {
-            $nguoiDung->update(['anh_dai_dien' => '/api/anh-dai-dien/'.basename($duongDan)]);
+            [$nguoiDung, $anhCu] = $this->luuAnhDaiDien($taiKhoan, '/api/anh-dai-dien/'.$tenAnh);
         } catch (Throwable $exception) {
-            Storage::disk('public')->delete($duongDan);
+            Storage::disk('anh-dai-dien')->delete($duongDan);
             throw $exception;
         }
-        if ($anhCu && preg_match('~^/api/anh-dai-dien/([a-zA-Z0-9]{40}\.(?:jpg|jpeg|png|webp))$~', $anhCu, $ketQua)) {
+        $this->donAnhCu($anhCu);
+
+        return response()->json(['message' => $anhCu ? 'Đã thay đổi ảnh đại diện.' : 'Đã thêm ảnh đại diện.', 'user' => $nguoiDung->thongTinCaNhan()]);
+    }
+
+    public function goAnhDaiDien(Request $request): JsonResponse
+    {
+        [$nguoiDung, $anhCu] = $this->luuAnhDaiDien($request->user(), null);
+        $this->donAnhCu($anhCu);
+
+        return response()->json(['message' => 'Đã gỡ ảnh đại diện.', 'user' => $nguoiDung->thongTinCaNhan()]);
+    }
+
+    private function luuAnhDaiDien(NguoiDung $taiKhoan, ?string $anhMoi): array
+    {
+        return DB::transaction(function () use ($taiKhoan, $anhMoi) {
+            $nguoiDung = NguoiDung::lockForUpdate()->findOrFail($taiKhoan->id);
+            $anhCu = $nguoiDung->anh_dai_dien;
+            if ($anhCu !== $anhMoi) {
+                $nguoiDung->update(['anh_dai_dien' => $anhMoi]);
+            }
+
+            return [$nguoiDung, $anhCu];
+        }, 3);
+    }
+
+    private function donAnhCu(?string $anhCu): void
+    {
+        if ($anhCu && preg_match('~\A/api/anh-dai-dien/('.self::MAU_TEN_ANH.')\z~', $anhCu, $ketQua)
+            && ! NguoiDung::where('anh_dai_dien', $anhCu)->exists()) {
+            Storage::disk('anh-dai-dien')->delete($ketQua[1]);
             Storage::disk('public')->delete('anh-dai-dien/'.$ketQua[1]);
         }
-
-        return response()->json(['message' => 'Đã đổi ảnh đại diện.', 'user' => $nguoiDung->thongTinCaNhan()]);
     }
 
     public function anhDaiDien(string $tenAnh): StreamedResponse
     {
-        $oDia = Storage::disk('public');
+        $oDia = Storage::disk('anh-dai-dien');
+        $duongDan = $tenAnh;
+        if (! $oDia->exists($duongDan)) {
+            $oDia = Storage::disk('public');
+            $duongDan = 'anh-dai-dien/'.$tenAnh;
+        }
         if (! $oDia instanceof FilesystemAdapter) {
             throw new LogicException('Ổ lưu trữ ảnh đại diện không hỗ trợ trả tệp.');
         }
-        $duongDan = 'anh-dai-dien/'.$tenAnh;
         abort_unless($oDia->exists($duongDan), 404);
 
         return $oDia->response($duongDan, null, [

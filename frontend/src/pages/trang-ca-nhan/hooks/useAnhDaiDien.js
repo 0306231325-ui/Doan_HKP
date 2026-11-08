@@ -7,6 +7,7 @@ import useThongBaoThaoTac from '../../../components/shared/hooks/useThongBaoThao
 export default function useAnhDaiDien() {
   const { user, capNhatTaiKhoan } = useAuth()
   const oChonAnh = useRef(null)
+  const [hopThoaiAnh, datHopThoaiAnh] = useState('')
   const [dangTai, datDangTai] = useState(false)
   const [anhChon, datAnhChon] = useState(null)
   const [loiTaiAnh, datLoiTaiAnh] = useState('')
@@ -19,6 +20,22 @@ export default function useAnhDaiDien() {
     }
   }, [anhChon])
 
+  function moQuanLyAnh() {
+    if (!dangGui.current) datHopThoaiAnh('quan-ly')
+  }
+
+  function dongQuanLyAnh() {
+    if (dangGui.current) return
+    datHopThoaiAnh('')
+    datLoiTaiAnh('')
+  }
+
+  function doiXacNhanGoAnh() {
+    if (dangGui.current) return
+    datHopThoaiAnh(hopThoaiAnh === 'go-anh' ? 'quan-ly' : 'go-anh')
+    datLoiTaiAnh('')
+  }
+
   function moChonAnh() {
     if (!dangTai && !anhChon) oChonAnh.current?.click()
   }
@@ -28,33 +45,43 @@ export default function useAnhDaiDien() {
     suKien.target.value = ''
     if (!anh || dangGui.current || anhChon) return
     if (!['image/jpeg', 'image/png', 'image/webp'].includes(anh.type) || anh.size > 2 * 1024 * 1024) {
-      hienThongBao('Chọn ảnh JPG, PNG hoặc WebP không quá 2 MB.', 'error')
+      datLoiTaiAnh('Chọn ảnh JPG, PNG hoặc WebP không quá 2 MB.')
       return
     }
     datLoiTaiAnh('')
     datAnhChon({ tepAnh: anh, urlAnh: URL.createObjectURL(anh) })
+    datHopThoaiAnh('')
   }
 
   function huyChonAnh() {
     if (!dangGui.current) {
       datAnhChon(null)
       datLoiTaiAnh('')
+      datHopThoaiAnh('quan-ly')
     }
   }
 
-  async function xacNhanDoiAnh() {
-    if (dangGui.current || !anhChon) return
+  async function xacNhanAnhDaiDien() {
+    const goAnh = hopThoaiAnh === 'go-anh'
+    if (dangGui.current || (!goAnh && !anhChon)) return
     dangGui.current = true
     datDangTai(true)
     datLoiTaiAnh('')
     try {
       await prepareCsrf()
-      const bieuMau = new FormData()
-      bieuMau.append('anh_dai_dien', anhChon.tepAnh)
-      const { data } = await api.post('/me/anh-dai-dien', bieuMau, { headers: { 'Content-Type': undefined } })
+      let phanHoi
+      if (goAnh) {
+        phanHoi = await api.delete('/me/anh-dai-dien')
+      } else {
+        const bieuMau = new FormData()
+        bieuMau.append('anh_dai_dien', anhChon.tepAnh)
+        phanHoi = await api.post('/me/anh-dai-dien', bieuMau, { headers: { 'Content-Type': undefined } })
+      }
+      const { data } = phanHoi
       capNhatTaiKhoan(data.user)
       datAnhChon(null)
-      hienThongBao(data.message || 'Đã đổi ảnh đại diện.')
+      datHopThoaiAnh('')
+      hienThongBao(data.message)
     } catch (loiGui) {
       datLoiTaiAnh(layLoiHoSo(loiGui))
     } finally {
@@ -63,5 +90,5 @@ export default function useAnhDaiDien() {
     }
   }
 
-  return { user, oChonAnh, dangTai, tepAnh: anhChon?.tepAnh, urlAnh: anhChon?.urlAnh, loiTaiAnh, moChonAnh, chonAnh, huyChonAnh, xacNhanDoiAnh }
+  return { user, oChonAnh, hopThoaiAnh, dangTai, urlAnh: anhChon?.urlAnh, loiTaiAnh, moQuanLyAnh, dongQuanLyAnh, doiXacNhanGoAnh, moChonAnh, chonAnh, huyChonAnh, xacNhanAnhDaiDien }
 }

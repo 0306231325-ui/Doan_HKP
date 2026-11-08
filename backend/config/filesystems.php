@@ -47,6 +47,29 @@ return [
             'report' => false,
         ],
 
+        'anh-dai-dien' => [
+            'driver' => 'local',
+            'root' => public_path('anh-dai-dien'),
+            'visibility' => 'public',
+            'throw' => false,
+            'report' => false,
+        ],
+
+        'anh-tin-dang' => [
+            'driver' => 'local',
+            'root' => public_path(),
+            'throw' => false,
+            'report' => false,
+        ],
+
+        'minh-chung-yeu-cau' => [
+            'driver' => 'local',
+            'root' => public_path('minh-chung-yeu-cau'),
+            'visibility' => 'public',
+            'throw' => false,
+            'report' => false,
+        ],
+
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),

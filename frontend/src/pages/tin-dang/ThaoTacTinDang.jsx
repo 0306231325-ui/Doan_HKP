@@ -6,19 +6,15 @@ import TruongNoiDungTinDang from '../../components/tin-dang/TruongNoiDungTinDang
 import { layNgayVietNam } from '../admin/tong-quan/hooks/xuLyThongKe.js'
 import useThaoTacTinDang from './hooks/useThaoTacTinDang'
 
-const cacMucSapCo = [
-  { id: 'chia_se', nhan: 'Chia sẻ tin', voHieu: true, lyDo: 'Chưa có chức năng chia sẻ tin' },
-  { id: 'to_cao', nhan: 'Tố cáo tin', voHieu: true, lyDo: 'Chưa có chức năng tố cáo tin' },
-]
+const mucToCao = { id: 'to_cao', nhan: 'Tố cáo tin', voHieu: true, lyDo: 'Chưa có chức năng tố cáo tin' }
 
 export default function ThaoTacTinDang({ tin, taiLai }) {
   const { laChuTin, thaoTac, banSua, loi, dangGui, moThaoTac, dongThaoTac, doiTruong, guiThaoTac } = useThaoTacTinDang(tin, taiLai)
   const [ngayToiDa] = useState(() => layNgayVietNam(new Date()))
   const cacThaoTac = laChuTin ? [
     { id: 'sua', nhan: 'Sửa tin', khiChon: () => moThaoTac('sua') },
-    ...cacMucSapCo,
     { id: 'xoa', nhan: 'Xóa tin', khiChon: () => moThaoTac('xoa'), nguyHiem: true },
-  ] : cacMucSapCo
+  ] : [mucToCao]
   const lopNutHuy = 'rounded-xl border border-[#ceded3] px-4 py-2.5 text-sm font-semibold text-[#315a43] hover:bg-emerald-50 disabled:opacity-50'
 
   return (

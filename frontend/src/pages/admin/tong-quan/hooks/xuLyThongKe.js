@@ -18,22 +18,21 @@ export function laNgayHopLe(ngay) {
   return !Number.isNaN(giaTri.getTime()) && giaTri.toISOString().slice(0, 10) === ngay
 }
 
-export function congNgay(ngay, soNgay) {
-  const giaTri = new Date(`${ngay}T00:00:00Z`)
-  giaTri.setUTCDate(giaTri.getUTCDate() + soNgay)
-  return giaTri.toISOString().slice(0, 10)
+export function chuyenNgaySangISO(giaTri) {
+  const cacPhan = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(giaTri.trim())
+  if (!cacPhan) return ''
+
+  const [, ngay, thang, nam] = cacPhan
+  const ngayISO = `${nam}-${thang.padStart(2, '0')}-${ngay.padStart(2, '0')}`
+  return nam !== '0000' && laNgayHopLe(ngayISO) ? ngayISO : ''
 }
 
-export function taoKhoangThoiGian(moc, homNay) {
-  if (moc === 'hom_nay') return { tuNgay: homNay, denNgay: homNay }
-  if (moc === '7_ngay') return { tuNgay: congNgay(homNay, -6), denNgay: homNay }
-  if (moc === '30_ngay') return { tuNgay: congNgay(homNay, -29), denNgay: homNay }
-  if (moc === 'thang_nay') return { tuNgay: `${homNay.slice(0, 7)}-01`, denNgay: homNay }
-  return { tuNgay: '', denNgay: '' }
+export function dinhDangNgay(ngayISO) {
+  return ngayISO.split('-').reverse().join('/')
 }
 
 export function kiemTraKhoangNgay(tuNgay, denNgay, homNay) {
-  if (!laNgayHopLe(tuNgay) || !laNgayHopLe(denNgay)) return 'Vui lòng chọn đủ ngày bắt đầu và ngày kết thúc hợp lệ.'
+  if (!laNgayHopLe(tuNgay) || !laNgayHopLe(denNgay)) return 'Vui lòng nhập hoặc chọn đủ hai ngày hợp lệ theo dd/mm/yyyy.'
   if (tuNgay > denNgay) return 'Ngày bắt đầu phải trước hoặc bằng ngày kết thúc.'
   if (denNgay > homNay) return 'Ngày kết thúc không được sau hôm nay.'
   return ''

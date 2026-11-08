@@ -53,7 +53,7 @@ export default function Navbar({ adminView = false }) {
           </nav>
 
           <div className="flex items-center gap-1.5 sm:gap-3">
-            {user && <ThongBao />}
+            {user && <ThongBao key={user.id} />}
             {!adminView && <Link
               to={LIEN_KET_DANG_TIN.to}
               onClick={dongMenuDiDong}

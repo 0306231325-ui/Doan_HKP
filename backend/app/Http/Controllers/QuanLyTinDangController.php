@@ -70,7 +70,7 @@ class QuanLyTinDangController extends Controller
             'referenceCode' => 'TIN-'.str_pad((string) $tin->id, 6, '0', STR_PAD_LEFT),
             'type' => $tin->loai_tin === 'bao_mat' ? 'lost' : 'found', 'typeName' => $tin->loai_tin === 'bao_mat' ? 'Mất đồ' : 'Nhặt được',
             'date' => $tin->created_at?->format('Y-m-d'), 'category' => $tin->danhMuc?->ten_danh_muc ?? 'Chưa phân loại',
-            'location' => $tin->diaDiem?->ten_dia_diem ?? 'Chưa rõ', 'imageUrl' => $tin->hinhAnh->first()?->duong_dan ?? '/do-vat-trong.svg',
+            'location' => $tin->diaDiem?->ten_dia_diem ?? 'Chưa rõ', 'imageUrl' => $tin->hinhAnh->first()?->duongDanHienThi() ?? '/do-vat-trong.svg',
             'nguoiDang' => $tin->nguoiDung?->ho_ten ?? 'Tài khoản không còn hoạt động', 'maSinhVien' => $tin->nguoiDung?->ma_so ?? '—',
             'trangThai' => $tin->trang_thai_kiem_duyet, 'lyDoAn' => $tin->ly_do_an,
             'baoCao' => $tin->baoCao->map(fn ($bc) => ['id' => $bc->id, 'nguoiBaoCao' => $bc->nguoiBaoCao?->ho_ten ?? 'Không xác định', 'lyDo' => $bc->ly_do, 'moTa' => $bc->mo_ta, 'thoiGian' => $bc->created_at?->format('d/m/Y H:i'), 'trangThai' => $bc->trang_thai, 'ketQua' => $bc->ghi_chu_admin]),

@@ -13,6 +13,10 @@ import QuanLyCauHoi from './pages/admin/cau-hoi/QuanLyCauHoi'
 import DanhSachDo from './pages/danh-sach-do/DanhSachDo'
 import AuthPage from './pages/auth/AuthPage'
 import YeuCauNhanDo from './pages/yeu-cau-nhan-do/YeuCauNhanDo'
+import KiemTraThongTinNhanDo from './pages/yeu-cau-nhan-do/KiemTraThongTinNhanDo'
+import TraLoiCauHoiNhanDo from './pages/yeu-cau-nhan-do/TraLoiCauHoiNhanDo'
+import FormYeuCauNhanDo from './components/danh-sach-do/FormYeuCauNhanDo'
+import TheoDoiYeuCau from './pages/yeu-cau-nhan-do/TheoDoiYeuCau'
 import DangTin from './pages/tin-dang/DangTin'
 import ChiTietTinDang from './pages/tin-dang/ChiTietTinDang'
 import TrangCaNhan from './pages/trang-ca-nhan/TrangCaNhan'
@@ -38,7 +42,12 @@ export default function App() {
             <Route element={<RequireAuth />}>
               <Route path="chi-tiet-yeu-cau" element={<TaoCuocHen />} />
               <Route path="tao-cuoc-hen" element={<TaoCuocHen />} />
-              <Route path="yeu-cau-nhan-do" element={<YeuCauNhanDo />} />
+              <Route path="yeu-cau-nhan-do" element={<YeuCauNhanDo />}>
+                <Route index element={<KiemTraThongTinNhanDo />} />
+                <Route path="cau-hoi" element={<TraLoiCauHoiNhanDo />} />
+                <Route path="anh-va-loi-nhan" element={<FormYeuCauNhanDo />} />
+              </Route>
+              <Route path="theo-doi-yeu-cau" element={<TheoDoiYeuCau />} />
               <Route path="dang-tin/noi-dung?" element={<DangTin />} />
               <Route path="trang-ca-nhan" element={<TrangCaNhan />} />
             </Route>

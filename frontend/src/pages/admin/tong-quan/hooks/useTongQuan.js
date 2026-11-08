@@ -1,11 +1,11 @@
 import { useMemo, useState } from 'react'
-import { layNgayVietNam, taoKhoangThoiGian, taoThongKe, kiemTraKhoangNgay } from './xuLyThongKe'
+import { chuyenNgaySangISO, dinhDangNgay, kiemTraKhoangNgay, layNgayVietNam, taoThongKe } from './xuLyThongKe'
 
 const danhSachMacDinh = []
+const tatCaThoiGian = { tuNgay: '', denNgay: '' }
 
 export default function useTongQuan(danhSachTinDang = danhSachMacDinh) {
-  const [mocThoiGian, datMocThoiGian] = useState('tat_ca')
-  const [khoangDangXem, datKhoangDangXem] = useState({ tuNgay: '', denNgay: '' })
+  const [khoangDangXem, datKhoangDangXem] = useState(tatCaThoiGian)
   const [tuNgay, datTuNgay] = useState('')
   const [denNgay, datDenNgay] = useState('')
   const [loiKhoangNgay, datLoiKhoangNgay] = useState('')
@@ -16,46 +16,44 @@ export default function useTongQuan(danhSachTinDang = danhSachMacDinh) {
     [danhSachTinDang, khoangDangXem],
   )
 
-  function chonMocThoiGian(suKien) {
-    const mocMoi = suKien.target.value
-    datMocThoiGian(mocMoi)
-    datLoiKhoangNgay('')
-
-    if (mocMoi === 'tuy_chinh') {
-      const khoangGoiY = taoKhoangThoiGian('30_ngay', homNay)
-      datTuNgay(khoangDangXem.tuNgay || khoangGoiY.tuNgay)
-      datDenNgay(khoangDangXem.denNgay || homNay)
-      return
-    }
-
-    datKhoangDangXem(taoKhoangThoiGian(mocMoi, homNay))
-  }
-
-  function doiTuNgay(suKien) {
-    datTuNgay(suKien.target.value)
+  function doiTuNgay(giaTri) {
+    datTuNgay(giaTri)
     datLoiKhoangNgay('')
   }
 
-  function doiDenNgay(suKien) {
-    datDenNgay(suKien.target.value)
+  function doiDenNgay(giaTri) {
+    datDenNgay(giaTri)
     datLoiKhoangNgay('')
   }
 
   function apDungKhoangNgay(suKien) {
     suKien.preventDefault()
-    const loi = kiemTraKhoangNgay(tuNgay, denNgay, homNay)
+    const tuNgayISO = chuyenNgaySangISO(tuNgay)
+    const denNgayISO = chuyenNgaySangISO(denNgay)
+    const loi = kiemTraKhoangNgay(tuNgayISO, denNgayISO, homNay)
     datLoiKhoangNgay(loi)
-    if (!loi) datKhoangDangXem({ tuNgay, denNgay })
+    if (loi) return
+
+    datTuNgay(dinhDangNgay(tuNgayISO))
+    datDenNgay(dinhDangNgay(denNgayISO))
+    datKhoangDangXem({ tuNgay: tuNgayISO, denNgay: denNgayISO })
+  }
+
+  function xoaKhoangNgay() {
+    datTuNgay('')
+    datDenNgay('')
+    datLoiKhoangNgay('')
+    datKhoangDangXem(tatCaThoiGian)
   }
 
   const nhanKhoangThoiGian = khoangDangXem.tuNgay
-    ? `${khoangDangXem.tuNgay.split('-').reverse().join('/')} – ${khoangDangXem.denNgay.split('-').reverse().join('/')}`
+    ? `${dinhDangNgay(khoangDangXem.tuNgay)} – ${dinhDangNgay(khoangDangXem.denNgay)}`
     : 'Tất cả thời gian'
 
   return {
     ...thongKe,
-    mocThoiGian, tuNgay, denNgay, homNay, loiKhoangNgay,
-    nhanKhoangThoiGian, chonMocThoiGian, doiTuNgay, doiDenNgay,
-    apDungKhoangNgay,
+    tuNgay, denNgay, homNay, loiKhoangNgay,
+    nhanKhoangThoiGian, doiTuNgay, doiDenNgay,
+    apDungKhoangNgay, xoaKhoangNgay,
   }
 }
