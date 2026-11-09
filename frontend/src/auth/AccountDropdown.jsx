@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState } from 'react'
-import { ChevronDown, ClipboardList, LogOut, ShieldCheck, UserRound } from 'lucide-react'
+import { ChevronDown, ClipboardList, House, LogOut, ShieldCheck, UserRound } from 'lucide-react'
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from './useAuth'
 import useDangXuat from './hooks/useDangXuat'
@@ -46,6 +46,7 @@ export default function AccountDropdown({ showProfile = true }) {
   }
 
   if (!user) return null
+  const dangOTrangQuanTri = /^\/admin(?:\/|$)/.test(pathname)
   const itemClass = 'flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-semibold transition-colors hover:bg-emerald-50 focus-visible:outline-2 focus-visible:outline-emerald-700'
   return <div ref={container} className="relative" onBlur={event => {
     if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false)
@@ -64,7 +65,8 @@ export default function AccountDropdown({ showProfile = true }) {
       </div>
       {showProfile && <Link to="/trang-ca-nhan" onClick={() => setOpen(false)} className={itemClass}><UserRound size={18} aria-hidden="true" />Trang cá nhân</Link>}
       {showProfile && <Link to="/theo-doi-yeu-cau" onClick={() => setOpen(false)} className={itemClass}><ClipboardList size={18} aria-hidden="true" />Theo dõi yêu cầu</Link>}
-      {user.vai_tro === 'quan_tri' && !/^\/admin(?:\/|$)/.test(pathname) && <Link to="/admin" onClick={() => setOpen(false)} className={itemClass}><ShieldCheck size={18} aria-hidden="true" />Về trang quản trị</Link>}
+      {dangOTrangQuanTri && <Link to="/" onClick={() => setOpen(false)} className={itemClass}><House size={18} aria-hidden="true" />Xem trang người dùng</Link>}
+      {user.vai_tro === 'quan_tri' && !dangOTrangQuanTri && <Link to="/admin" onClick={() => setOpen(false)} className={itemClass}><ShieldCheck size={18} aria-hidden="true" />Về trang quản trị</Link>}
       <div className="mt-1 border-t border-gray-100 pt-1">
         <button type="button" onClick={moXacNhanDangXuat} className={`${itemClass} text-red-600 hover:bg-red-50`}><LogOut size={18} aria-hidden="true" />Đăng xuất</button>
       </div>

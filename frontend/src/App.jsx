@@ -25,6 +25,9 @@ import AuthNotice from './auth/AuthNotice'
 import QuanLyNguoiDung from './pages/admin/nguoi-dung/QuanLyNguoiDung'
 import GioiThieu from './pages/gioi-thieu/GioiThieu'
 import TaoCuocHen from './pages/cuoc-hen/TaoCuocHen'
+import TrangCuocHen from './pages/cuoc-hen/TrangCuocHen'
+import LapLichHen, { ChonYeuCauHen, NhapThongTinLichHen } from './pages/cuoc-hen/LapLichHen'
+import NhapMaBanGiao from './pages/cuoc-hen/NhapMaBanGiao'
 
 export default function App() {
   return (
@@ -42,6 +45,14 @@ export default function App() {
             <Route element={<RequireAuth />}>
               <Route path="chi-tiet-yeu-cau" element={<TaoCuocHen />} />
               <Route path="tao-cuoc-hen" element={<TaoCuocHen />} />
+              <Route path="cuoc-hen">
+                <Route index element={<TrangCuocHen />} />
+                <Route path="tao" element={<LapLichHen />}>
+                  <Route index element={<ChonYeuCauHen />} />
+                  <Route path="thong-tin" element={<NhapThongTinLichHen />} />
+                </Route>
+                <Route path="nhap-ma" element={<NhapMaBanGiao />} />
+              </Route>
               <Route path="yeu-cau-nhan-do" element={<YeuCauNhanDo />}>
                 <Route index element={<KiemTraThongTinNhanDo />} />
                 <Route path="cau-hoi" element={<TraLoiCauHoiNhanDo />} />
