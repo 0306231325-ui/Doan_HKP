@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useEffectEvent, useState } from 'react'
 import { Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import api, { prepareCsrf, sessionApi } from '../services/api'
 import { AuthContext, useAuth } from './useAuth'
@@ -7,15 +7,39 @@ import XacNhanDangXuat from './XacNhanDangXuat'
 
 export function AuthProvider({ children }) {
   const navigate = useNavigate()
+  const location = useLocation()
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [attempt, setAttempt] = useState(0)
+  const [chuyenHuongKhiKhoa, datChuyenHuongKhiKhoa] = useState(null)
+
+  const baoTaiKhoanBiKhoa = useEffectEvent((thongBao) => {
+    datChuyenHuongKhiKhoa(hienTai => hienTai ?? {
+      khoaViTri: location.key,
+      state: {
+        from: location.pathname === '/dang-nhap' ? location.state?.from : location.pathname + location.search + location.hash,
+        authMessage: thongBao,
+        authType: 'error',
+      },
+    })
+    setUser(null)
+  })
+
   function refresh() {
     setLoading(true)
     setError('')
     setAttempt(value => value + 1)
   }
+  useEffect(() => {
+    const id = api.interceptors.response.use(response => response, err => {
+      const { status, data } = err.response ?? {}
+      if (status === 403 && data?.message === 'Tài khoản đã bị khóa.') baoTaiKhoanBiKhoa(data.message)
+      if (status === 401) setUser(null)
+      return Promise.reject(err)
+    })
+    return () => api.interceptors.response.eject(id)
+  }, [])
   useEffect(() => {
     let cancelled = false
     api.get('/me').then(({ data }) => {
@@ -27,16 +51,10 @@ export function AuthProvider({ children }) {
     }).finally(() => { if (!cancelled) setLoading(false) })
     return () => { cancelled = true }
   }, [attempt])
-  useEffect(() => {
-    const id = api.interceptors.response.use(response => response, err => {
-      if (err.response?.status === 401 || (err.response?.status === 403 && err.response?.data?.message === 'Tài khoản đã bị khóa.')) setUser(null)
-      return Promise.reject(err)
-    })
-    return () => api.interceptors.response.eject(id)
-  }, [])
   async function login(credentials) {
     await prepareCsrf()
     const { data } = await sessionApi.post('/login', credentials)
+    datChuyenHuongKhiKhoa(null)
     setUser(data.user)
     setError('')
     return data.user
@@ -52,6 +70,9 @@ export function AuthProvider({ children }) {
   }
   function capNhatTaiKhoan(taiKhoan) {
     setUser(taiKhoan)
+  }
+  if (chuyenHuongKhiKhoa?.khoaViTri === location.key) {
+    return <Navigate to="/dang-nhap" replace state={chuyenHuongKhiKhoa.state} />
   }
   return <AuthContext.Provider value={{ user, loading, error, refresh, login, logout, capNhatTaiKhoan }}>{children}</AuthContext.Provider>
 }
