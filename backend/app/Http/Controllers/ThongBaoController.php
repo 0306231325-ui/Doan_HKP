@@ -43,6 +43,21 @@ class ThongBaoController extends Controller
         return response()->noContent();
     }
 
+    public function xoa(Request $request, string $id): Response
+    {
+        $soDaXoa = $request->user()->thongBao()->whereKey($id)->delete();
+        abort_if($soDaXoa === 0, 404);
+
+        return response()->noContent();
+    }
+
+    public function xoaTatCa(Request $request): Response
+    {
+        $request->user()->thongBao()->delete();
+
+        return response()->noContent();
+    }
+
     private function duLieuThongBao(ThongBao $muc): array
     {
         return [

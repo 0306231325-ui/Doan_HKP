@@ -21,11 +21,13 @@ class YeuCauNhanDoController extends Controller
         $this->kiemTraNhan($banTin, $request);
         $cacLoi = $this->cacLoiKhai($banTin);
         abort_if($cacLoi->isEmpty(), 409, 'Tin này chưa có bộ câu hỏi nhận diện để gửi yêu cầu.');
+        $yeuCauId = $banTin->yeuCauDangXuLyId($request->user()->id);
 
         return response()->json([
             'tin' => $duLieu->congKhai($banTin->load(['danhMuc', 'diaDiem', 'nguoiDung', 'hinhAnh' => fn ($q) => $q->where('pham_vi', 'cong_khai')->orderBy('thu_tu')])),
             'data' => $cacLoi->map(fn ($loi) => $traLoi->cauHoi($loi->phienBanCauHoi, (string) $loi->id))->values(),
-            'daGui' => $banTin->daGuiYeuCau($request->user()->id),
+            'daGui' => $yeuCauId !== null,
+            'yeuCauId' => $yeuCauId,
         ])->header('Cache-Control', 'no-store');
     }
 
@@ -56,8 +58,9 @@ class YeuCauNhanDoController extends Controller
             return DB::transaction(function () use ($request, $tin, $mau, $traLoi, &$tepDaLuu) {
                 $banTin = $this->timTin($tin, true);
                 $this->kiemTraNhan($banTin, $request);
-                if ($banTin->daGuiYeuCau($request->user()->id)) {
-                    return response()->json(['message' => 'Bạn đã gửi yêu cầu cho tin này.', 'daGui' => true]);
+                $yeuCauId = $banTin->yeuCauDangXuLyId($request->user()->id);
+                if ($yeuCauId !== null) {
+                    return response()->json(['message' => 'Bạn đã gửi yêu cầu cho tin này.', 'daGui' => true, 'yeuCauId' => $yeuCauId]);
                 }
                 $cacLoi = $this->cacLoiKhai($banTin);
                 $dapAn = collect($mau['cauTraLoi'])->keyBy('id');
@@ -80,8 +83,15 @@ class YeuCauNhanDoController extends Controller
                     $yeuCau->minhChung()->create(['duong_dan' => 'minh-chung-yeu-cau/'.$duongDan, 'thu_tu' => $thuTu]);
                 }
                 $yeuCau->lichSu()->create(['nguoi_thuc_hien_id' => $request->user()->id, 'hanh_dong' => 'gui_yeu_cau', 'trang_thai_moi' => 'cho_kiem_tra']);
+                $yeuCau->thongBao()->create([
+                    'nguoi_dung_id' => $yeuCau->nguoi_yeu_cau_id,
+                    'tin_dang_id' => $banTin->id,
+                    'loai_thong_bao' => 'gui_yeu_cau',
+                    'tieu_de' => 'Đã gửi yêu cầu nhận đồ',
+                    'noi_dung' => 'Vui lòng chờ xét duyệt. Bấm để xem trạng thái.',
+                ]);
 
-                return response()->json(['message' => 'Đã gửi yêu cầu. Vui lòng chờ quản trị viên xác minh.', 'daGui' => true], 201);
+                return response()->json(['message' => 'Đã gửi yêu cầu nhận đồ. Vui lòng chờ xét duyệt.', 'daGui' => true, 'yeuCauId' => $yeuCau->id], 201);
             });
         } catch (Throwable $loi) {
             if ($tepDaLuu) {

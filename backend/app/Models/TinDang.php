@@ -104,8 +104,13 @@ class TinDang extends Model
 
     public function daGuiYeuCau(int|string $nguoiDungId): bool
     {
+        return $this->yeuCauDangXuLyId($nguoiDungId) !== null;
+    }
+
+    public function yeuCauDangXuLyId(int|string $nguoiDungId): int|string|null
+    {
         return $this->yeuCauNhanDo()->where('nguoi_yeu_cau_id', $nguoiDungId)
-            ->whereIn('trang_thai', ['cho_kiem_tra', 'can_bo_sung', 'da_xac_minh'])->exists();
+            ->whereIn('trang_thai', ['cho_kiem_tra', 'can_bo_sung', 'da_xac_minh'])->value('id');
     }
 
     public function traLoiYeuCau(): HasMany

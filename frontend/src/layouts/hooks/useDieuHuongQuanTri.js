@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom'
 
 const cacMucQuanTri = [
   { duongDan: '/admin', nhan: 'Tổng quan', bieuTuong: LayoutDashboard, ketThuc: true },
-  { duongDan: '/admin/tin-dang', nhan: 'Duyệt tin đăng', bieuTuong: FileText },
+  { duongDan: '/admin/tin-dang', nhan: 'Quản lý tin đăng', bieuTuong: FileText },
   { duongDan: '/admin/yeu-cau', nhan: 'Yêu cầu nhận lại', bieuTuong: HandHeart },
   { duongDan: '/admin/nguoi-dung', nhan: 'Quản lý người dùng', bieuTuong: UsersRound },
   { duongDan: '/admin/danh-muc', nhan: 'Quản lý danh mục', bieuTuong: FolderTree },

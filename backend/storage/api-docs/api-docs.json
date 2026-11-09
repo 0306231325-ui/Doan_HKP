@@ -647,7 +647,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "tin, daGui và data câu hỏi riêng từ snapshot gốc, id là ID lời khai gốc; không trả đáp án người đăng. Không lấy câu mới hoặc kiểu mới từ cấu hình danh mục hiện tại."
+                        "description": "tin, daGui, yeuCauId (ID yêu cầu đang xử lý của tài khoản hiện tại hoặc null) và data câu hỏi từ snapshot gốc. ID trong data là ID lời khai gốc."
                     },
                     "401": {
                         "description": "Chưa đăng nhập"
@@ -766,10 +766,10 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "Lưu yêu cầu cho_kiem_tra, đáp án, lịch sử và ảnh xác minh nếu có. Ảnh lưu trong backend/public/minh-chung-yeu-cau; phản hồi chỉ trả trạng thái gửi."
+                        "description": "Lưu yêu cầu cho_kiem_tra, đáp án, lịch sử, ảnh xác minh nếu có và thông báo cho người gửi. Ảnh lưu trong backend/public/minh-chung-yeu-cau. Trả message, daGui và yeuCauId."
                     },
                     "200": {
-                        "description": "Đã có yêu cầu đang xử lý của tài khoản này, không gửi trùng"
+                        "description": "Trả message, daGui và yeuCauId của yêu cầu đang xử lý, không tạo yêu cầu hoặc thông báo trùng."
                     },
                     "401": {
                         "description": "Chưa đăng nhập"
@@ -2195,6 +2195,37 @@
                         "description": "Tài khoản đã bị khóa"
                     }
                 }
+            },
+            "delete": {
+                "tags": [
+                    "Thông báo"
+                ],
+                "summary": "Xóa tất cả thông báo của tài khoản đang đăng nhập",
+                "operationId": "6023d88f9fdc4b3ddf827a00b42263f3",
+                "parameters": [
+                    {
+                        "name": "X-XSRF-TOKEN",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Đã xóa toàn bộ hộp thư, gồm các mục ngoài 20 thông báo mới nhất"
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Tài khoản đã bị khóa"
+                    },
+                    "429": {
+                        "description": "Đã vượt giới hạn thao tác"
+                    }
+                }
             }
         },
         "/api/thong-bao/{id}/da-doc": {
@@ -2265,6 +2296,176 @@
                     },
                     "403": {
                         "description": "Tài khoản đã bị khóa"
+                    }
+                }
+            }
+        },
+        "/api/thong-bao/{id}": {
+            "delete": {
+                "tags": [
+                    "Thông báo"
+                ],
+                "summary": "Xóa một thông báo của tài khoản đang đăng nhập",
+                "operationId": "4ff0e14bf064685489b4c1287f997e58",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "X-XSRF-TOKEN",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Đã xóa thông báo"
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Tài khoản đã bị khóa"
+                    },
+                    "404": {
+                        "description": "Thông báo không tồn tại trong hộp thư của phiên hiện tại"
+                    },
+                    "429": {
+                        "description": "Đã vượt giới hạn thao tác"
+                    }
+                }
+            }
+        },
+        "/api/tin-dang/{tin}/giu-do": {
+            "get": {
+                "tags": [
+                    "Đăng tin"
+                ],
+                "summary": "Lấy danh sách tin nhặt được để báo cho người mất",
+                "operationId": "4b675146a83f2fd66a69da052dd8fc11",
+                "parameters": [
+                    {
+                        "name": "tin",
+                        "in": "path",
+                        "description": "ID tin báo mất",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "trang",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 1000000,
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "data và meta phân trang, tối đa 6 tin mỗi trang. Chỉ gồm tin nhặt được đang mở, công khai, có câu hỏi nhận diện và thuộc tài khoản hiện tại."
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Tài khoản bị khóa hoặc tự thao tác trên tin của mình"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy tin báo mất hiển thị"
+                    },
+                    "409": {
+                        "description": "Tin không còn mở để báo tìm thấy đồ"
+                    },
+                    "422": {
+                        "description": "Số trang không hợp lệ"
+                    },
+                    "429": {
+                        "description": "Đã vượt giới hạn thao tác"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Đăng tin"
+                ],
+                "summary": "Gửi thông báo kèm liên kết tin nhặt được cho chủ tin báo mất",
+                "operationId": "bc31b960d5da32c57c5bb5f57fc99a21",
+                "parameters": [
+                    {
+                        "name": "tin",
+                        "in": "path",
+                        "description": "ID tin báo mất",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "X-XSRF-TOKEN",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "tinNhatId"
+                                ],
+                                "properties": {
+                                    "tinNhatId": {
+                                        "type": "integer",
+                                        "minimum": 1
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Đã tạo thông báo trong hộp thư của chủ tin báo mất"
+                    },
+                    "200": {
+                        "description": "Hộp thư người nhận đã có thông báo về tin nhặt được này"
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Tài khoản bị khóa hoặc tự thao tác trên tin của mình"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy tin báo mất hiển thị"
+                    },
+                    "409": {
+                        "description": "Tin không còn mở để báo tìm thấy đồ"
+                    },
+                    "422": {
+                        "description": "Tin nhặt được không hợp lệ hoặc không thuộc tài khoản hiện tại"
+                    },
+                    "429": {
+                        "description": "Đã vượt giới hạn thao tác"
                     }
                 }
             }

@@ -1,6 +1,5 @@
-import { ArrowLeft, ArrowRight, Camera, HandHeart, Menu, Plus, UserRound } from 'lucide-react'
+import { ArrowLeft, Camera, Menu, Plus, UserRound } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import ThongBaoTrong from '../../components/shared/ThongBaoTrong'
 import QuanLyAnhDaiDien from './QuanLyAnhDaiDien'
 import ThongTinCaNhan from './ThongTinCaNhan'
 import TinDaDang from './TinDaDang'
@@ -49,16 +48,7 @@ export default function TrangCaNhan() {
       </header>
 
       <div id="noi-dung-ca-nhan" className="min-w-0">
-        {mucHienTai === 'thong-tin' ? <ThongTinCaNhan /> : laTinDang ? <TinDaDang nguoiDungId={user?.id} /> : (
-          <section aria-label="Yêu cầu nhận đồ" className="space-y-5">
-            <div>
-              <h2 className="text-2xl font-bold text-emerald-900">Yêu cầu nhận đồ</h2>
-              <p className="mt-2 text-sm leading-6 text-[#607568]">Theo dõi trạng thái các yêu cầu nhận lại đồ của bạn.</p>
-            </div>
-            <ThongBaoTrong bieuTuong={HandHeart} tieuDe="Chưa có yêu cầu để hiển thị" moTa="Các yêu cầu nhận lại đồ của bạn sẽ được hiển thị tại đây khi có dữ liệu." />
-            <Link to="/danh-sach-do" className="inline-flex items-center gap-2 rounded-xl px-1 py-2 text-sm font-bold text-emerald-800 hover:text-emerald-950 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700">Tra cứu đồ thất lạc<ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>
-          </section>
-        )}
+        {laTinDang ? <TinDaDang nguoiDungId={user?.id} /> : <ThongTinCaNhan />}
       </div>
       {hopThoaiAnh && <QuanLyAnhDaiDien {...anhDaiDien} />}
       {urlAnh && <XemTruocAnhDaiDien key={urlAnh} urlAnh={urlAnh} dangTai={dangTai} loiTaiAnh={loiTaiAnh} khiDong={huyChonAnh} khiXacNhan={xacNhanAnhDaiDien} />}

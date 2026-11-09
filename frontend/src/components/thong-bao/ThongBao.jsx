@@ -1,6 +1,7 @@
-import { Bell, CheckCheck, ChevronRight, Eye, Settings2, X } from 'lucide-react'
+import { Bell, CheckCheck, ChevronRight, Eye, Settings2, Trash2, X } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import LoiMoiThongBao from './LoiMoiThongBao'
+import HopThoai from '../shared/HopThoai'
 import useThongBao from '../../pages/thong-bao/hooks/useThongBao'
 
 const dinhDangGio = new Intl.DateTimeFormat('vi-VN', {
@@ -21,7 +22,8 @@ function NoiDungThongBao({ muc }) {
 export default function ThongBao() {
   const { moBang, moLoiMoi, quyen, dangXinQuyen, loi, thamChieuKhung, thamChieuChuong, thamChieuBang, maBang, maTieuDe,
     doiMoBang, dongBang, roiKhung, moHopThoaiMoi, dongLoiMoi, batThongBao,
-    danhSach, soChuaDoc, dangTai, loiHopThu, dangDanhDauTatCa, taiThongBao, danhDauDaDoc } = useThongBao()
+    danhSach, soChuaDoc, dangTai, loiHopThu, dangDanhDauTatCa, taiThongBao, danhDauDaDoc,
+    mucChoXoa, dangXoa, loiXoa, moXacNhanXoa, dongXacNhanXoa, xacNhanXoa } = useThongBao()
   const daBat = quyen === 'granted'
   const biChan = quyen === 'denied'
   const BieuTuong = daBat ? CheckCheck : biChan ? Settings2 : Eye
@@ -45,25 +47,42 @@ export default function ThongBao() {
         {danhSach.length > 0 && <div className="py-3">
           <div className="mb-2 flex flex-wrap items-center justify-between gap-2 text-xs text-[#607568]">
             <span>Thông báo gần đây</span>
-            {soChuaDoc > 0 && <button type="button" disabled={dangDanhDauTatCa} onClick={() => danhDauDaDoc()} className="rounded font-semibold text-emerald-800 hover:underline focus-visible:outline-2 disabled:opacity-60">Đánh dấu tất cả đã đọc</button>}
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+              {soChuaDoc > 0 && <button type="button" disabled={dangDanhDauTatCa} onClick={() => danhDauDaDoc()} className="rounded font-semibold text-emerald-800 hover:underline focus-visible:outline-2 disabled:opacity-60">Đánh dấu tất cả đã đọc</button>}
+              <button type="button" onClick={() => moXacNhanXoa()} className="rounded font-semibold text-rose-700 hover:underline focus-visible:outline-2">Xóa tất cả</button>
+            </div>
           </div>
           <ul className="space-y-2">
-            {danhSach.map((muc) => <li key={muc.id} className={`rounded-xl border border-[#e1eee5] ${muc.daDoc ? 'bg-white' : 'bg-emerald-50'}`}>
+            {danhSach.map((muc) => <li key={muc.id} className={`flex items-start rounded-xl border border-[#e1eee5] ${muc.daDoc ? 'bg-white' : 'bg-emerald-50'}`}>
               {muc.duongDan ? <Link to={muc.duongDan} onClick={() => {
                 if (!muc.daDoc) danhDauDaDoc(muc.id)
                 dongBang()
-              }} className="flex items-center gap-2 rounded-xl p-3 hover:bg-emerald-100/60 focus-visible:outline-2 focus-visible:outline-emerald-700">
+              }} className="flex min-w-0 flex-1 items-center gap-2 rounded-xl p-3 hover:bg-emerald-100/60 focus-visible:outline-2 focus-visible:outline-emerald-700">
                 <NoiDungThongBao muc={muc} />
                 <ChevronRight className="h-4 w-4 shrink-0 text-emerald-800" aria-hidden="true" />
-              </Link> : <div className="p-3">
+              </Link> : <div className="min-w-0 flex-1 p-3">
                 <NoiDungThongBao muc={muc} />
                 <button type="button" aria-disabled={muc.daDoc} onClick={() => { if (!muc.daDoc) danhDauDaDoc(muc.id) }} className="mt-2 rounded text-xs font-semibold text-emerald-800 hover:underline focus-visible:outline-2 aria-disabled:text-[#607568] aria-disabled:no-underline">{muc.daDoc ? 'Đã đọc' : 'Đánh dấu đã đọc'}</button>
               </div>}
+              <button type="button" onClick={() => moXacNhanXoa(muc)} aria-label={`Xóa thông báo ${muc.tieuDe}`} title="Xóa thông báo" className="m-1.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[#607568] hover:bg-rose-50 hover:text-rose-700 focus-visible:outline-2 focus-visible:outline-rose-700">
+                <Trash2 className="h-4 w-4" aria-hidden="true" />
+              </button>
             </li>)}
           </ul>
         </div>}
         <div className="border-t border-[#e1eee5] pt-4"><button type="button" onClick={moHopThoaiMoi} className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[#edf7f0] px-4 py-3 text-sm font-bold text-[#315a43] hover:bg-[#dfefe5] focus-visible:outline-2 focus-visible:outline-emerald-700"><BieuTuong className="h-4 w-4" aria-hidden="true" />{daBat ? 'Đã cho phép thông báo' : biChan ? 'Hướng dẫn bật thông báo' : 'Mời bật thông báo'}</button></div>
       </section>}
+      {mucChoXoa && <HopThoai
+        tieuDe={mucChoXoa.id ? 'Xóa thông báo?' : 'Xóa tất cả thông báo?'}
+        moTa={mucChoXoa.id ? `Bạn có muốn xóa thông báo “${mucChoXoa.tieuDe}”?` : 'Toàn bộ thông báo trong hộp thư sẽ bị xóa vĩnh viễn.'}
+        khiDong={dongXacNhanXoa}
+      >
+        {loiXoa && <p role="alert" className="mx-5 mt-4 rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-700 sm:mx-6">{loiXoa}</p>}
+        <div className="flex justify-end gap-3 px-5 py-4 sm:px-6">
+          <button type="button" onClick={dongXacNhanXoa} disabled={dangXoa} className="rounded-xl border border-[#ceded3] px-4 py-2.5 text-sm font-semibold text-[#526c5b] hover:bg-emerald-50 focus-visible:outline-2 disabled:opacity-50">Hủy</button>
+          <button type="button" onClick={xacNhanXoa} disabled={dangXoa} className="rounded-xl bg-rose-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-rose-800 focus-visible:outline-2 disabled:opacity-50">{dangXoa ? 'Đang xóa…' : mucChoXoa.id ? 'Xóa thông báo' : 'Xóa tất cả'}</button>
+        </div>
+      </HopThoai>}
       {moLoiMoi && <LoiMoiThongBao quyen={quyen} dangXinQuyen={dangXinQuyen} loi={loi} dongLoiMoi={dongLoiMoi} batThongBao={batThongBao} />}
     </div>
   )
