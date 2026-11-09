@@ -28,7 +28,9 @@ class QuanLyYeuCauTest extends TestCase
         DB::purge('sqlite');
         $tables = [
             'nguoi_dung' => ['ho_ten', 'email', 'mat_khau', 'vai_tro', 'trang_thai', 'so_dien_thoai'],
-            'tin_dang' => ['nguoi_dung_id', 'tieu_de', 'trang_thai', 'thong_tin_lien_he', 'email_lien_he'],
+            'tin_dang' => ['nguoi_dung_id', 'danh_muc_id', 'tieu_de', 'trang_thai', 'thong_tin_lien_he', 'email_lien_he'],
+            'danh_muc_do_vat' => ['ten_danh_muc', 'trang_thai', 'thu_tu'],
+            'hinh_anh_tin_dang' => ['tin_dang_id', 'duong_dan', 'pham_vi', 'thu_tu'],
             'yeu_cau_nhan_do' => ['tin_dang_id', 'nguoi_yeu_cau_id', 'trang_thai', 'loi_nhan', 'ghi_chu_admin', 'nguoi_xu_ly_id', 'thoi_gian_xu_ly'],
             'tra_loi_yeu_cau' => ['yeu_cau_id', 'ket_qua_doi_chieu', 'loi_khai_tin_dang_id'],
             'loi_khai_tin_dang' => ['cau_hoi_phien_ban_id'],
@@ -74,6 +76,23 @@ class QuanLyYeuCauTest extends TestCase
         $this->getJson('/api/admin/yeu-cau')->assertOk()->assertJsonPath('data.total', 1);
     }
 
+    public function test_group_counts_and_item_filter(): void
+    {
+        for ($i = 0; $i < 24; $i++) {
+            YeuCauNhanDo::create(['tin_dang_id' => $this->yc->tin_dang_id, 'nguoi_yeu_cau_id' => $this->user->id, 'trang_thai' => 'can_bo_sung']);
+        }
+        $other = TinDang::create(['nguoi_dung_id' => $this->admin->id, 'tieu_de' => 'Phone', 'trang_thai' => 'dang_mo']);
+        YeuCauNhanDo::create(['tin_dang_id' => $other->id, 'nguoi_yeu_cau_id' => $this->user->id, 'trang_thai' => 'cho_kiem_tra']);
+        $this->actingAs($this->admin);
+        $groups = $this->getJson('/api/admin/yeu-cau?nhom=1')->assertOk()->assertJsonPath('data.total', 2)->json('data.data');
+        $group = collect($groups)->firstWhere('tin_dang_id', $this->yc->tin_dang_id);
+        $this->assertEquals(25, $group['so_yeu_cau']);
+        $this->assertEquals(1, $group['cho_kiem_tra']);
+        $this->assertEquals(24, $group['can_bo_sung']);
+        $this->getJson('/api/admin/yeu-cau?tinDangId='.$this->yc->tin_dang_id)->assertOk()->assertJsonPath('data.total', 25)->assertJsonCount(20, 'data.data');
+        $this->getJson('/api/admin/yeu-cau?nhom=1&trangThai=can_bo_sung')->assertOk()->assertJsonPath('data.total', 1)->assertJsonPath('data.data.0.so_yeu_cau', 24);
+    }
+
     public function test_review_requires_matching_answers_and_rolls_back_foreign_answers(): void
     {
         $this->actingAs($this->admin);
@@ -87,15 +106,25 @@ class QuanLyYeuCauTest extends TestCase
         $this->patchJson('/api/admin/yeu-cau/'.$other->id, ['hanhDong' => 'da_xac_minh', 'ghiChu' => 'Khớp'])->assertConflict();
     }
 
-    public function test_supplement_only_owner_and_requested_state(): void
+    public function test_supplement_action_is_no_longer_available(): void
     {
         $this->actingAs($this->admin);
-        $this->action('can_bo_sung')->assertOk();
-        $url = '/api/me/yeu-cau/'.$this->yc->id.'/bo-sung';
-        $this->postJson($url, ['noiDung' => 'Khác'])->assertNotFound();
-        $this->actingAs($this->user)->postJson($url, ['noiDung' => 'Có hóa đơn'])->assertOk();
+        $this->action('can_bo_sung')->assertUnprocessable();
         $this->assertSame('cho_kiem_tra', $this->yc->fresh()->trang_thai);
-        $this->postJson($url, ['noiDung' => 'Lặp'])->assertConflict();
+        $this->postJson('/api/me/yeu-cau/'.$this->yc->id.'/bo-sung', ['noiDung' => 'demo'])->assertNotFound();
+    }
+
+    public function test_retired_supplement_claims_return_to_review_without_losing_answers(): void
+    {
+        $this->yc->update(['trang_thai' => 'can_bo_sung', 'ghi_chu_admin' => 'Old feedback']);
+        $migration = require database_path('migrations/2026_11_09_000001_retire_claim_supplement_step.php');
+        $migration->up();
+        $this->assertSame('cho_kiem_tra', $this->yc->fresh()->trang_thai);
+        $this->assertNull($this->yc->fresh()->ghi_chu_admin);
+        $this->assertDatabaseHas('tra_loi_yeu_cau', ['id' => $this->answer->id]);
+        $this->assertDatabaseHas('lich_su_yeu_cau', ['yeu_cau_id' => $this->yc->id, 'hanh_dong' => 'chuyen_cho_duyet']);
+        $migration->up();
+        $this->assertSame(1, $this->yc->lichSu()->where('hanh_dong', 'chuyen_cho_duyet')->count());
     }
 
     public function test_evidence_route_requires_admin_and_correct_claim(): void
@@ -182,6 +211,67 @@ class QuanLyYeuCauTest extends TestCase
         $hen->update(['trang_thai' => 'da_hoan_tat']);
         $this->getJson('/api/admin/yeu-cau?trangThai=dang_giao_nhan')->assertOk()->assertJsonPath('data.total', 0);
         $this->getJson('/api/admin/yeu-cau?trangThai=da_hoan_tat')->assertOk()->assertJsonPath('data.total', 1);
+    }
+
+    public function test_categories_filter_groups_before_pagination(): void
+    {
+        DB::table('danh_muc_do_vat')->insert(['id' => 1, 'ten_danh_muc' => 'Ví']);
+        DB::table('danh_muc_do_vat')->insert(['id' => 2, 'ten_danh_muc' => 'Điện tử']);
+        $this->yc->tinDang->update(['danh_muc_id' => 1]);
+        $other = TinDang::create(['nguoi_dung_id' => $this->admin->id, 'danh_muc_id' => 2, 'tieu_de' => 'Phone', 'trang_thai' => 'dang_mo']);
+        YeuCauNhanDo::create(['tin_dang_id' => $other->id, 'nguoi_yeu_cau_id' => $this->user->id, 'trang_thai' => 'cho_kiem_tra']);
+        $this->actingAs($this->admin)->getJson('/api/admin/yeu-cau?nhom=1&danhMucId=1')->assertOk()->assertJsonPath('data.total', 1)->assertJsonPath('data.data.0.tin_dang.danh_muc.ten_danh_muc', 'Ví');
+        $this->getJson('/api/admin/yeu-cau?nhom=1&danhMucId=2')->assertOk()->assertJsonPath('data.total', 1)->assertJsonPath('data.data.0.tin_dang.tieu_de', 'Phone');
+        $this->getJson('/api/admin/yeu-cau?danhMucId=invalid')->assertUnprocessable();
+    }
+
+    public function test_other_claims_wait_then_reopen_or_close_with_the_item(): void
+    {
+        $other = YeuCauNhanDo::create(['tin_dang_id' => $this->yc->tin_dang_id, 'nguoi_yeu_cau_id' => $this->user->id, 'trang_thai' => 'cho_kiem_tra']);
+        $other->traLoi()->create(['ket_qua_doi_chieu' => 'khop']);
+        $this->approve();
+        $url = '/api/admin/yeu-cau/'.$other->id;
+        $this->getJson($url)->assertOk()->assertJsonPath('data.trang_thai_xu_ly', 'tam_cho_ban_giao');
+        $this->getJson('/api/admin/yeu-cau?trangThai=tam_cho_ban_giao')->assertOk()->assertJsonPath('data.total', 1);
+        $this->getJson('/api/admin/yeu-cau?trangThai=san_sang_duyet')->assertOk()->assertJsonPath('data.total', 0);
+        $this->getJson('/api/admin/yeu-cau?trangThai=nhom_da_duyet')->assertOk()->assertJsonPath('data.total', 1);
+        $this->patchJson($url, ['hanhDong' => 'da_xac_minh'])->assertConflict();
+        $this->action('tu_choi')->assertOk();
+        $this->getJson($url)->assertOk()->assertJsonPath('data.trang_thai_xu_ly', 'cho_kiem_tra');
+        $this->getJson('/api/admin/yeu-cau?trangThai=san_sang_duyet')->assertOk()->assertJsonPath('data.total', 1);
+        $this->patchJson($url, ['hanhDong' => 'da_xac_minh'])->assertOk();
+        $this->yc->refresh()->update(['trang_thai' => 'cho_kiem_tra']);
+        $this->yc->tinDang->update(['trang_thai' => 'da_hoan_tat']);
+        $this->getJson('/api/admin/yeu-cau/'.$this->yc->id)->assertOk()->assertJsonPath('data.trang_thai_xu_ly', 'da_dong');
+        $this->getJson('/api/admin/yeu-cau?trangThai=da_dong')->assertOk()->assertJsonPath('data.total', 1);
+        $this->action('da_xac_minh', ['doiChieu' => [$this->answer->id => 'khop']])->assertConflict();
+    }
+
+    public function test_one_confirmation_reviews_all_answers_for_this_claim_only(): void
+    {
+        $second = $this->yc->traLoi()->create(['ket_qua_doi_chieu' => 'khong_khop']);
+        $other = YeuCauNhanDo::create(['tin_dang_id' => $this->yc->tin_dang_id, 'nguoi_yeu_cau_id' => $this->user->id, 'trang_thai' => 'cho_kiem_tra']);
+        $otherAnswer = $other->traLoi()->create(['ket_qua_doi_chieu' => 'chua_danh_gia']);
+        $this->actingAs($this->admin);
+        $this->action('da_xac_minh', ['xacNhanDoiChieu' => false])->assertUnprocessable();
+        $this->action('da_xac_minh', ['xacNhanDoiChieu' => true])->assertOk();
+        $this->assertSame('khop', $this->answer->fresh()->ket_qua_doi_chieu);
+        $this->assertSame('khop', $second->fresh()->ket_qua_doi_chieu);
+        $this->assertSame('chua_danh_gia', $otherAnswer->fresh()->ket_qua_doi_chieu);
+        $this->patchJson('/api/admin/yeu-cau/'.$other->id, ['hanhDong' => 'da_xac_minh', 'xacNhanDoiChieu' => true])->assertConflict();
+        $this->assertSame('chua_danh_gia', $otherAnswer->fresh()->ket_qua_doi_chieu);
+    }
+
+    public function test_comparison_returns_public_item_photos_only(): void
+    {
+        DB::table('hinh_anh_tin_dang')->insert([
+            ['tin_dang_id' => $this->yc->tin_dang_id, 'duong_dan' => '/tin/tin-nhat/anhtin1.jpg', 'pham_vi' => 'cong_khai', 'thu_tu' => 1],
+            ['tin_dang_id' => $this->yc->tin_dang_id, 'duong_dan' => '/private-evidence.jpg', 'pham_vi' => 'rieng_tu', 'thu_tu' => 2],
+        ]);
+        $this->actingAs($this->admin)->getJson('/api/admin/yeu-cau/'.$this->yc->id)
+            ->assertOk()->assertJsonCount(1, 'data.anh_tin_dang')
+            ->assertJsonPath('data.anh_tin_dang.0.url', '/api/tin-dang/anh/anhtin1.jpg')
+            ->assertJsonMissingPath('data.tin_dang.hinh_anh');
     }
 
     private function approve(): void

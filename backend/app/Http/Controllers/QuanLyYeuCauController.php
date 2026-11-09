@@ -26,11 +26,14 @@ class QuanLyYeuCauController extends Controller
 
     public function danhSach(Request $request, TienDoYeuCau $tienDo)
     {
-        $filters = $request->validate(['trangThai' => ['nullable', Rule::in(TienDoYeuCau::CAC_TRANG_THAI)], 'tuKhoa' => 'nullable|string|max:200']);
+        $filters = $request->validate(['trangThai' => ['nullable', Rule::in(TienDoYeuCau::CAC_TRANG_THAI)], 'tuKhoa' => 'nullable|string|max:200', 'nhom' => 'sometimes|boolean', 'tinDangId' => 'nullable|integer|min:1', 'danhMucId' => 'nullable|integer|min:1']);
         $tong = YeuCauNhanDo::count();
         $hoanTat = $tienDo->hoanTat(YeuCauNhanDo::query())->count();
         $stats = ['tong' => $tong, 'choKiemTra' => YeuCauNhanDo::where('trang_thai', 'cho_kiem_tra')->count(), 'dangGiaoNhan' => $tienDo->loc(YeuCauNhanDo::query(), 'dang_giao_nhan')->count(), 'hoanTat' => $hoanTat];
         $q = YeuCauNhanDo::with(['tinDang', 'nguoiYeuCau', 'cuocHen.banGiao']);
+        if (! empty($filters['danhMucId'])) {
+            $q->whereHas('tinDang', fn ($tin) => $tin->where('danh_muc_id', $filters['danhMucId']));
+        }
         if (! empty($filters['trangThai'])) {
             $tienDo->loc($q, $filters['trangThai']);
         }
@@ -46,6 +49,24 @@ class QuanLyYeuCauController extends Controller
                 }
             });
         }
+        if (! empty($filters['tinDangId'])) {
+            $q->where('tin_dang_id', $filters['tinDangId']);
+        }
+        if ($request->boolean('nhom')) {
+            $rows = $q->without(['nguoiYeuCau', 'cuocHen'])->with(['tinDang.danhMuc', 'tinDang.hinhAnh' => fn ($anh) => $anh->where('pham_vi', 'cong_khai')->orderBy('thu_tu')->orderBy('id')])->select('tin_dang_id')
+                ->selectRaw('COUNT(*) as so_yeu_cau, MAX(created_at) as moi_nhat')
+                ->selectRaw("SUM(CASE WHEN trang_thai = 'cho_kiem_tra' THEN 1 ELSE 0 END) as cho_kiem_tra")
+                ->selectRaw("SUM(CASE WHEN trang_thai = 'can_bo_sung' THEN 1 ELSE 0 END) as can_bo_sung")
+                ->groupBy('tin_dang_id')->orderByDesc('cho_kiem_tra')->orderByDesc('moi_nhat')->orderByDesc('tin_dang_id')->paginate(20);
+            $rows->through(function ($nhom) {
+                $nhom->setAttribute('anh_bia', $nhom->tinDang?->hinhAnh->first()?->duongDanHienThi() ?? '/do-vat-trong.svg');
+                $nhom->tinDang?->unsetRelation('hinhAnh');
+
+                return $nhom;
+            });
+
+            return response()->json(['data' => $rows, 'thongKe' => $stats])->header('Cache-Control', 'private, no-store');
+        }
         $rows = $q->latest('id')->paginate(20);
         $rows->through(fn ($yc) => $tienDo->duLieu($yc));
 
@@ -54,7 +75,9 @@ class QuanLyYeuCauController extends Controller
 
     public function chiTiet(string $id)
     {
-        $yc = YeuCauNhanDo::with(['tinDang.nguoiDung', 'nguoiYeuCau', 'traLoi.loiKhaiTinDang.phienBanCauHoi', 'minhChung', 'lichSu.nguoiThucHien', 'cuocHen.banGiao'])->findOrFail($id);
+        $yc = YeuCauNhanDo::with(['tinDang.nguoiDung', 'tinDang.hinhAnh' => fn ($anh) => $anh->where('pham_vi', 'cong_khai')->orderBy('thu_tu')->orderBy('id'), 'nguoiYeuCau', 'traLoi.loiKhaiTinDang.phienBanCauHoi', 'minhChung' => fn ($anh) => $anh->orderBy('thu_tu')->orderBy('id'), 'lichSu.nguoiThucHien', 'cuocHen.banGiao'])->findOrFail($id);
+        $yc->setAttribute('anh_tin_dang', $yc->tinDang?->hinhAnh->map(fn ($anh) => ['id' => $anh->id, 'url' => $anh->duongDanHienThi(), 'mo_ta' => $anh->mo_ta])->values() ?? []);
+        $yc->tinDang?->unsetRelation('hinhAnh');
 
         return response()->json(['data' => app(TienDoYeuCau::class)->duLieu($yc)])->header('Cache-Control', 'private, no-store');
     }
@@ -74,15 +97,16 @@ class QuanLyYeuCauController extends Controller
     public function xuLy(Request $request, string $id)
     {
         $data = $request->validate([
-            'hanhDong' => 'required|in:can_bo_sung,tu_choi,da_xac_minh',
+            'hanhDong' => 'required|in:tu_choi,da_xac_minh',
             'ghiChu' => 'required_unless:hanhDong,da_xac_minh|nullable|string|max:2000',
             'doiChieu' => 'sometimes|array|max:500',
             'doiChieu.*' => 'required|in:khop,khong_khop,chua_du_can_cu,chua_danh_gia',
+            'xacNhanDoiChieu' => 'sometimes|accepted',
         ]);
         $data['ghiChu'] = $data['hanhDong'] === 'da_xac_minh'
             ? 'Yêu cầu nhận lại đồ đã được duyệt.'
             : trim($data['ghiChu'] ?? '');
-        abort_if($data['ghiChu'] === '', 422, 'Vui lòng nhập lý do từ chối hoặc nội dung cần bổ sung.');
+        abort_if($data['ghiChu'] === '', 422, 'Vui lòng nhập lý do từ chối.');
         DB::transaction(function () use ($request, $id, $data) {
             // Lock the item first: competing claims for the same item must serialize.
             $itemId = YeuCauNhanDo::findOrFail($id)->tin_dang_id;
@@ -104,6 +128,12 @@ class QuanLyYeuCauController extends Controller
             }
             if ($action === 'da_xac_minh') {
                 abort_unless($tin->trang_thai === 'dang_mo', 409, 'Đồ vật đang chờ bàn giao hoặc đã đóng.');
+                abort_if(YeuCauNhanDo::where('tin_dang_id', $itemId)->where('trang_thai', 'da_xac_minh')->where('id', '!=', $yc->id)->exists(), 409, 'Đồ vật đã có người được duyệt.');
+                if (! empty($data['xacNhanDoiChieu'])) {
+                    foreach ($answers as $answer) {
+                        $answer->update(['ket_qua_doi_chieu' => 'khop']);
+                    }
+                }
                 abort_if($answers->isEmpty() || $answers->contains(fn ($a) => $a->ket_qua_doi_chieu !== 'khop'), 422, 'Cần đối chiếu tất cả câu trả lời là khớp trước khi chấp thuận.');
                 $tin->update(['trang_thai' => 'cho_ban_giao']);
             }
@@ -112,20 +142,6 @@ class QuanLyYeuCauController extends Controller
         });
 
         return $this->chiTiet($id);
-    }
-
-    public function boSung(Request $request, string $id)
-    {
-        $data = $request->validate(['noiDung' => 'required|string|max:2000']);
-        abort_if(trim($data['noiDung']) === '', 422, 'Vui lòng nhập thông tin bổ sung.');
-        DB::transaction(function () use ($request, $id, $data) {
-            $yc = YeuCauNhanDo::where('nguoi_yeu_cau_id', $request->user()->id)->lockForUpdate()->findOrFail($id);
-            abort_unless($yc->trang_thai === 'can_bo_sung', 409, 'Yêu cầu không chờ bổ sung.');
-            $yc->update(['loi_nhan' => ($yc->loi_nhan ? $yc->loi_nhan."\n\n" : '').'Bổ sung: '.trim($data['noiDung']), 'trang_thai' => 'cho_kiem_tra']);
-            $yc->lichSu()->create(['nguoi_thuc_hien_id' => $request->user()->id, 'hanh_dong' => 'bo_sung', 'trang_thai_cu' => 'can_bo_sung', 'trang_thai_moi' => 'cho_kiem_tra', 'noi_dung' => trim($data['noiDung'])]);
-        });
-
-        return response()->json(['message' => 'Đã gửi bổ sung.']);
     }
 
     private function ghiNhan($yc, $request, $action, $old, $note, $henId = null): void

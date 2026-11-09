@@ -54,6 +54,7 @@ class QuanLyTinDangController extends Controller
                 'noi_dung' => $lyDo, 'du_lieu_cu' => $duLieuCu, 'du_lieu_moi' => $duLieuMoi,
             ]);
         });
+
         return response()->json(['data' => $this->duLieu($tin->fresh()->load($this->quanHe()))]);
     }
 
@@ -65,12 +66,15 @@ class QuanLyTinDangController extends Controller
     private function duLieu(TinDang $tin): array
     {
         $nhan = ['an_tin' => 'Ẩn tin', 'khoi_phuc' => 'Khôi phục tin', 'chap_nhan_bao_cao' => 'Xác nhận vi phạm', 'tu_choi_bao_cao' => 'Bác bỏ báo cáo'];
+
         return [
             'id' => $tin->id, 'title' => $tin->tieu_de, 'fullName' => $tin->tieu_de, 'description' => $tin->mo_ta,
             'referenceCode' => 'TIN-'.str_pad((string) $tin->id, 6, '0', STR_PAD_LEFT),
             'type' => $tin->loai_tin === 'bao_mat' ? 'lost' : 'found', 'typeName' => $tin->loai_tin === 'bao_mat' ? 'Mất đồ' : 'Nhặt được',
             'date' => $tin->created_at?->format('Y-m-d'), 'category' => $tin->danhMuc?->ten_danh_muc ?? 'Chưa phân loại',
             'location' => $tin->diaDiem?->ten_dia_diem ?? 'Chưa rõ', 'imageUrl' => $tin->hinhAnh->first()?->duongDanHienThi() ?? '/do-vat-trong.svg',
+            'images' => $tin->hinhAnh->map(fn ($anh) => $anh->duongDanHienThi())->values(),
+            'locationDetail' => $tin->dia_diem_chi_tiet,
             'nguoiDang' => $tin->nguoiDung?->ho_ten ?? 'Tài khoản không còn hoạt động', 'maSinhVien' => $tin->nguoiDung?->ma_so ?? '—',
             'trangThai' => $tin->trang_thai_kiem_duyet, 'lyDoAn' => $tin->ly_do_an,
             'baoCao' => $tin->baoCao->map(fn ($bc) => ['id' => $bc->id, 'nguoiBaoCao' => $bc->nguoiBaoCao?->ho_ten ?? 'Không xác định', 'lyDo' => $bc->ly_do, 'moTa' => $bc->mo_ta, 'thoiGian' => $bc->created_at?->format('d/m/Y H:i'), 'trangThai' => $bc->trang_thai, 'ketQua' => $bc->ghi_chu_admin]),

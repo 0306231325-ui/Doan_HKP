@@ -7,7 +7,7 @@ const nut = 'inline-flex min-h-11 items-center justify-center gap-2 rounded-xl b
 const input = 'mt-2 w-full rounded-xl border border-[#ceded3] bg-white p-3 text-sm focus-visible:outline-2 focus-visible:outline-emerald-700'
 const card = 'space-y-4 rounded-2xl border border-[#d6e4db] bg-white p-5 sm:p-6'
 const ngayGio = (v) => new Date(v).toLocaleString('vi-VN')
-const trangThai = { cho_kiem_tra: 'Chờ kiểm tra', can_bo_sung: 'Cần bổ sung', da_xac_minh: 'Đã duyệt', tu_choi: 'Từ chối', da_huy: 'Đã hủy' }
+const trangThai = { cho_kiem_tra: 'Chờ duyệt', can_bo_sung: 'Chờ duyệt', da_xac_minh: 'Đã duyệt', tu_choi: 'Từ chối', da_huy: 'Đã hủy' }
 
 export default function TaoCuocHen() {
   const [params] = useSearchParams()
@@ -72,7 +72,7 @@ export default function TaoCuocHen() {
           </>}
         </section>
         {hen && ['da_xac_nhan', 'da_hoan_tat'].includes(hen.trang_thai) && !hen.lichCu && <section className={card}><h2 className="flex items-center gap-2 font-bold text-[#315a43]"><CheckCheck size={18} />Xác nhận giao nhận</h2><div className="grid gap-3 text-sm sm:grid-cols-2"><p className="rounded-xl bg-[#f5f9f6] p-4">Người nhặt: <strong>{hen.nguoi_giu_xac_nhan_luc ? 'Đã xác nhận giao đồ' : 'Chưa xác nhận'}</strong></p><p className="rounded-xl bg-[#f5f9f6] p-4">Người mất: <strong>{hen.nguoi_nhan_xac_nhan_luc ? 'Đã xác nhận nhận đồ' : 'Chưa xác nhận'}</strong></p></div>{hoanTat ? <p className="text-sm font-semibold text-emerald-800">Đã trả đồ. Cuộc hẹn hoàn tất và các yêu cầu còn lại đã được đóng.</p> : daXacNhan ? <p className="text-sm text-[#607568]">Đã lưu xác nhận của bạn. Đang chờ người còn lại xác nhận để hoàn tất.</p> : <>{chuaDenGio && <p className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900">Chưa đến giờ hẹn. Bạn có thể xác nhận giao nhận từ <strong>{ngayGio(hen.thoi_gian_hen_gap)}</strong>. Nếu gặp sớm hơn, hãy đề xuất đổi lịch và để người còn lại đồng ý.</p>}<p className="text-sm leading-6 text-[#718276]">Chỉ xác nhận sau khi đã gặp, xác minh trực tiếp và thực hiện giao nhận. Hệ thống chỉ đóng tin khi cả hai xác nhận.</p><label className="flex items-start gap-2 text-sm leading-6 text-[#526c5b]"><input disabled type="checkbox" className="mt-1 accent-emerald-800" checked={xacNhan} onChange={(e) => datXacNhan(e.target.checked)} />{yc.laNguoiGiu ? 'Tôi đã giao đồ cho đúng người nhận.' : 'Tôi đã kiểm tra và nhận lại đúng đồ của mình.'}</label><button disabled title="Chức năng chưa được kết nối" className={nut}>{dangLuu ? 'Đang lưu xác nhận…' : yc.laNguoiGiu ? 'Xác nhận đã giao đồ' : 'Xác nhận đã nhận đồ'}</button></>}</section>}
-      </> : <p className="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm leading-6 text-amber-900">Liên hệ và cuộc hẹn chỉ mở sau khi admin duyệt. Bạn có thể theo dõi kết quả hoặc gửi bổ sung ở trang Theo dõi yêu cầu.</p>}
+      </> : <p className="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm leading-6 text-amber-900">Liên hệ và cuộc hẹn chỉ mở sau khi admin duyệt. Bạn có thể xem kết quả ở trang Theo dõi yêu cầu.</p>}
     </>}
   </div>
 }
