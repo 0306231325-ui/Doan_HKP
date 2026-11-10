@@ -28,7 +28,7 @@ class QuanLyYeuCauTest extends TestCase
         DB::purge('sqlite');
         $tables = [
             'nguoi_dung' => ['ho_ten', 'email', 'mat_khau', 'vai_tro', 'trang_thai', 'so_dien_thoai'],
-            'tin_dang' => ['nguoi_dung_id', 'danh_muc_id', 'dia_diem_id', 'loai_tin', 'mo_ta', 'thoi_gian_xay_ra', 'co_gio_xay_ra', 'dia_diem_chi_tiet', 'tieu_de', 'trang_thai', 'thong_tin_lien_he', 'email_lien_he'],
+            'tin_dang' => ['nguoi_dung_id', 'danh_muc_id', 'dia_diem_id', 'loai_tin', 'mo_ta', 'thoi_gian_xay_ra', 'co_gio_xay_ra', 'dia_diem_chi_tiet', 'tieu_de', 'trang_thai', 'trang_thai_kiem_duyet', 'thong_tin_lien_he', 'email_lien_he', 'tin_bao_mat_lien_quan_id'],
             'danh_muc_do_vat' => ['ten_danh_muc', 'trang_thai', 'thu_tu'],
             'hinh_anh_tin_dang' => ['tin_dang_id', 'duong_dan', 'pham_vi', 'thu_tu'],
             'yeu_cau_nhan_do' => ['tin_dang_id', 'nguoi_yeu_cau_id', 'trang_thai', 'loi_nhan', 'ghi_chu_admin', 'nguoi_xu_ly_id', 'thoi_gian_xu_ly'],
@@ -37,7 +37,7 @@ class QuanLyYeuCauTest extends TestCase
             'lich_su_cau_hoi' => ['du_lieu'],
             'minh_chung_yeu_cau' => ['yeu_cau_id', 'duong_dan'],
             'lich_su_yeu_cau' => ['yeu_cau_id', 'cuoc_hen_id', 'nguoi_thuc_hien_id', 'hanh_dong', 'trang_thai_cu', 'trang_thai_moi', 'noi_dung'],
-            'thong_bao' => ['nguoi_dung_id', 'tin_dang_id', 'yeu_cau_id', 'cuoc_hen_id', 'loai_thong_bao', 'tieu_de', 'noi_dung'],
+            'thong_bao' => ['nguoi_dung_id', 'tin_dang_id', 'yeu_cau_id', 'cuoc_hen_id', 'loai_thong_bao', 'tieu_de', 'noi_dung', 'thoi_gian_doc'],
             'dia_diem' => ['ten_dia_diem', 'trang_thai'],
             'cuoc_hen' => ['yeu_cau_id', 'nguoi_giu_do_id', 'nguoi_de_xuat_id', 'nguoi_xac_nhan_id', 'thoi_gian_xac_nhan', 'thoi_gian_hen_gap', 'dia_diem_id', 'trang_thai', 'ly_do_huy', 'nguoi_giu_xac_nhan_luc', 'nguoi_nhan_xac_nhan_luc'],
             'ban_giao' => ['cuoc_hen_id', 'thoi_gian_ban_giao', 'ma_ban_giao_hash', 'ma_het_han_luc'],
@@ -56,6 +56,7 @@ class QuanLyYeuCauTest extends TestCase
                 }
             });
         }
+        (require database_path('migrations/2026_11_10_000003_create_doi_chieu_tin_dang.php'))->up();
         $this->admin = NguoiDung::create(['ho_ten' => 'Admin', 'email' => 'admin@test.vn', 'mat_khau' => 'password', 'vai_tro' => 'quan_tri', 'trang_thai' => 'hoat_dong']);
         $this->user = NguoiDung::create(['ho_ten' => 'User', 'email' => 'user@test.vn', 'mat_khau' => 'password', 'vai_tro' => 'nguoi_dung', 'trang_thai' => 'hoat_dong']);
         $tin = TinDang::create(['nguoi_dung_id' => $this->admin->id, 'tieu_de' => 'Ví', 'trang_thai' => 'dang_mo']);
@@ -228,6 +229,10 @@ class QuanLyYeuCauTest extends TestCase
         $this->actingAs($this->user)->getJson('/api/me/yeu-cau')->assertOk()->assertJsonPath('data.data.0.coTheDatLich', true);
         $this->getJson('/api/me/yeu-cau?loai=lich_hen')->assertOk()->assertJsonPath('data.total', 0);
         $nguoiNgoai = NguoiDung::create(['ho_ten' => 'Khách', 'email' => 'khach@test.vn', 'mat_khau' => 'password', 'vai_tro' => 'nguoi_dung', 'trang_thai' => 'hoat_dong']);
+        $tinMat = TinDang::create(['nguoi_dung_id' => $this->user->id, 'loai_tin' => 'bao_mat', 'trang_thai' => 'dang_mo']);
+        $tinKhac = TinDang::create(['nguoi_dung_id' => $this->user->id, 'loai_tin' => 'bao_mat', 'trang_thai' => 'dang_mo']);
+        $tinNguoiNgoai = TinDang::create(['nguoi_dung_id' => $nguoiNgoai->id, 'loai_tin' => 'bao_mat', 'trang_thai' => 'dang_mo']);
+        $this->yc->tinDang->tinBaoMatDaThongBao()->attach([$tinMat->id, $tinNguoiNgoai->id]);
         $this->actingAs($nguoiNgoai)->postJson('/api/me/cuoc-hen', $body)->assertNotFound();
         $this->actingAs($this->user)->postJson('/api/me/cuoc-hen', [...$body, 'diaDiemId' => 999])->assertUnprocessable();
         $this->postJson('/api/me/cuoc-hen', $this->lichHen(-1))->assertUnprocessable();
@@ -247,7 +252,16 @@ class QuanLyYeuCauTest extends TestCase
         $url = '/api/me/cuoc-hen/xac-nhan-ban-giao';
         $this->postJson($url, ['ma' => $ma])->assertUnprocessable();
         $this->actingAs($nguoiNgoai)->postJson($url, ['ma' => $ma])->assertUnprocessable();
-        $this->actingAs($this->admin)->postJson('/api/me/cuoc-hen', $body)->assertConflict();
+        $this->actingAs($this->admin)->postJson('/api/me/cuoc-hen', $this->lichHen(2))->assertConflict()
+            ->assertJsonPath('daCoLich', true)
+            ->assertJsonPath('yeuCauId', $this->yc->id)
+            ->assertJsonPath('cuocHenId', $hen->id)
+            ->assertJsonMissingPath('ma')->assertJsonMissingPath('data.ma');
+        $this->assertDatabaseCount('cuoc_hen', 1);
+        $this->assertSame(1, $hen->thongBao()->where('loai_thong_bao', 'tao_cuoc_hen')->count());
+        $this->getJson('/api/thong-bao')->assertOk()
+            ->assertJsonPath('data.0.tieuDe', 'Có cuộc hẹn bàn giao')
+            ->assertJsonPath('data.0.duongDan', '/chi-tiet-yeu-cau?id='.$this->yc->id.'&tab=lich-hen&cuocHen='.$hen->id);
         $this->getJson('/api/admin/yeu-cau?trangThai=cho_xac_nhan_giao_nhan')->assertOk()->assertJsonPath('data.total', 1);
         $this->postJson($url, ['ma' => $ma])->assertConflict();
         $this->travelTo($hen->thoi_gian_hen_gap);
@@ -263,6 +277,15 @@ class QuanLyYeuCauTest extends TestCase
         $this->assertTrue($hen->banGiao->thoi_gian_ban_giao->eq($hen->thoi_gian_xac_nhan));
         $this->assertSame(2, $hen->thongBao()->where('loai_thong_bao', 'xac_nhan_ban_giao')->count());
         $this->assertSame(1, $hen->lichSuYeuCau()->where('hanh_dong', 'xac_nhan_ban_giao')->count());
+        $this->assertDatabaseHas('tin_dang', ['id' => $this->yc->tin_dang_id, 'trang_thai' => 'da_hoan_tat', 'tin_bao_mat_lien_quan_id' => $tinMat->id]);
+        $this->assertSame('da_hoan_tat', $tinMat->fresh()->trang_thai);
+        $this->assertSame('dang_mo', $tinKhac->fresh()->trang_thai);
+        $this->assertSame('dang_mo', $tinNguoiNgoai->fresh()->trang_thai);
+        foreach ([$this->user, $this->admin] as $taiKhoan) {
+            $this->actingAs($taiKhoan)->getJson('/api/me/yeu-cau/'.$this->yc->id)->assertOk()
+                ->assertJsonPath('data.cuoc_hen.0.id', $hen->id)
+                ->assertJsonPath('data.cuoc_hen.0.trang_thai', 'da_hoan_tat');
+        }
         $lichQuanTri = '/api/admin/lich-hen?'.http_build_query([
             'trangThai' => 'da_hoan_tat', 'ngay' => substr($body['thoiGianHen'], 0, 10), 'tuKhoa' => 'Ví',
         ]);

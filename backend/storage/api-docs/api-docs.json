@@ -2062,7 +2062,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "data gồm thông tin công khai cho thẻ và cờ laChuTin theo phiên hiện tại. meta gồm trangHienTai, tongTrang, tongTin, tuViTri, denViTri. Tin ẩn và xóa mềm được loại khỏi kết quả. Điện thoại hiện nửa đầu. Email hiện tối đa hai ký tự đầu và che toàn bộ tên miền. Ngày lọc ưu tiên ngày xảy ra. Trang vượt biên về trang cuối."
+                        "description": "data gồm thông tin công khai cho thẻ và cờ laChuTin theo phiên hiện tại. meta gồm trangHienTai, tongTrang, tongTin, tuViTri, denViTri. Chỉ liệt kê tin công khai đang mở hoặc chờ bàn giao. Ngày lọc ưu tiên ngày xảy ra. Trang vượt biên về trang cuối."
                     },
                     "422": {
                         "description": "Bộ lọc hoặc khoảng ngày không hợp lệ"
@@ -2188,7 +2188,7 @@
                 "operationId": "86b63a667e5915ee162637568ff430cb",
                 "responses": {
                     "200": {
-                        "description": "Tối đa 20 thông báo mới nhất và tổng số chưa đọc. Chỉ có đường dẫn khi tài khoản xem được tin.",
+                        "description": "Tối đa 20 thông báo mới nhất và tổng số chưa đọc. Thông báo tạo lịch mở chi tiết yêu cầu ở mục Lịch hẹn và chọn đúng cuộc hẹn. Đường dẫn đến tin chỉ xuất hiện khi tài khoản có quyền xem tin.",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -2488,7 +2488,7 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "Đã tạo thông báo trong hộp thư của chủ tin báo mất"
+                        "description": "Đã tạo thông báo cho chủ tin báo mất và lưu cặp tin để đối chiếu khi bàn giao"
                     },
                     "200": {
                         "description": "Hộp thư người nhận đã có thông báo về tin nhặt được này"
@@ -2809,7 +2809,7 @@
                         "description": "Yêu cầu không tồn tại hoặc tài khoản không tham gia"
                     },
                     "409": {
-                        "description": "Yêu cầu chưa duyệt, đã kết thúc hoặc có lịch đang hiệu lực"
+                        "description": "Yêu cầu chưa duyệt, đã kết thúc hoặc có lịch đang hiệu lực. Khi đã có lịch, phản hồi gồm daCoLich=true, yeuCauId và cuocHenId để mở lịch hiện có."
                     },
                     "422": {
                         "description": "Ngày giờ, địa điểm hoặc dữ liệu không hợp lệ"
@@ -2859,7 +2859,7 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Hai bên đã xác nhận. Trả message, yeuCauId và cuocHenId. Gửi lại cùng mã chỉ trả kết quả cũ."
+                        "description": "Đã xác nhận bàn giao và hoàn tất tin nhặt được. Tin báo mất đang mở cũng hoàn tất khi có cặp đối chiếu duy nhất thuộc người nhận. Trả message, yeuCauId và cuocHenId. Gửi lại cùng mã chỉ trả kết quả cũ."
                     },
                     "401": {
                         "description": "Chưa đăng nhập"

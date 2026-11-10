@@ -43,7 +43,8 @@ class TraCuuController extends Controller
         if (! empty($boLoc['tuNgay']) && ! empty($boLoc['denNgay']) && $boLoc['tuNgay'] > $boLoc['denNgay']) {
             throw ValidationException::withMessages(['denNgay' => 'Ngày bắt đầu phải trước hoặc bằng ngày kết thúc.']);
         }
-        $truyVan = TinDang::query()->where('trang_thai_kiem_duyet', 'hien_thi');
+        $truyVan = TinDang::query()->where('trang_thai_kiem_duyet', 'hien_thi')
+            ->whereIn('trang_thai', ['dang_mo', 'cho_ban_giao']);
         if (in_array($boLoc['loaiTin'] ?? null, ['lost', 'found'], true)) {
             $truyVan->where('loai_tin', $boLoc['loaiTin'] === 'lost' ? 'bao_mat' : 'nhat_duoc');
         }

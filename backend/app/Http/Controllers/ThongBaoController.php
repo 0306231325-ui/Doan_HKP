@@ -60,13 +60,23 @@ class ThongBaoController extends Controller
 
     private function duLieuThongBao(ThongBao $muc): array
     {
+        $duongDan = $muc->co_the_xem_tin ? '/chi-tiet-tin-dang?id='.$muc->tin_dang_id : null;
+        if ($muc->yeu_cau_id) {
+            $thamSo = ['id' => $muc->yeu_cau_id];
+            if ($muc->loai_thong_bao === 'tao_cuoc_hen') {
+                $thamSo['tab'] = 'lich-hen';
+                $thamSo['cuocHen'] = $muc->cuoc_hen_id;
+            }
+            $duongDan = '/chi-tiet-yeu-cau?'.http_build_query($thamSo);
+        }
+
         return [
             'id' => (string) $muc->id,
             'tieuDe' => $muc->tieu_de,
             'noiDung' => $muc->noi_dung,
             'taoLuc' => $muc->created_at?->toISOString(),
             'daDoc' => $muc->thoi_gian_doc !== null,
-            'duongDan' => $muc->yeu_cau_id ? '/chi-tiet-yeu-cau?id='.$muc->yeu_cau_id : ($muc->co_the_xem_tin ? '/chi-tiet-tin-dang?id='.$muc->tin_dang_id : null),
+            'duongDan' => $duongDan,
         ];
     }
 }

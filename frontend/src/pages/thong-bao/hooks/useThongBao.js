@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useId, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import api, { prepareCsrf } from '../../../services/api'
 import { layQuyenThongBao, xinQuyenThongBao } from './xuLyQuyenThongBao.js'
 
@@ -8,11 +8,9 @@ export default function useThongBao() {
   const [quyen, datQuyen] = useState(layQuyenThongBao)
   const [dangXinQuyen, datDangXinQuyen] = useState(false)
   const [loi, datLoi] = useState('')
-  const [danhSach, datDanhSach] = useState([])
-  const [soChuaDoc, datSoChuaDoc] = useState(0)
+  const [{ danhSach, soChuaDoc }, datHopThu] = useState({ danhSach: [], soChuaDoc: 0 })
   const [dangTai, datDangTai] = useState(true)
   const [loiHopThu, datLoiHopThu] = useState('')
-  const [dangDanhDauTatCa, datDangDanhDauTatCa] = useState(false)
   const [mucChoXoa, datMucChoXoa] = useState(null)
   const [dangXoa, datDangXoa] = useState(false)
   const [loiXoa, datLoiXoa] = useState('')
@@ -20,41 +18,39 @@ export default function useThongBao() {
   const thamChieuChuong = useRef(null)
   const thamChieuBang = useRef(null)
   const dangXuLy = useRef(false)
-  const yeuCauTai = useRef(null)
   const phienHopThu = useRef(null)
   const maBang = useId()
   const maTieuDe = useId()
 
-  const taiThongBao = useCallback(function taiThongBao() {
-    yeuCauTai.current?.abort()
-    const yeuCau = new AbortController()
-    yeuCauTai.current = yeuCau
-    return api.get('/thong-bao', { signal: yeuCau.signal })
-      .then(({ data }) => {
-        if (yeuCau.signal.aborted) return
-        datDanhSach(data.data)
-        datSoChuaDoc(data.soChuaDoc)
-        datLoiHopThu('')
-      }).catch(() => {
-        if (!yeuCau.signal.aborted) datLoiHopThu('Chưa tải được thông báo. Vui lòng thử lại.')
-      }).finally(() => {
-        if (!yeuCau.signal.aborted) datDangTai(false)
-      })
-  }, [])
-
   useEffect(function khoiTaoHopThu() {
     const phien = new AbortController()
     phienHopThu.current = phien
+    let yeuCauTai
+
+    function taiThongBao() {
+      yeuCauTai?.abort()
+      yeuCauTai = new AbortController()
+      const { signal } = yeuCauTai
+      api.get('/thong-bao', { signal })
+        .then(({ data }) => {
+          if (signal.aborted) return
+          datHopThu({ danhSach: data.data, soChuaDoc: data.soChuaDoc })
+          datLoiHopThu('')
+        }).catch(() => {
+          if (!signal.aborted) datLoiHopThu('Chưa tải được thông báo. Bấm F5 để thử lại.')
+        }).finally(() => {
+          if (!signal.aborted) datDangTai(false)
+        })
+    }
+
     taiThongBao()
-    window.addEventListener('focus', taiThongBao)
-    window.addEventListener('thong-bao:cap-nhat', taiThongBao)
+    window.addEventListener('yeu-cau-nhan-do:da-gui', taiThongBao)
     return function huyHopThu() {
       phien.abort()
-      yeuCauTai.current?.abort()
-      window.removeEventListener('focus', taiThongBao)
-      window.removeEventListener('thong-bao:cap-nhat', taiThongBao)
+      yeuCauTai?.abort()
+      window.removeEventListener('yeu-cau-nhan-do:da-gui', taiThongBao)
     }
-  }, [taiThongBao])
+  }, [])
 
   useEffect(function theoDoiQuyen() {
     function capNhatQuyen() {
@@ -90,22 +86,33 @@ export default function useThongBao() {
 
   function doiMoBang() {
     datQuyen(layQuyenThongBao())
-    if (!moBang) taiThongBao()
-    datMoBang(!moBang)
+    datMoBang((dangMo) => !dangMo)
+  }
+
+  function capNhatMucHopThu(id, xoa) {
+    datHopThu((hopThu) => {
+      const muc = hopThu.danhSach.find((muc) => muc.id === id)
+      if (!muc) return hopThu
+      return {
+        danhSach: xoa ? hopThu.danhSach.filter((muc) => muc.id !== id)
+          : hopThu.danhSach.map((muc) => muc.id === id ? { ...muc, daDoc: true } : muc),
+        soChuaDoc: muc.daDoc ? hopThu.soChuaDoc : Math.max(0, hopThu.soChuaDoc - 1),
+      }
+    })
   }
 
   async function danhDauDaDoc(id) {
     const signal = phienHopThu.current?.signal
     if (!signal || signal.aborted) return
-    if (!id) datDangDanhDauTatCa(true)
     try {
       await prepareCsrf()
-      await api.patch(id ? `/thong-bao/${id}/da-doc` : '/thong-bao/da-doc', undefined, { signal })
-      if (!signal.aborted) await taiThongBao()
+      await api.patch(`/thong-bao/${id}/da-doc`, undefined, { signal })
+      if (!signal.aborted) {
+        capNhatMucHopThu(id, false)
+        datLoiHopThu('')
+      }
     } catch {
       if (!signal.aborted) datLoiHopThu('Chưa đánh dấu được thông báo. Vui lòng thử lại.')
-    } finally {
-      if (!id && !signal.aborted) datDangDanhDauTatCa(false)
     }
   }
 
@@ -130,8 +137,11 @@ export default function useThongBao() {
         signal,
         validateStatus: (status) => status === 204 || (Boolean(id) && status === 404),
       })
-      if (!signal.aborted) await taiThongBao()
-      if (!signal.aborted) datMucChoXoa(null)
+      if (!signal.aborted) {
+        if (id) capNhatMucHopThu(id, true)
+        else datHopThu({ danhSach: [], soChuaDoc: 0 })
+        datMucChoXoa(null)
+      }
     } catch {
       if (!signal.aborted) datLoiXoa('Chưa xóa được thông báo. Vui lòng thử lại.')
     } finally {
@@ -180,6 +190,6 @@ export default function useThongBao() {
 
   return { moBang, moLoiMoi, quyen, dangXinQuyen, loi, thamChieuKhung, thamChieuChuong, thamChieuBang, maBang, maTieuDe,
     doiMoBang, dongBang, roiKhung, moHopThoaiMoi, dongLoiMoi, batThongBao,
-    danhSach, soChuaDoc, dangTai, loiHopThu, dangDanhDauTatCa, taiThongBao, danhDauDaDoc,
+    danhSach, soChuaDoc, dangTai, loiHopThu, danhDauDaDoc,
     mucChoXoa, dangXoa, loiXoa, moXacNhanXoa, dongXacNhanXoa, xacNhanXoa }
 }

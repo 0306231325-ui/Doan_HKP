@@ -43,6 +43,10 @@ class GiuDoController extends Controller
                 'noi_dung' => 'Bấm để xem tin nhặt được và gửi yêu cầu nhận lại đồ.',
             ]);
 
+            if ($thongBao->wasRecentlyCreated) {
+                $tinNhat->tinBaoMatDaThongBao()->syncWithoutDetaching([$tinMat->id]);
+            }
+
             return $thongBao->wasRecentlyCreated
                 ? response()->json(['message' => 'Đã gửi thông báo cho người đăng tin báo mất.'], 201)
                 : response()->json(['message' => 'Bạn đã gửi thông báo về tin nhặt được này cho người đăng.']);

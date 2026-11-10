@@ -40,15 +40,19 @@ class XuLyCuocHen
                     abort_if($nguoiNhapId === $nguoiTaoId || ! NguoiDung::whereKey($nguoiNhapId)->exists(), 409, 'Không xác định được tài khoản của người còn lại.');
 
                     $bayGio = now();
+                    $lichCu = $yeuCau->cuocHen()->whereIn('trang_thai', self::LICH_DANG_HIEU_LUC)->lockForUpdate()->first();
+                    if ($lichCu && ! $this->huyLichHetHan($lichCu, $lichCu->banGiao()->lockForUpdate()->first(), $bayGio)) {
+                        return [
+                            'message' => 'Yêu cầu đã có cuộc hẹn.',
+                            'daCoLich' => true,
+                            'yeuCauId' => $yeuCau->id,
+                            'cuocHenId' => $lichCu->id,
+                        ];
+                    }
+
                     abort_if($gioHen->lt($bayGio->copy()->startOfMinute()), 422, 'Vui lòng chọn giờ hẹn từ thời điểm hiện tại trở đi.');
                     $diaDiem = DiaDiem::where('trang_thai', true)->sharedLock()->find($duLieu['diaDiemId']);
                     abort_unless($diaDiem, 422, 'Vui lòng chọn địa điểm đang hoạt động.');
-
-                    $lichCu = $yeuCau->cuocHen()->whereIn('trang_thai', self::LICH_DANG_HIEU_LUC)->lockForUpdate()->first();
-                    if ($lichCu) {
-                        $banGiaoCu = $lichCu->banGiao()->lockForUpdate()->first();
-                        abort_unless($this->huyLichHetHan($lichCu, $banGiaoCu, $bayGio), 409, 'Yêu cầu đã có cuộc hẹn. Vui lòng xem chi tiết yêu cầu.');
-                    }
 
                     $ma = sprintf('%06d', random_int(0, 999999));
                     $hen = $yeuCau->cuocHen()->create([
@@ -122,11 +126,25 @@ class XuLyCuocHen
                 'ma_het_han_luc' => null,
             ]);
             $tin->update(['trang_thai' => 'da_hoan_tat']);
+            $this->hoanTatTinBaoMat($tin, $yeuCau);
             YeuCauNhanDo::where('tin_dang_id', $tin->id)->whereIn('trang_thai', ['cho_kiem_tra', 'can_bo_sung'])->update(['trang_thai' => 'da_huy']);
             $this->ghiNhan($yeuCau, $hen, $nguoiNhapId, 'xac_nhan_ban_giao', 'cho_xac_nhan', $ketQua['message'], $haiBen, 'Bàn giao đồ thành công');
 
             return $ketQua;
         }, 3);
+    }
+
+    private function hoanTatTinBaoMat(TinDang $tin, YeuCauNhanDo $yeuCau): void
+    {
+        $truyVan = $tin->tin_bao_mat_lien_quan_id ? $tin->tinBaoMatLienQuan() : $tin->tinBaoMatDaThongBao();
+        $tinBaoMat = $truyVan->withTrashed()->where('loai_tin', 'bao_mat')
+            ->where('nguoi_dung_id', $yeuCau->nguoi_yeu_cau_id)->limit(2)->lockForUpdate()->get();
+
+        if ($tinBaoMat->count() === 1 && ! $tinBaoMat[0]->trashed() && $tinBaoMat[0]->trang_thai === 'dang_mo') {
+            $tinBaoMat[0]->update(['trang_thai' => 'da_hoan_tat']);
+            $tin->tinBaoMatLienQuan()->associate($tinBaoMat[0]);
+            $tin->save();
+        }
     }
 
     public function capNhatLichHetHan(array $yeuCauIds): void

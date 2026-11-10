@@ -91,6 +91,7 @@ class DangTinTest extends TestCase
             $t->softDeletes();
             $t->timestamps();
         });
+        (require database_path('migrations/2026_11_10_000003_create_doi_chieu_tin_dang.php'))->up();
         Schema::create('loi_khai_tin_dang', function (Blueprint $t) {
             $t->id();
             $t->foreignId('tin_dang_id')->constrained('tin_dang');
@@ -595,6 +596,8 @@ class DangTinTest extends TestCase
         $this->postJson($url, ['tinNhatId' => $tinMatCuaNguoiGiu])->assertUnprocessable();
         $this->postJson($url, ['tinNhatId' => $tinNhat])->assertCreated();
         $this->postJson($url, ['tinNhatId' => $tinNhat])->assertOk();
+        $this->assertDatabaseHas('doi_chieu_tin_dang', ['tin_nhat_id' => $tinNhat, 'tin_mat_id' => $tinMat]);
+        $this->assertDatabaseCount('doi_chieu_tin_dang', 1);
         $this->assertDatabaseCount('thong_bao', 1);
         $this->assertDatabaseCount('yeu_cau_nhan_do', 0);
         $this->getJson('/api/thong-bao')->assertOk()->assertJsonCount(0, 'data');

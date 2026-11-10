@@ -22,8 +22,8 @@ export function layTienDo(yc, xemLichHen = false) {
   }
 }
 
-function daXacNhanBanGiao(hen) {
-  return hen.trang_thai === 'da_hoan_tat' || Boolean(hen.ban_giao?.thoi_gian_ban_giao)
+export function daXacNhanBanGiao(hen) {
+  return hen?.trang_thai === 'da_hoan_tat' || Boolean(hen?.ban_giao?.thoi_gian_ban_giao)
 }
 
 export function nhanTrangThaiLichHen(hen) {

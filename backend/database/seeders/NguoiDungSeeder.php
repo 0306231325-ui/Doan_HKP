@@ -15,7 +15,7 @@ class NguoiDungSeeder extends Seeder
         }
 
         $taiKhoan = [
-            ['Trần Minh Quân', 'tranminhquan', '0106032501', '0306231325', 'quan_tri'],
+            ['Vũ Thiên Phú', 'vul53290', '0106032501', '0306231325', 'quan_tri'],
             ['Lê Gia Hân', 'legiahan', '0306240108', '0306231326', 'nguoi_dung'],
             ['Phạm Đức Khang', 'phamduckhang', '0306240223', '0306231327', 'nguoi_dung'],
             ['Nguyễn Thảo Vy', 'nguyenthaovy', '0306250116', '0306231328', 'nguoi_dung'],

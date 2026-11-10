@@ -1,6 +1,6 @@
 export default function LienHeTinDang({ tin }) {
   if (!tin.coTheLienHe) {
-    return <p className="mt-4 text-sm leading-6 text-red-600">Thông tin liên hệ sẽ hiển thị khi yêu cầu nhận đồ của bạn được duyệt.</p>
+    return <p className="mt-4 text-sm leading-6 text-amber-700">Thông tin liên hệ sẽ hiển thị khi yêu cầu nhận đồ của bạn được duyệt.</p>
   }
 
   const cacTruong = [

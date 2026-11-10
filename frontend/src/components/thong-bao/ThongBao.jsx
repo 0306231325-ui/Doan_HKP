@@ -22,7 +22,7 @@ function NoiDungThongBao({ muc }) {
 export default function ThongBao() {
   const { moBang, moLoiMoi, quyen, dangXinQuyen, loi, thamChieuKhung, thamChieuChuong, thamChieuBang, maBang, maTieuDe,
     doiMoBang, dongBang, roiKhung, moHopThoaiMoi, dongLoiMoi, batThongBao,
-    danhSach, soChuaDoc, dangTai, loiHopThu, dangDanhDauTatCa, taiThongBao, danhDauDaDoc,
+    danhSach, soChuaDoc, dangTai, loiHopThu, danhDauDaDoc,
     mucChoXoa, dangXoa, loiXoa, moXacNhanXoa, dongXacNhanXoa, xacNhanXoa } = useThongBao()
   const daBat = quyen === 'granted'
   const biChan = quyen === 'denied'
@@ -35,10 +35,7 @@ export default function ThongBao() {
       </button>
       {moBang && <section ref={thamChieuBang} id={maBang} role="dialog" tabIndex={-1} aria-labelledby={maTieuDe} className="fixed left-4 right-4 top-[5.5rem] z-50 max-h-[calc(100dvh_-_7rem)] overflow-y-auto rounded-[1.75rem] border-[3px] border-emerald-950 bg-white p-5 shadow-[6px_8px_0_#064e3b] outline-none sm:absolute sm:left-auto sm:right-0 sm:top-[calc(100%_+_1rem)] sm:w-[26rem] sm:p-6">
         <div className="flex items-center justify-between gap-3 border-b border-[#e1eee5] pb-4"><h2 id={maTieuDe} className="text-lg font-extrabold text-emerald-950">Thông báo</h2><button type="button" onClick={dongBang} aria-label="Đóng bảng thông báo" className="rounded-full p-1.5 text-[#91a79a] hover:bg-emerald-50 hover:text-emerald-900 focus-visible:outline-2 focus-visible:outline-emerald-700"><X className="h-5 w-5" aria-hidden="true" /></button></div>
-        {loiHopThu && <div className="my-3 flex flex-wrap items-center gap-2 rounded-xl bg-amber-50 p-3 text-sm text-amber-900">
-          <p role="alert" className="flex-1">{loiHopThu}</p>
-          <button type="button" onClick={taiThongBao} className="rounded font-semibold underline underline-offset-2 focus-visible:outline-2">Tải lại</button>
-        </div>}
+        {loiHopThu && <p role="alert" className="my-3 rounded-xl bg-amber-50 p-3 text-sm text-amber-900">{loiHopThu}</p>}
         {dangTai && <p role="status" className="py-7 text-center text-sm text-[#607568]">Đang tải thông báo…</p>}
         {!dangTai && !loiHopThu && danhSach.length === 0 && <div className="flex min-h-40 flex-col items-center justify-center gap-3 py-7 text-center">
           <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#f0f8f3]"><Bell className="h-5 w-5 text-[#9ab6a4]" strokeWidth={1.5} aria-hidden="true" /></span>
@@ -47,13 +44,10 @@ export default function ThongBao() {
         {danhSach.length > 0 && <div className="py-3">
           <div className="mb-2 flex flex-wrap items-center justify-between gap-2 text-xs text-[#607568]">
             <span>Thông báo gần đây</span>
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-              {soChuaDoc > 0 && <button type="button" disabled={dangDanhDauTatCa} onClick={() => danhDauDaDoc()} className="rounded font-semibold text-emerald-800 hover:underline focus-visible:outline-2 disabled:opacity-60">Đánh dấu tất cả đã đọc</button>}
-              <button type="button" onClick={() => moXacNhanXoa()} className="rounded font-semibold text-rose-700 hover:underline focus-visible:outline-2">Xóa tất cả</button>
-            </div>
+            <button type="button" onClick={() => moXacNhanXoa()} className="rounded font-semibold text-rose-700 hover:underline focus-visible:outline-2">Xóa tất cả</button>
           </div>
-          <ul className="space-y-2">
-            {danhSach.map((muc) => <li key={muc.id} className={`flex items-start rounded-xl border border-[#e1eee5] ${muc.daDoc ? 'bg-white' : 'bg-emerald-50'}`}>
+          <ul aria-label="Thông báo gần đây" tabIndex={0} className={`max-h-[min(22rem,50dvh)] space-y-2 overscroll-contain rounded-xl pr-2 focus-visible:outline-2 focus-visible:outline-emerald-700 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-track]:bg-emerald-50 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-emerald-700/55 ${danhSach.length >= 4 ? 'overflow-y-scroll' : 'overflow-y-auto'}`}>
+            {danhSach.map((muc) => <li key={muc.id} className={`flex min-h-24 items-start rounded-xl border border-[#e1eee5] ${muc.daDoc ? 'bg-white' : 'bg-emerald-50'}`}>
               {muc.duongDan ? <Link to={muc.duongDan} onClick={() => {
                 if (!muc.daDoc) danhDauDaDoc(muc.id)
                 dongBang()

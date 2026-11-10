@@ -110,8 +110,12 @@ class CuocHenController extends Controller
             'thoiGianHen' => ['required', 'date_format:Y-m-d H:i'],
         ], ['thoiGianHen.date_format' => 'Ngày giờ hẹn không hợp lệ.']);
 
-        return response()->json(['data' => $xuLy->taoLich($duLieu, (int) $request->user()->id)], 201)
-            ->header('Cache-Control', 'private, no-store');
+        $ketQua = $xuLy->taoLich($duLieu, (int) $request->user()->id);
+        if ($ketQua['daCoLich'] ?? false) {
+            return response()->json($ketQua, 409)->header('Cache-Control', 'private, no-store');
+        }
+
+        return response()->json(['data' => $ketQua], 201)->header('Cache-Control', 'private, no-store');
     }
 
     public function xacNhanBanGiao(Request $request, XuLyCuocHen $xuLy): JsonResponse

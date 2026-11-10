@@ -6,12 +6,15 @@ import FormField from '../../components/shared/FormField'
 import HopThoai from '../../components/shared/HopThoai'
 import ThongBaoTrong from '../../components/shared/ThongBaoTrong'
 import useDanhMuc from '../../components/shared/hooks/useDanhMuc'
+import useThongBaoThaoTac from '../../components/shared/hooks/useThongBaoThaoTac'
 import api, { prepareCsrf } from '../../services/api'
 import { chuanHoaTimKiem } from '../danh-sach-do/hooks/xuLyDanhSachDo.js'
 import FormCuocHen from './FormCuocHen'
 import KhungCuocHen from './KhungCuocHen'
 import useDanhSachYeuCauHen from './hooks/useDanhSachYeuCauHen'
+import useChiTietYeuCau from './hooks/useChiTietYeuCau'
 import dinhDangGioHen from './dinhDangGioHen'
+import { daXacNhanBanGiao } from './xuLyTienDoYeuCau'
 
 const HUONG_DAN_TAO_LICH = {
   goiY: 'Bạn có thể đọc hướng dẫn trước khi tạo cuộc hẹn.',
@@ -145,17 +148,22 @@ export function ChonYeuCauHen() {
 export function NhapThongTinLichHen() {
   const { yeuCau, dangTai: dangTaiYeuCau, loi: loiYeuCau, taiLai: taiLaiYeuCau } = useOutletContext()
   const dieuHuong = useNavigate()
+  const hienThongBao = useThongBaoThaoTac()
   const { diaDiem, dangTai, loiTai, taiLai } = useDanhMuc()
   const khoaGui = useRef(false)
   const [dangGui, datDangGui] = useState(false)
-  const [loiGui, datLoiGui] = useState('')
+  const [loiGui, datLoiGui] = useState(null)
   const [lichDaTao, datLichDaTao] = useState(null)
+  const { yc } = useChiTietYeuCau(lichDaTao?.yeuCauId)
+  const hen = yc?.cuoc_hen?.find((muc) => muc.id === lichDaTao?.cuocHenId)
+  const daBanGiao = daXacNhanBanGiao(hen)
+  const daHuy = hen?.trang_thai === 'da_huy'
 
   async function taoCuocHen({ ngay, gio, diaDiem: noiGap }) {
     if (khoaGui.current || !yeuCau || !noiGap) return
     khoaGui.current = true
     datDangGui(true)
-    datLoiGui('')
+    datLoiGui(null)
     try {
       await prepareCsrf()
       const { data } = await api.post('/me/cuoc-hen', {
@@ -164,7 +172,16 @@ export function NhapThongTinLichHen() {
       datLichDaTao(data.data)
       taiLaiYeuCau()
     } catch (loi) {
-      datLoiGui(loi.response?.data?.message || 'Chưa thể tạo cuộc hẹn. Vui lòng thử lại.')
+      const phanHoi = loi.response?.data
+      if (loi.response?.status === 409 && phanHoi?.daCoLich) {
+        const duongDan = `/chi-tiet-yeu-cau?id=${phanHoi.yeuCauId}&tab=lich-hen&cuocHen=${phanHoi.cuocHenId}`
+        hienThongBao('Yêu cầu đã có cuộc hẹn. Bạn đang xem lịch đã lưu.', 'info', duongDan)
+        return
+      }
+      datLoiGui({
+        noiDung: phanHoi?.message || 'Chưa thể tạo cuộc hẹn. Vui lòng thử lại.',
+        xemLich: loi.response?.status === 409,
+      })
     } finally {
       khoaGui.current = false
       datDangGui(false)
@@ -175,11 +192,15 @@ export function NhapThongTinLichHen() {
     <section aria-label="Kết quả tạo cuộc hẹn" className="space-y-5 rounded-3xl border border-emerald-100 bg-white p-5 shadow-sm sm:p-7">
       <h2 className="text-xl font-bold text-emerald-950">Đã tạo cuộc hẹn</h2>
       <p className="text-sm text-[#526c5b]">{dinhDangGioHen(lichDaTao.gioHen)} · {lichDaTao.diaDiem}</p>
-      <div className="rounded-xl bg-emerald-50 p-4 text-emerald-950">
-        <p className="text-sm font-semibold">Mã bàn giao</p>
-        <p className="mt-1 font-mono text-3xl tracking-widest">{lichDaTao.ma}</p>
-      </div>
-      <p className="text-sm leading-6 text-[#526c5b]">Mã chỉ hiện một lần. Hãy lưu lại và đưa cho người còn lại sau khi giao nhận đồ. Mã dùng từ giờ hẹn đến {dinhDangGioHen(lichDaTao.hetHanLuc)}.</p>
+      {daBanGiao ? <p role="status" className="rounded-xl bg-emerald-50 p-4 font-semibold text-emerald-950">Hai bên đã xác nhận bàn giao thành công.</p>
+        : daHuy ? <p role="status" className="rounded-xl bg-amber-50 p-4 text-sm text-amber-800">{hen.ly_do_huy || 'Cuộc hẹn đã bị hủy.'}</p>
+          : <>
+            <div className="rounded-xl bg-emerald-50 p-4 text-emerald-950">
+              <p className="text-sm font-semibold">Mã bàn giao</p>
+              <p className="mt-1 font-mono text-3xl tracking-widest">{lichDaTao.ma}</p>
+            </div>
+            <p className="text-sm leading-6 text-[#526c5b]">Mã chỉ hiện một lần. Hãy lưu lại và đưa cho người còn lại sau khi giao nhận đồ. Mã dùng từ giờ hẹn đến {dinhDangGioHen(lichDaTao.hetHanLuc)}.</p>
+          </>}
       <Link to={`/chi-tiet-yeu-cau?id=${lichDaTao.yeuCauId}&tab=lich-hen`} className="font-semibold text-emerald-800 hover:underline">Xem chi tiết cuộc hẹn</Link>
     </section>
   )
@@ -197,7 +218,10 @@ export function NhapThongTinLichHen() {
       </div>
       {dangTai && <p role="status" className="px-5 pt-4 text-sm text-[#526c5b] sm:px-7">Đang tải địa điểm…</p>}
       {loiTai && <div className="flex flex-wrap items-center gap-3 px-5 pt-4 text-sm text-rose-700 sm:px-7"><p role="alert">Không tải được địa điểm.</p><Button onClick={taiLai}>Thử lại</Button></div>}
-      {loiGui && <p role="alert" className="px-5 pt-4 text-sm text-rose-700 sm:px-7">{loiGui}</p>}
+      {loiGui && <div className="space-y-2 px-5 pt-4 text-sm sm:px-7">
+        <p role="alert" className="text-rose-700">{loiGui.noiDung}</p>
+        {loiGui.xemLich && <Link to={`/chi-tiet-yeu-cau?id=${yeuCau.id}&tab=lich-hen`} className="font-semibold text-emerald-800 hover:underline">Xem lịch hẹn của yêu cầu</Link>}
+      </div>}
       <FormCuocHen
         cacDiaDiem={diaDiem.map((muc) => ({ id: String(muc.id), ten: muc.name }))}
         khiXemLai={taoCuocHen}

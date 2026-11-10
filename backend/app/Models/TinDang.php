@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -95,6 +96,11 @@ class TinDang extends Model
     public function tinNhatDuocLienQuan(): HasMany
     {
         return $this->hasMany(TinDang::class, 'tin_bao_mat_lien_quan_id');
+    }
+
+    public function tinBaoMatDaThongBao(): BelongsToMany
+    {
+        return $this->belongsToMany(TinDang::class, 'doi_chieu_tin_dang', 'tin_nhat_id', 'tin_mat_id');
     }
 
     public function loiKhai(): HasMany

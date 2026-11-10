@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { ArrowLeft, ArrowRight, CalendarDays, Clock3, Mail, MapPin, Phone, RefreshCw, UserRound } from 'lucide-react'
-import api from '../../services/api'
+import { ArrowLeft, CalendarDays, Clock3, Mail, MapPin, Phone, RefreshCw, UserRound } from 'lucide-react'
 import ThongTinYeuCau from './ThongTinYeuCau'
 import TienDoYeuCau from './TienDoYeuCau'
 import dinhDangGioHen from './dinhDangGioHen'
+import useChiTietYeuCau from './hooks/useChiTietYeuCau'
 import { nhanTrangThaiLichHen } from './xuLyTienDoYeuCau'
 
 const nut = 'inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[#d6e4db] bg-white px-4 py-2.5 text-sm font-semibold text-emerald-900 transition-colors hover:bg-emerald-50 focus-visible:outline-2 focus-visible:outline-emerald-700'
@@ -14,28 +14,11 @@ export default function TaoCuocHen() {
   const [params] = useSearchParams()
   const id = params.get('id')
   const [lanTai, datLanTai] = useState(0)
-  const [nguon, datNguon] = useState(null)
-  const khoa = `${id}-${lanTai}`
-  useEffect(() => {
-    if (!id) return
-    const abort = new AbortController()
-    async function tai() {
-      try {
-        const { data } = await api.get(`/me/yeu-cau/${id}`, { signal: abort.signal })
-        if (!abort.signal.aborted) datNguon({ khoa, yc: data.data })
-      } catch (e) {
-        if (!abort.signal.aborted) datNguon({ khoa, loi: e.response?.status === 404 ? 'Không tìm thấy yêu cầu của bạn.' : 'Không tải được yêu cầu. Vui lòng thử lại.' })
-      }
-    }
-    tai()
-    const timer = window.setInterval(tai, 15000)
-    window.addEventListener('focus', tai)
-    return () => { abort.abort(); window.clearInterval(timer); window.removeEventListener('focus', tai) }
-  }, [id, khoa])
-  const yc = nguon?.khoa === khoa ? nguon.yc : null
-  const loi = nguon?.khoa === khoa ? nguon.loi : ''
+  const { yc, loi } = useChiTietYeuCau(id, lanTai)
   const cacHen = [...(yc?.cuoc_hen || [])].sort((a, b) => b.id - a.id)
-  const hen = cacHen.find((h) => ['cho_xac_nhan', 'da_xac_nhan', 'da_hoan_tat'].includes(h.trang_thai))
+  const cuocHenId = params.get('cuocHen')
+  const hen = cacHen.find((h) => String(h.id) === cuocHenId)
+    ?? cacHen.find((h) => ['cho_xac_nhan', 'da_xac_nhan', 'da_hoan_tat'].includes(h.trang_thai))
   const hoanTat = yc?.tin_dang?.trang_thai === 'da_hoan_tat' || hen?.trang_thai === 'da_hoan_tat'
   const duyet = yc?.trang_thai === 'da_xac_minh'
   const xemLichHen = duyet && params.get('tab') === 'lich-hen'
@@ -59,19 +42,25 @@ export default function TaoCuocHen() {
           <div className="flex items-center gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-800"><UserRound size={20} /></span><div><p className="text-xs text-[#718276]">{yc.laNguoiGiu ? 'Người nhận đồ' : 'Người giữ đồ'}</p><h2 className="mt-0.5 font-bold text-[#315a43]">{yc.lienHe.hoTen || 'Chưa có tên'}</h2></div></div>
           <div className="flex flex-wrap gap-x-8 gap-y-4"><ThongTinLienHe Icon={Phone} nhan="Điện thoại" giaTri={yc.lienHe.soDienThoai} href={yc.lienHe.soDienThoai ? `tel:${yc.lienHe.soDienThoai.replace(/[^+\d]/g, '')}` : null} /><ThongTinLienHe Icon={Mail} nhan="Email" giaTri={yc.lienHe.email} href={yc.lienHe.email ? `mailto:${yc.lienHe.email}` : null} /></div>
           </div>
-        {coTheDatHen && <div className="shrink-0"><Link to={`/cuoc-hen/tao/thong-tin?yeuCau=${yc.id}`} className={`${nut} w-full sm:w-auto sm:min-w-36 !border-emerald-900 !bg-emerald-900 !text-white hover:!bg-emerald-800`}>Đặt hẹn<ArrowRight size={16} /></Link></div>}
+        {coTheDatHen && <div className="rounded-xl border border-emerald-100 bg-emerald-50 p-4 text-sm leading-6 text-emerald-950 sm:w-72 sm:shrink-0">
+          <p className="font-semibold">Thống nhất lịch gặp</p>
+          <p className="mt-1">Vui lòng liên hệ với người còn lại để thống nhất giờ và địa điểm gặp. Sau đó, vào mục Đặt hẹn để tạo lịch.</p>
+        </div>}
           </div>
         </section>
         {hen && <section className="border-t border-[#edf2ee]"><div className="flex items-center justify-between gap-3 border-b border-[#edf2ee] px-5 py-4 sm:px-6"><h2 className="flex items-center gap-2 font-bold text-[#315a43]"><CalendarDays size={18} />Lịch hẹn giao nhận</h2>{hen && <span className="rounded-full bg-[#f1f6f3] px-3 py-1 text-xs text-[#607568]">{nhanTrangThaiLichHen(hen)}</span>}</div>
           {!xemLichHen && <Link to={`/chi-tiet-yeu-cau?id=${yc.id}&tab=lich-hen`} className="mx-5 mt-4 inline-flex text-sm font-semibold text-emerald-800 hover:underline sm:mx-6">Xem tiến trình bàn giao</Link>}
-          <div className="p-5 sm:p-6">{hen ? <div className="space-y-4"><div className="grid gap-3 sm:grid-cols-2"><div className="flex items-start gap-3 rounded-xl bg-[#f5f8f6] p-4"><Clock3 size={18} className="mt-0.5 shrink-0 text-emerald-700" /><div><p className="text-xs text-[#718276]">Thời gian gặp</p><p className="mt-1 text-sm font-semibold text-[#315a43]">{hen.thoi_gian_hen_gap ? dinhDangGioHen(hen.thoi_gian_hen_gap) : 'Chưa có thời gian'}</p></div></div><div className="flex items-start gap-3 rounded-xl bg-[#f5f8f6] p-4"><MapPin size={18} className="mt-0.5 shrink-0 text-emerald-700" /><div><p className="text-xs text-[#718276]">Địa điểm</p><p className="mt-1 text-sm font-semibold text-[#315a43]">{hen.dia_diem?.ten_dia_diem || 'Chưa có địa điểm'}</p></div></div></div>{(hen.nguoi_giu_xac_nhan_luc || hen.nguoi_nhan_xac_nhan_luc) && !hoanTat && <div className="space-y-1 text-sm text-[#607568]"><p>Người giữ đồ: {hen.nguoi_giu_xac_nhan_luc ? 'Đã xác nhận giao đồ' : 'Chưa xác nhận'}</p><p>Người nhận đồ: {hen.nguoi_nhan_xac_nhan_luc ? 'Đã xác nhận nhận đồ' : 'Chưa xác nhận'}</p></div>}{hen.dungMaBanGiao && !hoanTat && <div className="space-y-2 border-t border-emerald-100 pt-3 text-sm text-[#526c5b]">
+          <div className="space-y-4 p-5 sm:p-6"><div className="grid gap-3 sm:grid-cols-2"><div className="flex items-start gap-3 rounded-xl bg-[#f5f8f6] p-4"><Clock3 size={18} className="mt-0.5 shrink-0 text-emerald-700" /><div><p className="text-xs text-[#718276]">Thời gian gặp</p><p className="mt-1 text-sm font-semibold text-[#315a43]">{hen.thoi_gian_hen_gap ? dinhDangGioHen(hen.thoi_gian_hen_gap) : 'Chưa có thời gian'}</p></div></div><div className="flex items-start gap-3 rounded-xl bg-[#f5f8f6] p-4"><MapPin size={18} className="mt-0.5 shrink-0 text-emerald-700" /><div><p className="text-xs text-[#718276]">Địa điểm</p><p className="mt-1 text-sm font-semibold text-[#315a43]">{hen.dia_diem?.ten_dia_diem || 'Chưa có địa điểm'}</p></div></div></div>{(hen.nguoi_giu_xac_nhan_luc || hen.nguoi_nhan_xac_nhan_luc) && !hoanTat && <div className="space-y-1 text-sm text-[#607568]"><p>Người giữ đồ: {hen.nguoi_giu_xac_nhan_luc ? 'Đã xác nhận giao đồ' : 'Chưa xác nhận'}</p><p>Người nhận đồ: {hen.nguoi_nhan_xac_nhan_luc ? 'Đã xác nhận nhận đồ' : 'Chưa xác nhận'}</p></div>}
+            {hen.ly_do_huy && <p className="text-sm text-[#607568]">{hen.ly_do_huy}</p>}
+            {hen.dungMaBanGiao && !hoanTat && hen.trang_thai !== 'da_huy' && <div className="space-y-2 border-t border-emerald-100 pt-3 text-sm text-[#526c5b]">
               <p>{hen.laNguoiDeXuat ? 'Đưa mã đã lưu cho người còn lại sau khi giao nhận đồ.' : 'Sau khi giao nhận đồ, nhập mã do người tạo lịch cung cấp.'}</p>
               {!hen.laNguoiDeXuat && <Link to="/cuoc-hen/nhap-ma" className="inline-block font-semibold text-emerald-800 hover:underline">Nhập mã bàn giao</Link>}
-            </div>}</div> : null}</div>
+            </div>}
+          </div>
         </section>}
         {!hen && cacHen[0]?.ly_do_huy && <p className="border-t border-[#edf2ee] p-5 text-sm text-[#607568]">{cacHen[0].ly_do_huy}</p>}
 
-      </> : !tamDung && ['cho_kiem_tra', 'can_bo_sung'].includes(yc.trang_thai) && <p className="border-t border-[#edf2ee] p-5 text-sm leading-6 text-[#607568] sm:p-6">Thông tin liên hệ và đặt hẹn sẽ mở khi yêu cầu được duyệt.</p>}
+      </> : !tamDung && ['cho_kiem_tra', 'can_bo_sung'].includes(yc.trang_thai) && <p className="border-t border-[#edf2ee] p-5 text-sm leading-6 text-[#607568] sm:p-6">Bạn sẽ xem được thông tin liên hệ sau khi yêu cầu được duyệt.</p>}
       </article>
     </>}
   </div>

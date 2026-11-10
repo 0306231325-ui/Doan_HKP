@@ -107,7 +107,7 @@ export default function useGuiYeuCauNhanDo(id) {
       anhBieuMau.anh.forEach(({ tep }) => mau.append('anh[]', tep))
       await prepareCsrf()
       const { data: ketQua, status } = await api.post(`/tin-dang/${id}/nhan-lai`, mau, { headers: { 'Content-Type': undefined } })
-      if (status === 201) window.dispatchEvent(new Event('thong-bao:cap-nhat'))
+      if (status === 201) window.dispatchEvent(new Event('yeu-cau-nhan-do:da-gui'))
       const authAction = ketQua.yeuCauId ? { to: `/chi-tiet-yeu-cau?id=${ketQua.yeuCauId}`, label: 'Xem trạng thái yêu cầu' } : undefined
       dieuHuong('/theo-doi-yeu-cau', { replace: true, state: { authMessage: ketQua.message, authType: 'success', authAction } })
     } catch (loiGui) {
