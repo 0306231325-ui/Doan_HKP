@@ -7,14 +7,15 @@ export default function useTinDaDang(nguoiDungId) {
   const [thamSo, datThamSo] = useSearchParams()
   const [lanTai, datLanTai] = useState(0)
   const [ketQua, datKetQua] = useState(null)
+  const tuKhoa = (thamSo.get('tuKhoa') ?? '').trim()
   const trangNhap = Number(thamSo.get('trang'))
   const trang = Number.isSafeInteger(trangNhap) ? Math.max(1, Math.min(trangNhap, 1000000)) : 1
-  const khoa = `${nguoiDungId}:${trang}:${lanTai}`
+  const khoa = `${nguoiDungId}:${trang}:${lanTai}:${tuKhoa}`
   const dangTai = ketQua?.khoa !== khoa
 
   useEffect(function napTinDaDang() {
     const yeuCau = new AbortController()
-    api.get('/me/tin-dang', { params: { trang }, signal: yeuCau.signal }).then(({ data }) => {
+    api.get('/me/tin-dang', { params: { trang, tuKhoa: tuKhoa || undefined }, signal: yeuCau.signal }).then(({ data }) => {
       if (yeuCau.signal.aborted) return
       const danhSachDo = data.data.map((tin) => ({ ...tin, time: dinhDangNgay(tin.date) }))
       datKetQua({ khoa, danhSachDo, meta: data.meta })
@@ -22,7 +23,7 @@ export default function useTinDaDang(nguoiDungId) {
       if (!yeuCau.signal.aborted) datKetQua({ khoa, loiTai: 'Không tải được tin đã đăng. Vui lòng thử lại.' })
     })
     return () => yeuCau.abort()
-  }, [khoa, trang])
+  }, [khoa, trang, tuKhoa])
 
   function taiLai() {
     datLanTai((cu) => cu + 1)
@@ -37,5 +38,16 @@ export default function useTinDaDang(nguoiDungId) {
     })
   }
 
-  return { ...(dangTai ? {} : ketQua), dangTai, taiLai, chuyenTrang }
+  function timKiem(suKien) {
+    suKien.preventDefault()
+    const tuKhoaMoi = String(new FormData(suKien.currentTarget).get('tuKhoa') ?? '').trim()
+    datThamSo(tuKhoaMoi ? { tuKhoa: tuKhoaMoi } : {}, { replace: true })
+    if (tuKhoaMoi === tuKhoa && trang === 1) taiLai()
+  }
+
+  function xoaTimKiem() {
+    datThamSo({}, { replace: true })
+  }
+
+  return { ...(dangTai ? {} : ketQua), dangTai, taiLai, chuyenTrang, tuKhoa, timKiem, xoaTimKiem }
 }

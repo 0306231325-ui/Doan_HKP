@@ -12,6 +12,7 @@ use App\Services\DuLieuTinDang;
 use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -24,9 +25,13 @@ class DangTinController extends Controller
 {
     public function tinCuaToi(Request $request, DuLieuTinDang $duLieu): JsonResponse
     {
-        $mau = $request->validate(['trang' => ['nullable', 'integer', 'min:1', 'max:1000000']]);
+        $mau = $request->validate([
+            'trang' => ['nullable', 'integer', 'min:1', 'max:1000000'],
+            'tuKhoa' => ['nullable', 'string', 'max:200'],
+        ]);
         $id = $request->user()->id;
         $truyVan = TinDang::where('nguoi_dung_id', $id)->latest()->orderByDesc('id');
+        $duLieu->locTuKhoa($truyVan, trim($mau['tuKhoa'] ?? ''));
 
         return response()->json($duLieu->phanTrang($truyVan, (int) ($mau['trang'] ?? 1), (string) $id))
             ->header('Cache-Control', 'private, no-store');
@@ -109,12 +114,13 @@ class DangTinController extends Controller
                 ]);
                 $tin->loiKhai()->createMany($loiKhai);
                 foreach ($request->file('anh', []) as $thuTu => $tep) {
-                    $duongDan = $tep->store($tin->thuMucAnh(), 'anh-tin-dang');
+                    $tenAnh = $this->tenAnhMoi($tin, $tep);
+                    $duongDan = $tep->storeAs($tin->thuMucAnh(), $tenAnh, 'anh-tin-dang');
                     if (! $duongDan) {
                         throw new LogicException('Không lưu được ảnh. Vui lòng thử lại.');
                     }
                     $tepDaLuu[] = $duongDan;
-                    $tin->hinhAnh()->create(['nguoi_tai_len_id' => $request->user()->id, 'duong_dan' => '/api/tin-dang/anh/'.basename($duongDan), 'pham_vi' => 'cong_khai', 'thu_tu' => $thuTu]);
+                    $tin->hinhAnh()->create(['nguoi_tai_len_id' => $request->user()->id, 'duong_dan' => '/api/tin-dang/anh/'.$tenAnh, 'pham_vi' => 'cong_khai', 'thu_tu' => $thuTu]);
                 }
                 $tin->lichSu()->create(['nguoi_thuc_hien_id' => $request->user()->id, 'hanh_dong' => 'tao_tin', 'trang_thai_moi' => 'hien_thi', 'noi_dung' => 'Đã đăng tin.']);
 
@@ -124,6 +130,23 @@ class DangTinController extends Controller
             Storage::disk('anh-tin-dang')->delete($tepDaLuu);
             throw $loi;
         }
+    }
+
+    private function tenAnhMoi(TinDang $tin, UploadedFile $tep): string
+    {
+        $tenGoc = pathinfo($tep->getClientOriginalName(), PATHINFO_FILENAME);
+        $tenChuan = trim(substr(Str::slug($tenGoc), 0, 80), '-') ?: 'anh';
+        $tienTo = $tin->maTin().'-'.$tenChuan;
+        $phanMoRong = $tep->guessExtension();
+        $tenAnh = $tienTo.'.'.$phanMoRong;
+        $oDia = Storage::disk('anh-tin-dang');
+        $thuMuc = $tin->thuMucAnh();
+
+        for ($soThuTu = 2; $oDia->exists($thuMuc.'/'.$tenAnh); $soThuTu++) {
+            $tenAnh = $tienTo.'-'.$soThuTu.'.'.$phanMoRong;
+        }
+
+        return $tenAnh;
     }
 
     public function duLieuSua(Request $request, string $tin): JsonResponse

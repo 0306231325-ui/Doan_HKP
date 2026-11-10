@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState } from 'react'
-import { ChevronDown, ClipboardList, House, LogOut, ShieldCheck, UserRound } from 'lucide-react'
+import { ChevronDown, ClipboardList, FileText, House, LogOut, ShieldCheck, UserRound } from 'lucide-react'
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from './useAuth'
 import useDangXuat from './hooks/useDangXuat'
@@ -64,6 +64,7 @@ export default function AccountDropdown({ showProfile = true }) {
         <p className="mt-1 truncate text-xs text-gray-500">{user.email}</p>
       </div>
       {showProfile && <Link to="/trang-ca-nhan" onClick={() => setOpen(false)} className={itemClass}><UserRound size={18} aria-hidden="true" />Trang cá nhân</Link>}
+      {showProfile && <Link to="/tin-da-dang" onClick={() => setOpen(false)} className={itemClass}><FileText size={18} aria-hidden="true" />Tin đã đăng</Link>}
       {showProfile && <Link to="/theo-doi-yeu-cau" onClick={() => setOpen(false)} className={itemClass}><ClipboardList size={18} aria-hidden="true" />Theo dõi yêu cầu</Link>}
       {dangOTrangQuanTri && <Link to="/" onClick={() => setOpen(false)} className={itemClass}><House size={18} aria-hidden="true" />Xem trang người dùng</Link>}
       {user.vai_tro === 'quan_tri' && !dangOTrangQuanTri && <Link to="/admin" onClick={() => setOpen(false)} className={itemClass}><ShieldCheck size={18} aria-hidden="true" />Về trang quản trị</Link>}

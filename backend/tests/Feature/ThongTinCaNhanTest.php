@@ -23,7 +23,7 @@ class ThongTinCaNhanTest extends TestCase
             $table->string('ho_ten');
             $table->string('email')->unique();
             $table->string('mat_khau');
-            foreach (['ma_so', 'so_dien_thoai', 'khoa', 'lop', 'anh_dai_dien'] as $column) {
+            foreach (['ma_so', 'so_dien_thoai', 'anh_dai_dien'] as $column) {
                 $table->string($column)->nullable();
             }
             $table->string('vai_tro')->default('nguoi_dung');
@@ -37,20 +37,20 @@ class ThongTinCaNhanTest extends TestCase
     {
         return NguoiDung::create([
             'ho_ten' => 'Nguyễn Văn A', 'email' => $email, 'mat_khau' => Hash::make('Password@123'),
-            'ma_so' => 'SV001', 'so_dien_thoai' => '0901234567', 'khoa' => 'CNTT', 'lop' => 'CTK46',
+            'ma_so' => 'SV001', 'so_dien_thoai' => '0901234567',
             'vai_tro' => 'nguoi_dung', 'trang_thai' => 'hoat_dong',
         ]);
     }
 
     private function duLieuHoSo(NguoiDung $user): array
     {
-        return $user->only(['ho_ten', 'email', 'ma_so', 'so_dien_thoai', 'khoa', 'lop']);
+        return $user->only(['ho_ten', 'email', 'ma_so', 'so_dien_thoai']);
     }
 
     public function test_doc_ho_so_day_du_va_khong_lo_mat_khau(): void
     {
         $this->actingAs($this->taoTaiKhoan())->getJson('/api/me')->assertOk()
-            ->assertJsonPath('user.khoa', 'CNTT')->assertJsonPath('user.ma_so', 'SV001')
+            ->assertJsonMissingPath('user.khoa')->assertJsonMissingPath('user.lop')->assertJsonPath('user.ma_so', 'SV001')
             ->assertJsonPath('user.so_dien_thoai', '0901234567')->assertJsonMissingPath('user.mat_khau');
     }
 
@@ -60,9 +60,10 @@ class ThongTinCaNhanTest extends TestCase
         $other = $this->taoTaiKhoan('khac@example.test');
         $hash = $user->mat_khau;
         $this->actingAs($user)->patchJson('/api/me', array_merge($this->duLieuHoSo($user), [
-            'id' => $other->id, 'ho_ten' => 'Tên mới', 'khoa' => null,
+            'id' => $other->id, 'ho_ten' => 'Tên mới', 'khoa' => 'CNTT', 'lop' => 'CTK46',
             'vai_tro' => 'quan_tri', 'trang_thai' => 'bi_khoa', 'mat_khau' => 'ghi-de',
-        ]))->assertOk()->assertJsonPath('updated', true)->assertJsonPath('user.ho_ten', 'Tên mới')->assertJsonPath('user.khoa', null)->assertJsonMissingPath('user.mat_khau');
+        ]))->assertOk()->assertJsonPath('updated', true)->assertJsonPath('user.ho_ten', 'Tên mới')
+            ->assertJsonMissingPath('user.khoa')->assertJsonMissingPath('user.lop')->assertJsonMissingPath('user.mat_khau');
         $this->assertSame('nguoi_dung', $user->fresh()->vai_tro);
         $this->assertSame('hoat_dong', $user->fresh()->trang_thai);
         $this->assertSame($hash, $user->fresh()->mat_khau);
@@ -96,8 +97,8 @@ class ThongTinCaNhanTest extends TestCase
     public function test_kiem_tra_du_lieu_va_chan_tai_khoan_bi_khoa(): void
     {
         $user = $this->taoTaiKhoan();
-        $this->actingAs($user)->patchJson('/api/me', ['ho_ten' => ' ', 'email' => 'sai', 'so_dien_thoai' => 'abc', 'lop' => str_repeat('x', 51)])
-            ->assertUnprocessable()->assertJsonValidationErrors(['ho_ten', 'email', 'so_dien_thoai', 'lop']);
+        $this->actingAs($user)->patchJson('/api/me', ['ho_ten' => ' ', 'email' => 'sai', 'so_dien_thoai' => 'abc'])
+            ->assertUnprocessable()->assertJsonValidationErrors(['ho_ten', 'email', 'so_dien_thoai']);
         $user->update(['trang_thai' => 'bi_khoa']);
         $this->patchJson('/api/me', $this->duLieuHoSo($user))->assertForbidden();
         $this->putJson('/api/me/mat-khau', [])->assertForbidden();

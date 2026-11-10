@@ -15,6 +15,8 @@ export default function useQuanLyDanhMuc() {
   const [loiThaoTac, datLoiThaoTac] = useState('')
   const khoaGui = useRef(false)
   const hienThongBao = useThongBaoThaoTac()
+  const tongDanhMuc = danhSach.length
+  const soHoatDong = danhSach.filter((muc) => muc.dangHoatDong).length
   const cacDanhMuc = locDanhSachDanhMuc(danhSach.map((muc, index) => ({ ...muc, stt: index + 1 })), boLoc)
   const coBoLoc = Boolean(chuanHoaTuKhoa(boLoc.tuKhoa) || boLoc.trangThai !== 'tat_ca')
 
@@ -108,5 +110,5 @@ export default function useQuanLyDanhMuc() {
     }
   }
 
-  return { cacDanhMuc, boLoc, coBoLoc, doiBoLoc, xoaBoLoc, dangTai, loiTai, taiLai, bieuMau, loiBieuMau, dangLuu, danhMucDangDoi, thaoTacChoXacNhan, loiThaoTac, moXacNhanThaoTac, dongXacNhanThaoTac, xacNhanThaoTac, moThemDanhMuc, dongBieuMau, thayDoiBieuMau, yeuCauThemDanhMuc }
+  return { cacDanhMuc, tongDanhMuc, soHoatDong, soAn: tongDanhMuc - soHoatDong, boLoc, coBoLoc, doiBoLoc, xoaBoLoc, dangTai, loiTai, taiLai, bieuMau, loiBieuMau, dangLuu, danhMucDangDoi, thaoTacChoXacNhan, loiThaoTac, moXacNhanThaoTac, dongXacNhanThaoTac, xacNhanThaoTac, moThemDanhMuc, dongBieuMau, thayDoiBieuMau, yeuCauThemDanhMuc }
 }

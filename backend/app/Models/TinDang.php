@@ -52,6 +52,11 @@ class TinDang extends Model
         return $this->co_gio_xay_ra || $thoiGian->format('H:i:s') !== '00:00:00' ? $thoiGian->format('H:i') : null;
     }
 
+    public function maTin(): string
+    {
+        return 'TIN-'.str_pad((string) $this->id, 6, '0', STR_PAD_LEFT);
+    }
+
     public function thuMucAnh(): string
     {
         return $this->loai_tin === 'nhat_duoc' ? 'tin/tin-nhat' : 'tin/tin-mat';

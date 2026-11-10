@@ -17,7 +17,7 @@ class QuanLyNguoiDungTest extends TestCase
         DB::purge('sqlite');
         Schema::create('nguoi_dung', function (Blueprint $table) {
             $table->id();
-            foreach (['ho_ten', 'email', 'mat_khau', 'ma_so', 'so_dien_thoai', 'khoa', 'lop', 'anh_dai_dien', 'ly_do_khoa'] as $cot) {
+            foreach (['ho_ten', 'email', 'mat_khau', 'ma_so', 'so_dien_thoai', 'anh_dai_dien', 'ly_do_khoa'] as $cot) {
                 $table->string($cot)->nullable();
             }
             $table->string('vai_tro')->default('nguoi_dung');

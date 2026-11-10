@@ -12,7 +12,7 @@ export default function BangNguoiDung({ cacNguoiDung, thongKe, xoaBoLoc, moChiTi
           <thead className="border-y border-[#e1eae4] bg-[#f8fbf9] text-xs font-semibold text-[#687d70]">
             <tr>
               <th scope="col" className="px-6 py-4">Người dùng</th>
-              <th scope="col" className="px-4 py-4">Mã số / Đơn vị</th>
+              <th scope="col" className="px-4 py-4">Mã số</th>
               <th scope="col" className="px-4 py-4">Vai trò</th>
               <th scope="col" className="px-4 py-4">Trạng thái</th>
               <th scope="col" className="px-6 py-4 text-right">Thao tác</th>
@@ -30,7 +30,7 @@ export default function BangNguoiDung({ cacNguoiDung, thongKe, xoaBoLoc, moChiTi
                       <p className="mt-1 break-all text-xs text-[#718276]">{nguoiDung.email || 'Chưa có email'}</p>
                     </div>
                   </th>
-                  <td className="max-w-48 px-4 py-5"><p className="font-medium text-[#344d3e]">{nguoiDung.ma_so || '—'}</p><p className="mt-1.5 break-words text-xs leading-5 text-[#718276]">{nguoiDung.khoa || nguoiDung.lop || 'Chưa có đơn vị'}</p></td>
+                  <td className="max-w-48 break-words px-4 py-5 font-medium text-[#344d3e]">{nguoiDung.ma_so || '—'}</td>
                   <td className="px-4 py-5"><NhanTaiKhoan nguoiDung={nguoiDung} loai="vai_tro" /></td>
                   <td className="px-4 py-5"><NhanTaiKhoan nguoiDung={nguoiDung} /></td>
                   <td className="px-6 py-5">

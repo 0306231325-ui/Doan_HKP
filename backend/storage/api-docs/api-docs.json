@@ -363,7 +363,7 @@
                                         "example": "[{\"id\":1,\"phienBanId\":1,\"giaTri\":\"Đen\"}]"
                                     },
                                     "anh[]": {
-                                        "description": "Tối đa 3 ảnh JPG/PNG/WebP, 5 MB/ảnh, kích thước tối đa 8192 mỗi chiều",
+                                        "description": "Tối đa 3 ảnh JPG/PNG/WebP, 5 MB/ảnh, kích thước tối đa 8192 mỗi chiều. Tên lưu ghép mã tin và tên ảnh đã chuẩn hóa, thêm số khi trùng.",
                                         "type": "array",
                                         "items": {
                                             "type": "string",
@@ -611,9 +611,11 @@
                     {
                         "name": "tenAnh",
                         "in": "path",
+                        "description": "Tên ảnh theo mã tin hoặc tên ảnh đã lưu trước đây",
                         "required": true,
                         "schema": {
-                            "type": "string"
+                            "type": "string",
+                            "example": "TIN-000001-vi-da.jpg"
                         }
                     }
                 ],
@@ -1612,7 +1614,7 @@
                 "operationId": "aacbcfc38e46c39c0c9807f03b7ca5d9",
                 "responses": {
                     "200": {
-                        "description": "user gồm id, ho_ten, email, ma_so, so_dien_thoai, khoa, lop, anh_dai_dien, vai_tro, trang_thai, created_at; không có mật khẩu"
+                        "description": "user gồm id, ho_ten, email, ma_so, so_dien_thoai, anh_dai_dien, vai_tro, trang_thai, created_at; không có mật khẩu"
                     },
                     "401": {
                         "description": "Chưa đăng nhập"
@@ -1667,16 +1669,6 @@
                                         "nullable": true,
                                         "maxLength": 20
                                     },
-                                    "khoa": {
-                                        "type": "string",
-                                        "nullable": true,
-                                        "maxLength": 100
-                                    },
-                                    "lop": {
-                                        "type": "string",
-                                        "nullable": true,
-                                        "maxLength": 50
-                                    },
                                     "current_password": {
                                         "description": "Bắt buộc đúng mật khẩu hiện tại khi đổi email",
                                         "type": "string",
@@ -1721,6 +1713,15 @@
                             "maximum": 1000000,
                             "minimum": 1
                         }
+                    },
+                    {
+                        "name": "tuKhoa",
+                        "in": "query",
+                        "description": "Tìm theo tên, mô tả, địa điểm, danh mục hoặc mã tin trước khi phân trang",
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 200
+                        }
                     }
                 ],
                 "responses": {
@@ -1734,7 +1735,7 @@
                         "description": "Tài khoản bị khóa"
                     },
                     "422": {
-                        "description": "Số trang không hợp lệ"
+                        "description": "Số trang hoặc từ khóa không hợp lệ"
                     },
                     "429": {
                         "description": "Tối đa 120 lần/phút"
@@ -2469,6 +2470,201 @@
                     }
                 }
             }
+        },
+        "/api/me/yeu-cau": {
+            "get": {
+                "tags": [
+                    "Cuộc hẹn"
+                ],
+                "summary": "Danh sách yêu cầu nhận đồ của tài khoản",
+                "operationId": "8a907f5daa0c7afc6fed3f656f5c390d",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Danh sách phân trang, gồm coTheDatLich và trạng thái các cuộc hẹn. Lịch hết hạn được chuyển sang đã hủy khi kiểm tra."
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Tài khoản đã bị khóa"
+                    }
+                }
+            }
+        },
+        "/api/me/yeu-cau/{id}": {
+            "get": {
+                "tags": [
+                    "Cuộc hẹn"
+                ],
+                "summary": "Chi tiết yêu cầu và cuộc hẹn",
+                "operationId": "ff70df9baa675b70782d0cd6f2c6e9c4",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Dữ liệu yêu cầu và lịch. Bàn giao có thời điểm hoàn tất nếu đã xác nhận. Liên hệ mở cho hai bên sau khi duyệt."
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Tài khoản đã bị khóa"
+                    },
+                    "404": {
+                        "description": "Yêu cầu không tồn tại hoặc tài khoản không có quyền xem"
+                    }
+                }
+            }
+        },
+        "/api/me/cuoc-hen": {
+            "post": {
+                "tags": [
+                    "Cuộc hẹn"
+                ],
+                "summary": "Tạo cuộc hẹn và nhận mã bàn giao",
+                "operationId": "31a8547e9d4e8c222157ad2955710a1e",
+                "parameters": [
+                    {
+                        "name": "X-XSRF-TOKEN",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "yeuCauId",
+                                    "diaDiemId",
+                                    "thoiGianHen"
+                                ],
+                                "properties": {
+                                    "yeuCauId": {
+                                        "type": "integer",
+                                        "minimum": 1
+                                    },
+                                    "diaDiemId": {
+                                        "type": "integer",
+                                        "minimum": 1
+                                    },
+                                    "thoiGianHen": {
+                                        "description": "Giờ Việt Nam theo định dạng YYYY-MM-DD HH:mm",
+                                        "type": "string",
+                                        "example": "2026-11-10 14:30"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "data gồm ma (chuỗi 6 số), yeuCauId, cuocHenId, gioHen, hetHanLuc và diaDiem. Mã chỉ trả cho người tạo trong lần này. Máy chủ lưu một giá trị HMAC gắn với tài khoản nhập mã."
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Tài khoản đã bị khóa"
+                    },
+                    "404": {
+                        "description": "Yêu cầu không tồn tại hoặc tài khoản không tham gia"
+                    },
+                    "409": {
+                        "description": "Yêu cầu chưa duyệt, đã kết thúc hoặc có lịch đang hiệu lực"
+                    },
+                    "422": {
+                        "description": "Ngày giờ, địa điểm hoặc dữ liệu không hợp lệ"
+                    },
+                    "429": {
+                        "description": "Đã vượt giới hạn thao tác"
+                    }
+                }
+            }
+        },
+        "/api/me/cuoc-hen/xac-nhan-ban-giao": {
+            "post": {
+                "tags": [
+                    "Cuộc hẹn"
+                ],
+                "summary": "Xác nhận bàn giao bằng mã 6 số",
+                "operationId": "2896d2bffd2e8a5b608c4eb23578579e",
+                "parameters": [
+                    {
+                        "name": "X-XSRF-TOKEN",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "ma"
+                                ],
+                                "properties": {
+                                    "ma": {
+                                        "type": "string",
+                                        "pattern": "^[0-9]{6}$",
+                                        "example": "042731"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Hai bên đã xác nhận. Trả message, yeuCauId và cuocHenId. Gửi lại cùng mã chỉ trả kết quả cũ."
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Tài khoản đã bị khóa"
+                    },
+                    "409": {
+                        "description": "Chưa đến giờ hẹn, hết hạn hoặc lịch không còn hiệu lực"
+                    },
+                    "422": {
+                        "description": "Mã sai, sai định dạng hoặc không dành cho tài khoản hiện tại"
+                    },
+                    "429": {
+                        "description": "Đã vượt giới hạn nhập mã"
+                    }
+                }
+            }
         }
     },
     "components": {
@@ -2556,6 +2752,10 @@
         {
             "name": "Thông báo",
             "description": "Thông báo"
+        },
+        {
+            "name": "Cuộc hẹn",
+            "description": "Cuộc hẹn"
         }
     ]
 }

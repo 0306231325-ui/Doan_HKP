@@ -1,15 +1,27 @@
 import { CalendarDays, ClipboardCheck, SearchX } from 'lucide-react'
 import { useRef, useState } from 'react'
-import { Link, Navigate, Outlet, useNavigate, useOutletContext } from 'react-router-dom'
+import { Link, Navigate, Outlet, useNavigate, useOutletContext, useSearchParams } from 'react-router-dom'
 import Button from '../../components/shared/Button'
 import FormField from '../../components/shared/FormField'
 import HopThoai from '../../components/shared/HopThoai'
 import ThongBaoTrong from '../../components/shared/ThongBaoTrong'
 import useDanhMuc from '../../components/shared/hooks/useDanhMuc'
+import api, { prepareCsrf } from '../../services/api'
 import { chuanHoaTimKiem } from '../danh-sach-do/hooks/xuLyDanhSachDo.js'
 import FormCuocHen from './FormCuocHen'
 import KhungCuocHen from './KhungCuocHen'
 import useDanhSachYeuCauHen from './hooks/useDanhSachYeuCauHen'
+import dinhDangGioHen from './dinhDangGioHen'
+
+const HUONG_DAN_TAO_LICH = {
+  goiY: 'Bạn có thể đọc hướng dẫn trước khi tạo cuộc hẹn.',
+  tieuDe: 'Hướng dẫn tạo cuộc hẹn',
+  cacBuoc: [
+    ['Chọn yêu cầu đã duyệt.', 'Người giữ đồ hoặc người nhận đều có thể tạo lịch sau khi hai bên thống nhất bàn giao.'],
+    ['Điền thông tin cuộc hẹn.', 'Chọn ngày, giờ Việt Nam và địa điểm gặp trong trường theo thỏa thuận. Sau đó bấm Xác nhận tạo lịch.'],
+    ['Lưu mã bàn giao.', 'Mã 6 số chỉ hiện một lần sau khi tạo lịch. Lưu lại và đưa cho người còn lại sau khi đã giao nhận đồ.'],
+  ],
+}
 
 export default function LapLichHen() {
   const nguonYeuCau = useDanhSachYeuCauHen()
@@ -17,7 +29,7 @@ export default function LapLichHen() {
   const [tuKhoa, datTuKhoa] = useState('')
 
   return (
-    <KhungCuocHen rong tieuDe="Tạo cuộc hẹn" moTa="Người giữ đồ hoặc người nhận đều có thể tạo lịch theo giờ và địa điểm hai bên đã thống nhất.">
+    <KhungCuocHen rong tieuDe="Tạo cuộc hẹn" huongDan={HUONG_DAN_TAO_LICH}>
       <Outlet context={{ yeuCau, datYeuCau, tuKhoa, datTuKhoa, ...nguonYeuCau }} />
     </KhungCuocHen>
   )
@@ -26,6 +38,7 @@ export default function LapLichHen() {
 export function ChonYeuCauHen() {
   const { yeuCau, datYeuCau, tuKhoa, datTuKhoa, danhSach, dangTai, loi, taiLai } = useOutletContext()
   const dieuHuong = useNavigate()
+  const [thamSo] = useSearchParams()
   const vungCuon = useRef(null)
   const [yeuCauDangXem, datYeuCauDangXem] = useState(null)
   const tuKhoaChuan = chuanHoaTimKiem(tuKhoa)
@@ -36,6 +49,8 @@ export function ChonYeuCauHen() {
     vaiTro: muc.laNguoiGiu ? 'Bạn là người giữ đồ' : 'Bạn là người nhận đồ',
     nguoiConLai: muc.lienHe?.hoTen,
   })).filter((muc) => chuanHoaTimKiem(`${muc.ma} ${muc.ten}`).includes(tuKhoaChuan))
+  const idDangChon = yeuCau?.id ?? thamSo.get('yeuCauId')
+  const dangChon = ketQua.find((muc) => String(muc.id) === String(idDangChon))
 
   function doiTuKhoa(suKien) {
     datTuKhoa(suKien.target.value)
@@ -48,7 +63,9 @@ export function ChonYeuCauHen() {
 
   function xacNhanYeuCau(suKien) {
     suKien.preventDefault()
-    if (yeuCau) dieuHuong('thong-tin')
+    if (!dangChon) return
+    datYeuCau(dangChon)
+    dieuHuong('thong-tin')
   }
 
   return (
@@ -72,7 +89,7 @@ export function ChonYeuCauHen() {
                 {ketQua.map((muc) => (
                   <div key={muc.id} className="flex flex-wrap items-center gap-2 rounded-xl border border-[#ceded3] bg-white p-4 hover:bg-emerald-50 has-checked:border-emerald-700 has-checked:bg-emerald-50 sm:flex-nowrap sm:gap-4">
                     <label className="flex min-w-0 basis-full cursor-pointer items-start gap-3 sm:flex-1">
-                      <input type="radio" name="yeuCau" value={muc.id} checked={yeuCau?.id === muc.id} onChange={() => datYeuCau(muc)} className="mt-1.5 shrink-0 accent-emerald-800" />
+                      <input type="radio" name="yeuCau" value={muc.id} checked={dangChon?.id === muc.id} onChange={() => datYeuCau(muc)} className="mt-1.5 shrink-0 accent-emerald-800" />
                       <span className="min-w-0">
                         <span className="block font-semibold text-emerald-950">{muc.ten}</span>
                         <span className="mt-1 block text-sm leading-5 text-[#526c5b]">{muc.ma} · {muc.vaiTro}</span>
@@ -95,8 +112,8 @@ export function ChonYeuCauHen() {
           ))}
         </div>
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-b-3xl border-t border-[#e1eae4] bg-[#f9fbfa] px-5 py-4 sm:px-7">
-          {yeuCau && <p className="text-sm font-semibold text-emerald-900">Đã chọn {yeuCau.ten} · {yeuCau.ma}</p>}
-          <Button type="submit" disabled={!yeuCau} className="ml-auto">Xác nhận và tiếp tục</Button>
+          {dangChon && <p className="text-sm font-semibold text-emerald-900">Đã chọn {dangChon.ten} · {dangChon.ma}</p>}
+          <Button type="submit" disabled={!dangChon} className="ml-auto">Xác nhận và tiếp tục</Button>
         </div>
       </form>
       {yeuCauDangXem && (
@@ -121,11 +138,48 @@ export function ChonYeuCauHen() {
 }
 
 export function NhapThongTinLichHen() {
-  const { yeuCau } = useOutletContext()
+  const { yeuCau, taiLai: taiLaiYeuCau } = useOutletContext()
   const dieuHuong = useNavigate()
   const { diaDiem, dangTai, loiTai, taiLai } = useDanhMuc()
+  const khoaGui = useRef(false)
+  const [dangGui, datDangGui] = useState(false)
+  const [loiGui, datLoiGui] = useState('')
+  const [lichDaTao, datLichDaTao] = useState(null)
 
   if (!yeuCau) return <Navigate to="/cuoc-hen/tao" replace />
+
+  async function taoCuocHen({ ngay, gio, diaDiem: noiGap }) {
+    if (khoaGui.current || !noiGap) return
+    khoaGui.current = true
+    datDangGui(true)
+    datLoiGui('')
+    try {
+      await prepareCsrf()
+      const { data } = await api.post('/me/cuoc-hen', {
+        yeuCauId: yeuCau.id, diaDiemId: noiGap.id, thoiGianHen: `${ngay} ${gio}`,
+      })
+      datLichDaTao(data.data)
+      taiLaiYeuCau()
+    } catch (loi) {
+      datLoiGui(loi.response?.data?.message || 'Chưa thể tạo cuộc hẹn. Vui lòng thử lại.')
+    } finally {
+      khoaGui.current = false
+      datDangGui(false)
+    }
+  }
+
+  if (lichDaTao) return (
+    <section aria-label="Kết quả tạo cuộc hẹn" className="space-y-5 rounded-3xl border border-emerald-100 bg-white p-5 shadow-sm sm:p-7">
+      <h2 className="text-xl font-bold text-emerald-950">Đã tạo cuộc hẹn</h2>
+      <p className="text-sm text-[#526c5b]">{dinhDangGioHen(lichDaTao.gioHen)} · {lichDaTao.diaDiem}</p>
+      <div className="rounded-xl bg-emerald-50 p-4 text-emerald-950">
+        <p className="text-sm font-semibold">Mã bàn giao</p>
+        <p className="mt-1 font-mono text-3xl tracking-widest">{lichDaTao.ma}</p>
+      </div>
+      <p className="text-sm leading-6 text-[#526c5b]">Mã chỉ hiện một lần. Hãy lưu lại và đưa cho người còn lại sau khi giao nhận đồ. Mã dùng từ giờ hẹn đến {dinhDangGioHen(lichDaTao.hetHanLuc)}.</p>
+      <Link to={`/chi-tiet-yeu-cau?id=${lichDaTao.yeuCauId}`} className="font-semibold text-emerald-800 hover:underline">Xem chi tiết cuộc hẹn</Link>
+    </section>
+  )
 
   return (
     <section className="rounded-3xl border border-emerald-100 bg-white shadow-sm">
@@ -136,9 +190,11 @@ export function NhapThongTinLichHen() {
       </div>
       {dangTai && <p role="status" className="px-5 pt-4 text-sm text-[#526c5b] sm:px-7">Đang tải địa điểm…</p>}
       {loiTai && <div className="flex flex-wrap items-center gap-3 px-5 pt-4 text-sm text-rose-700 sm:px-7"><p role="alert">Không tải được địa điểm.</p><Button onClick={taiLai}>Thử lại</Button></div>}
-      <p className="px-5 pt-4 text-sm text-[#526c5b] sm:px-7">Tính năng lưu cuộc hẹn đang được hoàn thiện.</p>
+      {loiGui && <p role="alert" className="px-5 pt-4 text-sm text-rose-700 sm:px-7">{loiGui}</p>}
       <FormCuocHen
         cacDiaDiem={diaDiem.map((muc) => ({ id: String(muc.id), ten: muc.name }))}
+        khiXemLai={taoCuocHen}
+        dangGui={dangGui}
         khiHuy={() => dieuHuong('/cuoc-hen/tao')}
         nhanXemLai="Xác nhận tạo lịch"
         nhanHuy="Quay lại"

@@ -17,7 +17,7 @@ export default function useChiTietTinDang() {
   const tin = hopLe && !dangTai ? ketQua.tin : null
   const loi = hopLe && !dangTai ? ketQua.loi : ''
   const noiQuayLai = viTri.state?.quayLai
-  const quayLai = typeof noiQuayLai === 'string' && /^\/(?:\?|$|(?:danh-sach-do|trang-ca-nhan)(?:\?|$))/.test(noiQuayLai) ? noiQuayLai : '/danh-sach-do'
+  const quayLai = typeof noiQuayLai === 'string' && /^\/(?:\?|$|(?:danh-sach-do|trang-ca-nhan|tin-da-dang)(?:\?|$))/.test(noiQuayLai) ? noiQuayLai : '/danh-sach-do'
 
   useEffect(function napChiTiet() {
     window.scrollTo(0, 0)

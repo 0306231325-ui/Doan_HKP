@@ -4,8 +4,8 @@ export default function useThongBaoThaoTac() {
   const location = useLocation()
   const navigate = useNavigate()
 
-  function hienThongBao(noiDung, loai = 'success') {
-    navigate(location.pathname + location.search + location.hash, {
+  function hienThongBao(noiDung, loai = 'success', duongDan = location.pathname + location.search + location.hash) {
+    navigate(duongDan, {
       replace: true,
       state: { ...location.state, authMessage: noiDung, authType: loai },
     })

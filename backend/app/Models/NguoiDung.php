@@ -24,8 +24,6 @@ class NguoiDung extends Authenticatable
         'mat_khau',
         'so_dien_thoai',
         'ma_so',
-        'khoa',
-        'lop',
         'vai_tro',
         'trang_thai',
         'ly_do_khoa',
@@ -53,7 +51,7 @@ class NguoiDung extends Authenticatable
 
     public function thongTinCaNhan(): array
     {
-        return $this->only(['id', 'ho_ten', 'email', 'ma_so', 'so_dien_thoai', 'khoa', 'lop', 'anh_dai_dien', 'vai_tro', 'trang_thai', 'created_at']);
+        return $this->only(['id', 'ho_ten', 'email', 'ma_so', 'so_dien_thoai', 'anh_dai_dien', 'vai_tro', 'trang_thai', 'created_at']);
     }
 
     public function kiemTraMatKhau(string $matKhau): bool
@@ -89,11 +87,6 @@ class NguoiDung extends Authenticatable
     public function cuocHenXacNhan(): HasMany
     {
         return $this->hasMany(CuocHen::class, 'nguoi_xac_nhan_id');
-    }
-
-    public function banGiaoDaXacNhan(): HasMany
-    {
-        return $this->hasMany(BanGiao::class, 'nguoi_xac_nhan_ban_giao_id');
     }
 
     public function hinhAnhTinDang(): HasMany

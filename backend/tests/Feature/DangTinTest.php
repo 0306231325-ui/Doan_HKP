@@ -291,14 +291,23 @@ class DangTinTest extends TestCase
     public function test_nhieu_anh_luu_that_va_chi_chu_tin_duoc_doc_anh_tin_da_an(): void
     {
         $mau = $this->mau();
-        $mau['anh'] = [UploadedFile::fake()->image('mot.jpg'), UploadedFile::fake()->image('hai.png'), UploadedFile::fake()->image('ba.jpg')];
+        $mau['anh'] = [UploadedFile::fake()->image('Ví da.jpg'), UploadedFile::fake()->image('Ví da.jpg'), UploadedFile::fake()->image('hai.png')];
         $this->post('/api/tin-dang', [...$mau, 'anh' => [...$mau['anh'], UploadedFile::fake()->image('bon.jpg')]], ['Accept' => 'application/json'])
             ->assertUnprocessable()->assertJsonValidationErrors('anh');
         $this->assertDatabaseCount('tin_dang', 0);
         $id = $this->post('/api/tin-dang', $mau, ['Accept' => 'application/json'])->assertCreated()->json('data.id');
         $this->assertDatabaseCount('hinh_anh_tin_dang', 3);
         $this->assertCount(3, Storage::disk('anh-tin-dang')->allFiles('tin/tin-nhat'));
-        $this->getJson('/api/tra-cuu/'.$id)->assertOk()->assertJsonCount(3, 'data.images');
+        $maTin = sprintf('TIN-%06d', $id);
+        $this->getJson('/api/tra-cuu/'.$id)->assertOk()->assertJsonCount(3, 'data.images')
+            ->assertJsonPath('data.referenceCode', $maTin)
+            ->assertJsonPath('data.images.0', '/api/tin-dang/anh/'.$maTin.'-vi-da.jpg')
+            ->assertJsonPath('data.images.1', '/api/tin-dang/anh/'.$maTin.'-vi-da-2.jpg')
+            ->assertJsonPath('data.images.2', '/api/tin-dang/anh/'.$maTin.'-hai.png');
+        $tenCu = str_repeat('a', 40).'.jpg';
+        Storage::disk('anh-tin-dang')->move('tin/tin-nhat/'.$maTin.'-vi-da-2.jpg', 'tin/tin-nhat/'.$tenCu);
+        HinhAnhTinDang::where('thu_tu', 1)->update(['duong_dan' => '/api/tin-dang/anh/'.$tenCu]);
+        $this->get('/api/tin-dang/anh/'.$tenCu)->assertOk();
         $url = HinhAnhTinDang::first()->duong_dan;
         $this->get($url)->assertOk();
         $tep = basename($url);
@@ -337,7 +346,7 @@ class DangTinTest extends TestCase
         for ($viTri = 0; $viTri < 6; $viTri++) {
             $tin->replicate()->fill(['slug' => 'tin-thu-'.$viTri, 'ma_gui' => null])->save();
         }
-        $tin->update(['trang_thai_kiem_duyet' => 'da_an']);
+        $tin->update(['trang_thai_kiem_duyet' => 'da_an', 'tieu_de' => 'Vi da thu nghiem']);
         $tin->replicate()->fill(['slug' => 'tin-da-xoa', 'ma_gui' => null])->save();
         TinDang::where('slug', 'tin-da-xoa')->delete();
         $tinKhac = $tin->replicate()->fill(['slug' => 'tin-nguoi-khac', 'ma_gui' => null, 'nguoi_dung_id' => $this->nguoiNhan->id, 'trang_thai_kiem_duyet' => 'hien_thi']);
@@ -349,6 +358,12 @@ class DangTinTest extends TestCase
         $this->getJson($url.'?trang=99')->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('meta.trangHienTai', 2)
             ->assertJsonPath('data.0.id', $id)->assertJsonPath('data.0.biAn', true)->assertJsonPath('data.0.contactEmail', 'li****@****')
             ->assertDontSee('SECRET-ANSWER');
+        DB::connection()->getPdo()->sqliteCreateFunction('REGEXP_REPLACE', fn ($text, $pattern, $replacement) => preg_replace('/'.$pattern.'/u', $replacement, $text), 3);
+        $this->getJson($url.'?'.http_build_query(['tuKhoa' => 'ví da', 'trang' => 2]))->assertOk()
+            ->assertJsonPath('meta.tongTin', 1)->assertJsonPath('meta.trangHienTai', 1)->assertJsonPath('data.0.id', $id);
+        $maTin = 'TIN-'.str_pad((string) $tinKhac->id, 6, '0', STR_PAD_LEFT);
+        $this->getJson($url.'?tuKhoa='.$maTin)->assertOk()->assertJsonCount(0, 'data');
+        $this->getJson($url.'?tuKhoa='.str_repeat('a', 201))->assertUnprocessable()->assertJsonValidationErrors('tuKhoa');
         $this->getJson('/api/tra-cuu')->assertJsonPath('meta.tongTin', 7);
 
         $this->app['auth']->forgetGuards();

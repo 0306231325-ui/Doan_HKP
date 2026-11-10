@@ -14,8 +14,6 @@ export default function ChiTietNguoiDung({ nguoiDungChon, dongChiTiet, moDoiTran
     ['Mã số sinh viên / cán bộ', nguoiDung.ma_so],
     ['Email', nguoiDung.email],
     ['Số điện thoại', nguoiDung.so_dien_thoai],
-    ['Khoa / Đơn vị', nguoiDung.khoa],
-    ['Lớp', nguoiDung.lop],
   ]
 
   return (

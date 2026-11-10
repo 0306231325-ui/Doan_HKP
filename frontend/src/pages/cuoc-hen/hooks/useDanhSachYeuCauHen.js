@@ -18,8 +18,7 @@ export default function useDanhSachYeuCauHen() {
         do {
           const { data } = await api.get('/me/yeu-cau', { params: { page: trang }, signal })
           const ketQua = data.data
-          danhSach.push(...ketQua.data.filter((muc) => muc.trang_thai === 'da_xac_minh'
-            && ['dang_mo', 'cho_ban_giao'].includes(muc.tin_dang?.trang_thai)))
+          danhSach.push(...ketQua.data.filter((muc) => muc.coTheDatLich))
           trangCuoi = ketQua.last_page
           trang += 1
         } while (trang <= trangCuoi && !signal.aborted)

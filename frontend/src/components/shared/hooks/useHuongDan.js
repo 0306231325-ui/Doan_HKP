@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-export default function useHuongDanDangTin() {
+export default function useHuongDan() {
   const [dangMo, datDangMo] = useState(false)
 
   function moHuongDan() {

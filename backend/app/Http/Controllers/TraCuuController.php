@@ -6,10 +6,8 @@ use App\Models\DanhMucDoVat;
 use App\Models\DiaDiem;
 use App\Models\TinDang;
 use App\Services\DuLieuTinDang;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
@@ -60,49 +58,13 @@ class TraCuuController extends Controller
         if (! empty($boLoc['denNgay'])) {
             $truyVan->whereRaw('DATE(COALESCE(thoi_gian_xay_ra, created_at)) <= ?', [$boLoc['denNgay']]);
         }
-        $this->locTuKhoa($truyVan, trim($boLoc['tuKhoa'] ?? ''));
+        $duLieu->locTuKhoa($truyVan, trim($boLoc['tuKhoa'] ?? ''));
         $chieu = ($boLoc['sapXep'] ?? 'moi_nhat') === 'cu_nhat' ? 'asc' : 'desc';
         $truyVan->orderByRaw('COALESCE(thoi_gian_xay_ra, created_at) '.$chieu)->orderBy('id', $chieu);
         $nguoiXem = $request->user('web');
 
         return response()->json($duLieu->phanTrang($truyVan, (int) ($boLoc['trang'] ?? 1), $nguoiXem ? (string) $nguoiXem->id : null))
             ->header('Cache-Control', 'private, no-store');
-    }
-
-    private function locTuKhoa(Builder $truyVan, string $tuKhoa): void
-    {
-        if ($tuKhoa === '') {
-            return;
-        }
-        if (preg_match('/^(?:TIN-)?0*([1-9][0-9]*)$/i', $tuKhoa, $maTin)) {
-            $truyVan->whereKey($maTin[1]);
-
-            return;
-        }
-        $cacTu = preg_split('/[^a-z0-9]+/', strtolower(Str::ascii($tuKhoa)), -1, PREG_SPLIT_NO_EMPTY);
-        foreach ($cacTu as $tu) {
-            $giaTri = '% '.$tu.' %';
-            $truyVan->where(function (Builder $nhom) use ($giaTri) {
-                $nhom->whereRaw($this->cotTimKiem('tieu_de'), [$giaTri])
-                    ->orWhereRaw($this->cotTimKiem('mo_ta'), [$giaTri])
-                    ->orWhereRaw($this->cotTimKiem('dia_diem_chi_tiet'), [$giaTri])
-                    ->orWhereHas('danhMuc', fn (Builder $muc) => $muc->whereRaw($this->cotTimKiem('ten_danh_muc'), [$giaTri]))
-                    ->orWhereHas('diaDiem', fn (Builder $noi) => $noi->whereRaw($this->cotTimKiem('ten_dia_diem'), [$giaTri]));
-            });
-        }
-        if (! $cacTu) {
-            $truyVan->whereRaw('1 = 0');
-        }
-    }
-
-    private function cotTimKiem(string $cot): string
-    {
-        $bieuThuc = "REGEXP_REPLACE(LOWER(REPLACE(REPLACE(COALESCE({$cot}, ''), 'đ', 'd'), 'Đ', 'd')), '[^[:alnum:]]+', ' ')";
-        $noiChuoi = (new TinDang)->getConnection()->getDriverName() === 'sqlite'
-            ? "' ' || {$bieuThuc} || ' '"
-            : "CONCAT(' ', {$bieuThuc}, ' ')";
-
-        return "({$noiChuoi}) LIKE ?";
     }
 
     public function chiTiet(Request $request, string $tin, DuLieuTinDang $duLieu): JsonResponse

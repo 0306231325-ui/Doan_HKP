@@ -20,6 +20,7 @@ import TheoDoiYeuCau from './pages/yeu-cau-nhan-do/TheoDoiYeuCau'
 import DangTin from './pages/tin-dang/DangTin'
 import ChiTietTinDang from './pages/tin-dang/ChiTietTinDang'
 import TrangCaNhan from './pages/trang-ca-nhan/TrangCaNhan'
+import TinDaDang from './pages/trang-ca-nhan/TinDaDang'
 import { AuthProvider, RequireAuth } from './auth/AuthContext'
 import AuthNotice from './auth/AuthNotice'
 import QuanLyNguoiDung from './pages/admin/nguoi-dung/QuanLyNguoiDung'
@@ -61,6 +62,7 @@ export default function App() {
               <Route path="theo-doi-yeu-cau" element={<TheoDoiYeuCau />} />
               <Route path="dang-tin/noi-dung?" element={<DangTin />} />
               <Route path="trang-ca-nhan" element={<TrangCaNhan />} />
+              <Route path="tin-da-dang" element={<TinDaDang />} />
             </Route>
           </Route>
           <Route element={<RequireAuth admin />}>

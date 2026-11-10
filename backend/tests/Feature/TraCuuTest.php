@@ -34,7 +34,7 @@ class TraCuuTest extends TestCase
                 $table->string($cot);
             }
             $table->unique('email');
-            foreach (['ma_so', 'khoa', 'lop', 'vai_tro'] as $cot) {
+            foreach (['ma_so', 'vai_tro'] as $cot) {
                 $table->string($cot)->nullable();
             }
             $table->softDeletes();

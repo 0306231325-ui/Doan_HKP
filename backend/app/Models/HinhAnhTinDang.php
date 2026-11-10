@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class HinhAnhTinDang extends Model
 {
-    public const MAU_TEN_ANH = '(?:[a-zA-Z0-9]{40}|anhtin[0-9]+(?:_[a-z])?)\.(jpg|jpeg|png|webp)';
+    public const MAU_TEN_ANH = '(?:[a-zA-Z0-9]{40}|anhtin[0-9]+(?:_[a-z])?|TIN-[0-9]{6,20}-[a-z0-9-]{1,100})\.(jpg|jpeg|png|webp)';
 
     public const UPDATED_AT = null;
 

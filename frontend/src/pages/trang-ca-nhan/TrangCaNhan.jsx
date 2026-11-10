@@ -1,17 +1,19 @@
-import { ArrowLeft, Camera, Menu, Plus, UserRound } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { ArrowLeft, Camera, Plus, UserRound } from 'lucide-react'
+import { Link, Navigate, useSearchParams } from 'react-router-dom'
 import QuanLyAnhDaiDien from './QuanLyAnhDaiDien'
 import ThongTinCaNhan from './ThongTinCaNhan'
-import TinDaDang from './TinDaDang'
 import XemTruocAnhDaiDien from './XemTruocAnhDaiDien'
-import useTrangCaNhan from './hooks/useTrangCaNhan'
 import useAnhDaiDien from './hooks/useAnhDaiDien'
 
 export default function TrangCaNhan() {
-  const { cacMuc, mucHienTai, chonMuc, moMenu, doiMoMenu, dongMenuKhiRoiKhung, khungMenu, nutMenu } = useTrangCaNhan()
+  const [thamSo] = useSearchParams()
   const anhDaiDien = useAnhDaiDien()
   const { user, hopThoaiAnh, dangTai, urlAnh, loiTaiAnh, moQuanLyAnh, huyChonAnh, xacNhanAnhDaiDien } = anhDaiDien
-  const laTinDang = mucHienTai === 'tin-dang'
+  if (thamSo.get('muc') === 'tin-dang') {
+    const thamSoTin = new URLSearchParams(thamSo)
+    thamSoTin.delete('muc')
+    return <Navigate to={{ pathname: '/tin-da-dang', search: thamSoTin.toString() }} replace />
+  }
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 pb-6 sm:space-y-8">
@@ -35,20 +37,12 @@ export default function TrangCaNhan() {
               <p className="mt-1 text-sm text-[#718276]">{user?.email}</p>
             </div>
           </div>
-          <div className="flex shrink-0 items-center gap-3 self-start sm:self-auto">
-            <Link to="/dang-tin" className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#86efac] px-5 py-3 text-sm font-bold text-emerald-950 transition-colors hover:bg-[#6ee7a0] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-700"><Plus className="h-4 w-4" aria-hidden="true" />Đăng tin mới</Link>
-            <div ref={khungMenu} onBlur={dongMenuKhiRoiKhung} className="relative">
-              <button ref={nutMenu} type="button" onClick={doiMoMenu} aria-label="Quản lý cá nhân" aria-expanded={moMenu} aria-controls="dieu-huong-ca-nhan" className="flex h-11 w-11 items-center justify-center rounded-xl border border-[#d6e4db] text-emerald-900 transition-colors hover:bg-emerald-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700"><Menu className="h-5 w-5" aria-hidden="true" /></button>
-              {moMenu && <nav id="dieu-huong-ca-nhan" aria-label="Quản lý cá nhân" className="absolute right-0 top-full z-30 mt-2 w-64 max-w-[calc(100vw-3rem)] space-y-1 rounded-2xl border border-[#d6e4db] bg-white p-2 shadow-xl">
-                {cacMuc.map(({ id, nhan, bieuTuong: BieuTuong }) => <button key={id} type="button" aria-pressed={mucHienTai === id} aria-controls="noi-dung-ca-nhan" onClick={() => chonMuc(id)} className={`flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-emerald-700 ${mucHienTai === id ? 'bg-emerald-900 text-white' : 'text-[#607568] hover:bg-emerald-50 hover:text-emerald-900'}`}><BieuTuong className="h-4 w-4 shrink-0" aria-hidden="true" />{nhan}</button>)}
-              </nav>}
-            </div>
-          </div>
+          <Link to="/dang-tin" className="inline-flex shrink-0 items-center justify-center gap-2 self-start rounded-xl bg-[#86efac] px-5 py-3 text-sm font-bold text-emerald-950 transition-colors hover:bg-[#6ee7a0] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-700 sm:self-auto"><Plus className="h-4 w-4" aria-hidden="true" />Đăng tin mới</Link>
         </div>
       </header>
 
-      <div id="noi-dung-ca-nhan" className="min-w-0">
-        {laTinDang ? <TinDaDang nguoiDungId={user?.id} /> : <ThongTinCaNhan />}
+      <div className="min-w-0">
+        <ThongTinCaNhan />
       </div>
       {hopThoaiAnh && <QuanLyAnhDaiDien {...anhDaiDien} />}
       {urlAnh && <XemTruocAnhDaiDien key={urlAnh} urlAnh={urlAnh} dangTai={dangTai} loiTaiAnh={loiTaiAnh} khiDong={huyChonAnh} khiXacNhan={xacNhanAnhDaiDien} />}

@@ -17,7 +17,7 @@ class TienDoYeuCau
             $completed = $appointments->contains(fn ($h) => $h->trang_thai === 'da_hoan_tat' || $h->banGiao?->thoi_gian_ban_giao);
             $active = $appointments->first(fn ($h) => in_array($h->trang_thai, ['cho_xac_nhan', 'da_xac_nhan']));
             $status = $completed ? 'da_hoan_tat' : match ($active?->trang_thai) {
-                'cho_xac_nhan' => 'cho_xac_nhan_lich',
+                'cho_xac_nhan' => $active->banGiao?->ma_ban_giao_hash ? 'cho_xac_nhan_giao_nhan' : 'cho_xac_nhan_lich',
                 'da_xac_nhan' => ($active->nguoi_giu_xac_nhan_luc || $active->nguoi_nhan_xac_nhan_luc) ? 'cho_xac_nhan_giao_nhan' : 'da_thong_nhat_lich',
                 default => 'da_xac_minh',
             };
@@ -54,12 +54,12 @@ class TienDoYeuCau
         }
 
         return $q->whereHas('cuocHen', function ($h) use ($status) {
-            $h->where('trang_thai', $status === 'cho_xac_nhan_lich' ? 'cho_xac_nhan' : 'da_xac_nhan');
-            if ($status === 'da_thong_nhat_lich') {
-                $h->whereNull('nguoi_giu_xac_nhan_luc')->whereNull('nguoi_nhan_xac_nhan_luc');
-            } elseif ($status === 'cho_xac_nhan_giao_nhan') {
-                $h->where(fn ($h) => $h->whereNotNull('nguoi_giu_xac_nhan_luc')->orWhereNotNull('nguoi_nhan_xac_nhan_luc'));
-            }
+            match ($status) {
+                'cho_xac_nhan_lich' => $h->where('trang_thai', 'cho_xac_nhan')->whereDoesntHave('banGiao', fn ($b) => $b->whereNotNull('ma_ban_giao_hash')),
+                'cho_xac_nhan_giao_nhan' => $h->where(fn ($h) => $h->where('trang_thai', 'cho_xac_nhan')->whereHas('banGiao', fn ($b) => $b->whereNotNull('ma_ban_giao_hash')))
+                    ->orWhere(fn ($h) => $h->where('trang_thai', 'da_xac_nhan')->where(fn ($h) => $h->whereNotNull('nguoi_giu_xac_nhan_luc')->orWhereNotNull('nguoi_nhan_xac_nhan_luc'))),
+                default => $h->where('trang_thai', 'da_xac_nhan')->whereNull('nguoi_giu_xac_nhan_luc')->whereNull('nguoi_nhan_xac_nhan_luc'),
+            };
         });
     }
 }
