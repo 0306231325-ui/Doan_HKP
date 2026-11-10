@@ -1,6 +1,6 @@
 import { CalendarDays, ClipboardCheck, SearchX } from 'lucide-react'
 import { useRef, useState } from 'react'
-import { Link, Navigate, Outlet, useNavigate, useOutletContext } from 'react-router-dom'
+import { Link, Navigate, Outlet, useNavigate, useOutletContext, useSearchParams } from 'react-router-dom'
 import Button from '../../components/shared/Button'
 import FormField from '../../components/shared/FormField'
 import HopThoai from '../../components/shared/HopThoai'
@@ -13,7 +13,13 @@ import useDanhSachYeuCauHen from './hooks/useDanhSachYeuCauHen'
 
 export default function LapLichHen() {
   const nguonYeuCau = useDanhSachYeuCauHen()
-  const [yeuCau, datYeuCau] = useState(null)
+  const [yeuCauDaChon, datYeuCau] = useState(null)
+  const [params] = useSearchParams()
+  const chonSan = nguonYeuCau.danhSach.find((muc) => String(muc.id) === params.get('yeuCau'))
+  const yeuCau = yeuCauDaChon || (chonSan ? {
+    id: chonSan.id, ma: `YC-${String(chonSan.id).padStart(4, '0')}`, ten: chonSan.tin_dang.tieu_de,
+    vaiTro: chonSan.laNguoiGiu ? 'Bạn là người giữ đồ' : 'Bạn là người nhận đồ', nguoiConLai: chonSan.lienHe?.hoTen,
+  } : null)
   const [tuKhoa, datTuKhoa] = useState('')
 
   return (
@@ -121,10 +127,12 @@ export function ChonYeuCauHen() {
 }
 
 export function NhapThongTinLichHen() {
-  const { yeuCau } = useOutletContext()
+  const { yeuCau, dangTai: dangTaiYeuCau, loi: loiYeuCau, taiLai: taiLaiYeuCau } = useOutletContext()
   const dieuHuong = useNavigate()
   const { diaDiem, dangTai, loiTai, taiLai } = useDanhMuc()
 
+  if (dangTaiYeuCau) return <p role="status" className="rounded-2xl bg-white p-6 text-sm text-[#526c5b]">Đang tải yêu cầu đã chọn…</p>
+  if (loiYeuCau) return <div role="alert" className="space-y-3 rounded-2xl bg-white p-6 text-sm text-rose-700"><p>{loiYeuCau}</p><Button onClick={taiLaiYeuCau}>Thử lại</Button></div>
   if (!yeuCau) return <Navigate to="/cuoc-hen/tao" replace />
 
   return (

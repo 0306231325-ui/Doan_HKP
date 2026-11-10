@@ -9,6 +9,7 @@ import ChiTietTinPopup from './ChiTietTinPopup'
 
 export default function YeuCauNhanLai() {
   const [moTin, datMoTin] = useState(false)
+  const [trangThaiNhom, datTrangThaiNhom] = useState('')
   const [danhMucId, datDanhMucId] = useState('')
   const [tuKhoa, datTuKhoa] = useState('')
   const [trang, datTrang] = useState(1)
@@ -18,7 +19,7 @@ export default function YeuCauNhanLai() {
   const [maHoSo, datMaHoSo] = useState(null)
   const [lanTai, datLanTai] = useState(0)
   const danhMuc = useDuLieu('/admin/danh-muc', {}, lanTai)
-  const nhom = useDuLieu('/admin/yeu-cau', { nhom: 1, danhMucId: danhMucId || undefined, tuKhoa: tuKhoa || undefined, page: trang }, lanTai)
+  const nhom = useDuLieu('/admin/yeu-cau', { nhom: 1, trangThaiNhom: trangThaiNhom || undefined, danhMucId: danhMucId || undefined, tuKhoa: tuKhoa || undefined, page: trang }, lanTai)
   const hoSo = useDuLieu(doVat ? '/admin/yeu-cau' : null, { tinDangId: doVat?.tin_dang_id, trangThai: loc || undefined, page: trangHoSo }, lanTai)
   const cacNhom = nhom.data?.data
   const cacHoSo = hoSo.data?.data
@@ -37,7 +38,7 @@ export default function YeuCauNhanLai() {
 
     {!doVat ? <>
       <div className="flex justify-end"><button type="button" className={nut} onClick={() => datLanTai((n) => n + 1)}><RefreshCw size={16} />Làm mới</button></div>
-      <BoLocLoaiDo danhSach={danhMuc.data?.data || []} giaTri={danhMucId} khiChon={(id) => { datDanhMucId(id); datTrang(1) }} loi={danhMuc.loi} tuKhoa={tuKhoa} khiTimKiem={(value) => { datTuKhoa(value); datTrang(1) }} />
+      <BoLocLoaiDo trangThai={trangThaiNhom} khiLocTrangThai={(value) => { datTrangThaiNhom(value); datTrang(1) }} danhSach={danhMuc.data?.data || []} giaTri={danhMucId} khiChon={(id) => { datDanhMucId(id); datTrang(1) }} loi={danhMuc.loi} tuKhoa={tuKhoa} khiTimKiem={(value) => { datTuKhoa(value); datTrang(1) }} />
       <section className="overflow-hidden rounded-2xl border border-[#d6e4db] bg-white"><div className="flex flex-wrap items-center justify-between gap-4 p-5"><div><h3 className="font-bold text-[#243c30]">Đồ vật có yêu cầu <span className="ml-2 text-sm font-normal text-[#718276]">{cacNhom?.total ?? '…'}</span></h3></div></div>
         {nhom.loi ? <p role="alert" className="p-8 text-rose-700">{nhom.loi}</p> : !cacNhom ? <p role="status" className="p-10 text-center text-sm text-[#718276]">Đang tải đồ vật…</p> : !cacNhom.data.length ? <Trong /> : <div className="grid grid-cols-1 gap-5 px-5 pb-5 sm:grid-cols-2 lg:grid-cols-3">{cacNhom.data.map((n) => <TheTinYeuCau key={n.tin_dang_id} nhom={n} khiChon={() => chonDo(n)} />)}</div>}
         <PhanTrang duLieu={cacNhom} trang={trang} doiTrang={datTrang} />
