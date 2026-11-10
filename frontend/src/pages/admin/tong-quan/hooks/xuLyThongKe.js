@@ -37,20 +37,3 @@ export function kiemTraKhoangNgay(tuNgay, denNgay, homNay) {
   if (denNgay > homNay) return 'Ngày kết thúc không được sau hôm nay.'
   return ''
 }
-
-export function locTinTheoNgay(danhSach, { tuNgay, denNgay }) {
-  if (!tuNgay && !denNgay) return [...danhSach]
-  return danhSach.filter((tin) => {
-    const ngay = layNgayVietNam(tin.created_at)
-    return ngay && (!tuNgay || ngay >= tuNgay) && (!denNgay || ngay <= denNgay)
-  })
-}
-
-export function taoThongKe(danhSach, khoangNgay) {
-  const cacTin = locTinTheoNgay(danhSach.filter((tin) => !tin.deleted_at), khoangNgay)
-  const tongTin = cacTin.length
-  const soBaoMat = cacTin.filter((tin) => tin.loai_tin === 'bao_mat').length
-  const soNhatDuoc = cacTin.filter((tin) => tin.loai_tin === 'nhat_duoc').length
-  const soDaTra = cacTin.filter((tin) => tin.loai_tin === 'nhat_duoc' && ['da_hoan_tat', 'da_ban_giao'].includes(tin.trang_thai)).length
-  return { tongTin, soBaoMat, soNhatDuoc, soDaTra }
-}

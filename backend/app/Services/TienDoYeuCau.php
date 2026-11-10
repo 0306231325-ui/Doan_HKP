@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Builder;
 
 class TienDoYeuCau
 {
-    public const CAC_TRANG_THAI = ['cho_kiem_tra', 'can_bo_sung', 'da_xac_minh', 'cho_xac_nhan_lich', 'da_thong_nhat_lich', 'cho_xac_nhan_giao_nhan', 'da_hoan_tat', 'tu_choi', 'da_huy', 'nhom_cho_kiem_tra', 'dang_giao_nhan', 'nhom_tu_choi'];
+    public const CAC_TRANG_THAI = ['cho_kiem_tra', 'can_bo_sung', 'da_xac_minh', 'cho_xac_nhan_lich', 'da_thong_nhat_lich', 'cho_xac_nhan_giao_nhan', 'da_hoan_tat', 'tu_choi', 'da_huy', 'nhom_cho_kiem_tra', 'dang_giao_nhan', 'nhom_tu_choi', 'tam_cho_ban_giao', 'da_dong', 'san_sang_duyet', 'nhom_da_duyet', 'nhom_da_dong'];
 
     public function duLieu(YeuCauNhanDo $yc): array
     {
@@ -23,7 +23,16 @@ class TienDoYeuCau
             };
         }
 
-        return [...$yc->toArray(), 'tien_do' => $status];
+        $xuLy = $status;
+        if (in_array($yc->trang_thai, ['cho_kiem_tra', 'can_bo_sung'])) {
+            $xuLy = match ($yc->tinDang?->trang_thai) {
+                'cho_ban_giao' => 'tam_cho_ban_giao',
+                'da_hoan_tat' => 'da_dong',
+                default => $status,
+            };
+        }
+
+        return [...$yc->toArray(), 'tien_do' => $status, 'trang_thai_xu_ly' => $xuLy];
     }
 
     public function hoanTat(Builder $q): Builder
@@ -33,6 +42,21 @@ class TienDoYeuCau
 
     public function loc(Builder $q, string $status): Builder
     {
+        if ($status === 'nhom_da_dong') {
+            return $q->where(function ($nhom) {
+                $nhom->whereIn('trang_thai', ['tu_choi', 'da_huy'])
+                    ->orWhere(fn ($cho) => $cho->whereIn('trang_thai', ['cho_kiem_tra', 'can_bo_sung'])->whereHas('tinDang', fn ($tin) => $tin->where('trang_thai', 'da_hoan_tat')));
+            });
+        }
+        if ($status === 'san_sang_duyet') {
+            return $q->where('trang_thai', 'cho_kiem_tra')->whereHas('tinDang', fn ($tin) => $tin->where('trang_thai', 'dang_mo'));
+        }
+        if ($status === 'nhom_da_duyet') {
+            return $q->where('trang_thai', 'da_xac_minh');
+        }
+        if (in_array($status, ['tam_cho_ban_giao', 'da_dong'])) {
+            return $q->whereIn('trang_thai', ['cho_kiem_tra', 'can_bo_sung'])->whereHas('tinDang', fn ($tin) => $tin->where('trang_thai', $status === 'tam_cho_ban_giao' ? 'cho_ban_giao' : 'da_hoan_tat'));
+        }
         if ($status === 'nhom_cho_kiem_tra') {
             return $q->whereIn('trang_thai', ['cho_kiem_tra', 'can_bo_sung']);
         }

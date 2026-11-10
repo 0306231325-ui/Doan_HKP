@@ -57,6 +57,29 @@ class QuanLyTinDangTest extends TestCase
         $this->actingAs($admin)->getJson('/api/admin/tin-dang')->assertForbidden();
     }
 
+    public function test_thong_ke_dem_tin_theo_ngay_viet_nam_va_bo_tin_xoa_mem(): void
+    {
+        config(['app.timezone' => 'UTC']);
+        $admin = $this->taiKhoan();
+        foreach ([
+            ['2026-11-09 16:59:59', 'nhat_duoc', 'da_hoan_tat', null],
+            ['2026-11-09 17:00:00', 'bao_mat', 'dang_mo', null],
+            ['2026-11-10 16:59:59', 'nhat_duoc', 'da_hoan_tat', null],
+            ['2026-11-10 17:00:00', 'nhat_duoc', 'dang_mo', null],
+            ['2026-11-10 12:00:00', 'nhat_duoc', 'da_hoan_tat', '2026-11-10 13:00:00'],
+        ] as [$ngay, $loai, $trangThai, $daXoa]) {
+            DB::table('tin_dang')->insert([
+                'nguoi_dung_id' => $admin->id, 'created_at' => $ngay, 'loai_tin' => $loai,
+                'trang_thai' => $trangThai, 'deleted_at' => $daXoa,
+            ]);
+        }
+
+        $url = '/api/admin/tin-dang/thong-ke?tuNgay=2026-11-10&denNgay=2026-11-10';
+        $this->actingAs($this->taiKhoan('nguoi_dung'))->getJson($url)->assertForbidden();
+        $this->actingAs($admin)->getJson($url)->assertOk()
+            ->assertExactJson(['data' => ['tongTin' => 2, 'soBaoMat' => 1, 'soNhatDuoc' => 1, 'soDaTra' => 1]]);
+    }
+
     public function test_an_khoi_phuc_va_bao_cao_luu_dung_lich_su(): void
     {
         $admin = $this->taiKhoan();

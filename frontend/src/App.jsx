@@ -7,6 +7,7 @@ import DuyetTinDang from './pages/admin/tin-dang/DuyetTinDang'
 import DanhSachTinDang from './pages/admin/tin-dang/DanhSachTinDang'
 import ChiTietKiemDuyet from './pages/admin/tin-dang/ChiTietKiemDuyet'
 import YeuCauNhanLai from './pages/admin/yeu-cau-nhan-lai/YeuCauNhanLai'
+import QuanLyLichHen from './pages/admin/lich-hen/QuanLyLichHen'
 import QuanLyDanhMuc from './pages/admin/danh-muc/QuanLyDanhMuc'
 import QuanLyDiaDiem from './pages/admin/dia-diem/QuanLyDiaDiem'
 import QuanLyCauHoi from './pages/admin/cau-hoi/QuanLyCauHoi'
@@ -73,6 +74,7 @@ export default function App() {
                 <Route path=":id" element={<ChiTietKiemDuyet />} />
               </Route>
               <Route path="yeu-cau" element={<YeuCauNhanLai />} />
+              <Route path="lich-hen" element={<QuanLyLichHen />} />
               <Route path="nguoi-dung" element={<QuanLyNguoiDung />} />
               <Route path="danh-muc" element={<QuanLyDanhMuc />} />
               <Route path="dia-diem" element={<QuanLyDiaDiem />} />

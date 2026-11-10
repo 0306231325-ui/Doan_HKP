@@ -848,6 +848,49 @@
                 }
             }
         },
+        "/api/admin/tin-dang/thong-ke": {
+            "get": {
+                "tags": [
+                    "Kiểm duyệt"
+                ],
+                "summary": "Thống kê tin đăng cho quản trị",
+                "operationId": "c31d2e17ea5f535ff18f9de44978a4b5",
+                "parameters": [
+                    {
+                        "name": "tuNgay",
+                        "in": "query",
+                        "description": "Ngày bắt đầu theo giờ Việt Nam",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "denNgay",
+                        "in": "query",
+                        "description": "Ngày kết thúc theo giờ Việt Nam",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "data gồm tongTin, soBaoMat, soNhatDuoc và soDaTra tính từ tin chưa xóa mềm"
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Chỉ quản trị viên đang hoạt động được xem"
+                    },
+                    "422": {
+                        "description": "Khoảng ngày không hợp lệ"
+                    }
+                }
+            }
+        },
         "/api/admin/tin-dang/{tin}": {
             "get": {
                 "tags": [
@@ -2471,6 +2514,165 @@
                 }
             }
         },
+        "/api/admin/yeu-cau": {
+            "get": {
+                "tags": [
+                    "Yêu cầu nhận đồ"
+                ],
+                "summary": "Danh sách hồ sơ hoặc nhóm theo tin",
+                "operationId": "e626acd7753c36ef23af7a2957a6ad94",
+                "parameters": [
+                    {
+                        "name": "nhom",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "enum": [
+                                0,
+                                1
+                            ]
+                        }
+                    },
+                    {
+                        "name": "trangThaiNhom",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "cho_duyet",
+                                "cho_ban_giao",
+                                "hoan_tat",
+                                "tu_choi"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "trangThai",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "danhMucId",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "tinDangId",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "tuKhoa",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 200
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Danh sách phân trang và thống kê. Nhóm theo tin kèm người đã duyệt và lịch hẹn nếu có."
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Chỉ quản trị viên đang hoạt động được xem"
+                    },
+                    "422": {
+                        "description": "Bộ lọc không hợp lệ"
+                    }
+                }
+            }
+        },
+        "/api/admin/lich-hen": {
+            "get": {
+                "tags": [
+                    "Cuộc hẹn"
+                ],
+                "summary": "Lịch hẹn giao nhận cho quản trị",
+                "operationId": "06302a83756e11838a845b66d00a19a4",
+                "parameters": [
+                    {
+                        "name": "tuKhoa",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 150
+                        }
+                    },
+                    {
+                        "name": "ngay",
+                        "in": "query",
+                        "description": "Ngày hẹn theo giờ Việt Nam",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "trangThai",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "cho_xac_nhan",
+                                "da_xac_nhan",
+                                "da_hoan_tat",
+                                "da_huy"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "yeuCau",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lịch phân trang, có đồ vật, hai bên, địa điểm và mốc bàn giao. Không trả mã."
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Chỉ quản trị viên đang hoạt động được xem"
+                    },
+                    "422": {
+                        "description": "Bộ lọc không hợp lệ"
+                    }
+                }
+            }
+        },
         "/api/me/yeu-cau": {
             "get": {
                 "tags": [
@@ -2521,7 +2723,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Dữ liệu yêu cầu và lịch. Bàn giao có thời điểm hoàn tất nếu đã xác nhận. Liên hệ mở cho hai bên sau khi duyệt."
+                        "description": "Dữ liệu yêu cầu, lịch và chi_tiet của tin cùng ảnh công khai. Bàn giao có thời điểm hoàn tất nếu đã xác nhận. Liên hệ mở cho hai bên sau khi duyệt."
                     },
                     "401": {
                         "description": "Chưa đăng nhập"
@@ -2752,6 +2954,10 @@
         {
             "name": "Thông báo",
             "description": "Thông báo"
+        },
+        {
+            "name": "Yêu cầu nhận đồ",
+            "description": "Yêu cầu nhận đồ"
         },
         {
             "name": "Cuộc hẹn",
