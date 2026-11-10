@@ -90,8 +90,6 @@ class DuLieuTinDang
             'statusBadge' => $trangThai[$tin->trang_thai] ?? 'Đang mở', 'canClaim' => $laNhatDuoc && $tin->trang_thai === 'dang_mo',
             'statusType' => $tin->trang_thai === 'dang_mo' ? ($laNhatDuoc ? 'safe' : 'urgent') : 'secure',
             'contactPerson' => $tin->nguoiDung?->ho_ten ?? 'Người đăng',
-            'contactPhone' => $this->cheLienHe($tin->thong_tin_lien_he),
-            'contactEmail' => $this->cheLienHe($tin->email_lien_he, laEmail: true),
         ];
         if ($chiTiet) {
             $duLieu['images'] = $tin->hinhAnh->map->duongDanHienThi()->values();
@@ -102,20 +100,5 @@ class DuLieuTinDang
         }
 
         return $duLieu;
-    }
-
-    private function cheLienHe(?string $giaTri, bool $laEmail = false): string
-    {
-        $giaTri = trim($giaTri ?? '');
-        if ($giaTri === '') {
-            return '';
-        }
-        if ($laEmail) {
-            $ten = explode('@', $giaTri, 2)[0];
-
-            return mb_substr($ten, 0, max(0, min(2, mb_strlen($ten) - 1))).'****@****';
-        }
-
-        return mb_substr($giaTri, 0, intdiv(mb_strlen($giaTri), 2)).'****';
     }
 }

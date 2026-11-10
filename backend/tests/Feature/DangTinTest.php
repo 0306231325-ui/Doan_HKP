@@ -218,17 +218,21 @@ class DangTinTest extends TestCase
         $id = $this->postJson('/api/tin-dang', $mau)->assertCreated()->json('data.id');
         $this->assertDatabaseHas('tin_dang', ['id' => $id, 'nguoi_dung_id' => $this->chuTin->id, 'email_lien_he' => 'lienhe@gmail.com', 'trang_thai_kiem_duyet' => 'hien_thi']);
         $this->getJson('/api/tra-cuu')->assertOk()->assertJsonPath('data.0.id', $id)
-            ->assertJsonPath('data.0.contactPhone', '09012****')->assertJsonPath('data.0.contactEmail', 'li****@****');
+            ->assertJsonMissingPath('data.0.contactPhone')->assertJsonMissingPath('data.0.contactEmail');
         $response = $this->getJson('/api/tra-cuu/'.$id)->assertOk()->assertJsonMissingPath('data.publicAnswers')
-            ->assertJsonPath('data.contactPhone', '09012****')->assertJsonPath('data.contactEmail', 'li****@****')
+            ->assertJsonPath('data.coTheLienHe', true)
+            ->assertJsonPath('data.contactPhone', '0901234567')->assertJsonPath('data.contactEmail', 'lienhe@gmail.com')
             ->assertJsonPath('data.gioXayRa', null);
-        foreach (['SECRET-ANSWER', '0901234567', 'lienhe@gmail.com', 'Dấu hiệu bí mật?', 'khong-doi-mat-khau'] as $biMat) {
+        foreach (['SECRET-ANSWER', 'Dấu hiệu bí mật?', 'khong-doi-mat-khau'] as $biMat) {
             $this->assertStringNotContainsString($biMat, $response->getContent());
         }
         $this->postJson('/api/tin-dang', $mau)->assertOk()->assertJsonPath('data.id', $id);
         $this->assertDatabaseCount('tin_dang', 1);
         $this->assertDatabaseCount('loi_khai_tin_dang', 1);
         $this->assertDatabaseCount('lich_su_tin_dang', 1);
+        $this->app['auth']->guard('web')->logout();
+        $this->getJson('/api/tra-cuu/'.$id)->assertOk()->assertJsonPath('data.coTheLienHe', false)
+            ->assertJsonMissingPath('data.contactPhone')->assertJsonMissingPath('data.contactEmail');
     }
 
     public function test_bat_buoc_cau_danh_muc_va_cho_email_thay_dien_thoai(): void
@@ -356,7 +360,7 @@ class DangTinTest extends TestCase
         $this->getJson($url)->assertOk()->assertJsonCount(6, 'data')->assertJsonPath('meta.tongTin', 7)
             ->assertJsonPath('meta.tongTrang', 2)->assertJsonPath('data.0.laChuTin', true);
         $this->getJson($url.'?trang=99')->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('meta.trangHienTai', 2)
-            ->assertJsonPath('data.0.id', $id)->assertJsonPath('data.0.biAn', true)->assertJsonPath('data.0.contactEmail', 'li****@****')
+            ->assertJsonPath('data.0.id', $id)->assertJsonPath('data.0.biAn', true)->assertJsonMissingPath('data.0.contactEmail')
             ->assertDontSee('SECRET-ANSWER');
         DB::connection()->getPdo()->sqliteCreateFunction('REGEXP_REPLACE', fn ($text, $pattern, $replacement) => preg_replace('/'.$pattern.'/u', $replacement, $text), 3);
         $this->getJson($url.'?'.http_build_query(['tuKhoa' => 'ví da', 'trang' => 2]))->assertOk()
@@ -386,7 +390,7 @@ class DangTinTest extends TestCase
         $this->assertEmpty(Storage::disk('anh-tin-dang')->allFiles('tin'));
     }
 
-    public function test_nhan_lai_dung_cau_goc_va_chi_chu_tin_duoc_mo_lien_he(): void
+    public function test_nhan_lai_dung_cau_goc_va_chi_mo_lien_he_cho_chu_tin_hoac_nguoi_duoc_duyet(): void
     {
         $this->rieng->update(['thu_tu' => 2]);
         $this->rieng->lichSu()->create(['phien_ban' => 2, 'du_lieu' => $this->rieng->attributesToArray()]);
@@ -428,7 +432,8 @@ class DangTinTest extends TestCase
         $this->app['auth']->forgetGuards();
         $this->actingAs($this->nguoiNhan, 'web');
         $this->getJson('/api/tin-dang/'.$id.'/lien-he')->assertForbidden()->assertDontSee('lienhe@gmail.com')->assertDontSee('0901234567');
-        $this->getJson('/api/tra-cuu/'.$id)->assertOk()->assertJsonPath('data.hasClaim', true)->assertJsonPath('data.laChuTin', false);
+        $this->getJson('/api/tra-cuu/'.$id)->assertOk()->assertJsonPath('data.hasClaim', true)->assertJsonPath('data.laChuTin', false)
+            ->assertJsonPath('data.coTheLienHe', false)->assertJsonMissingPath('data.contactPhone')->assertJsonMissingPath('data.contactEmail');
         $this->postJson('/api/tin-dang/'.$id.'/nhan-lai', $mau)->assertOk()->assertJsonPath('yeuCauId', $yeuCau->id);
         $this->assertDatabaseCount('yeu_cau_nhan_do', 1);
         $this->assertDatabaseCount('thong_bao', 1);
@@ -437,8 +442,15 @@ class DangTinTest extends TestCase
         $this->assertDatabaseHas('loi_khai_tin_dang', ['id' => $loiKhaiCu->id, 'gia_tri_text' => 'Đáp án cũ']);
         $this->assertDatabaseHas('tra_loi_yeu_cau', ['loi_khai_tin_dang_id' => $form->json('data.1.id'), 'gia_tri_text' => 'Câu trả lời của người mất']);
         $this->assertDatabaseHas('yeu_cau_nhan_do', ['trang_thai' => 'cho_kiem_tra']);
+        $yeuCau->update(['trang_thai' => 'da_xac_minh']);
+        TinDang::findOrFail($id)->update(['trang_thai' => 'cho_ban_giao']);
+        $this->getJson('/api/tra-cuu/'.$id)->assertOk()->assertJsonPath('data.coTheLienHe', true)
+            ->assertJsonPath('data.contactEmail', 'lienhe@gmail.com')->assertJsonPath('data.contactPhone', '0901234567');
+        $this->getJson('/api/tin-dang/'.$id.'/lien-he')->assertOk()->assertJsonPath('data.daGui', true);
         $yeuCau->update(['trang_thai' => 'tu_choi']);
         $this->getJson('/api/tin-dang/'.$id.'/lien-he')->assertForbidden();
+        $this->getJson('/api/tra-cuu/'.$id)->assertOk()->assertJsonPath('data.coTheLienHe', false)
+            ->assertJsonMissingPath('data.contactPhone')->assertJsonMissingPath('data.contactEmail');
         $this->actingAs($this->taiKhoan());
         $this->getJson('/api/tin-dang/'.$id.'/lien-he')->assertForbidden();
         $this->actingAs($this->chuTin);
@@ -446,8 +458,8 @@ class DangTinTest extends TestCase
         $this->getJson('/api/tin-dang/'.$id.'/nhan-lai')->assertForbidden();
         $this->app['auth']->forgetGuards();
         $this->actingAs($this->taiKhoan('quan_tri'), 'web');
-        $this->getJson('/api/tra-cuu/'.$id)->assertOk()->assertJsonPath('data.contactEmail', 'li****@****')
-            ->assertJsonPath('data.contactPhone', '09012****')->assertDontSee('lienhe@gmail.com')->assertDontSee('0901234567');
+        $this->getJson('/api/tra-cuu/'.$id)->assertOk()->assertJsonPath('data.coTheLienHe', false)
+            ->assertJsonMissingPath('data.contactPhone')->assertJsonMissingPath('data.contactEmail');
         $this->getJson('/api/tin-dang/'.$id.'/lien-he')->assertForbidden()->assertDontSee('lienhe@gmail.com')->assertDontSee('0901234567');
     }
 

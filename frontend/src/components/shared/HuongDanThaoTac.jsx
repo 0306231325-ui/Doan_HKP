@@ -3,18 +3,22 @@ import Button from './Button'
 import HopThoai from './HopThoai'
 import useHuongDan from './hooks/useHuongDan'
 
-export default function HuongDanThaoTac({ goiY, tieuDe, cacBuoc, ghiChu }) {
+export default function HuongDanThaoTac({ goiY, tieuDe, cacBuoc, ghiChu, chiBieuTuong = false }) {
   const { dangMo, moHuongDan, dongHuongDan } = useHuongDan()
+  const nhanNut = chiBieuTuong ? tieuDe : `Click vào đây để xem ${tieuDe.toLocaleLowerCase('vi-VN')}`
+  const nutHuongDan = (
+    <button type="button" onClick={moHuongDan} aria-label={nhanNut} aria-haspopup="dialog" aria-expanded={dangMo} className={`inline-flex min-h-8 items-center gap-1.5 rounded-lg px-1 align-middle text-emerald-800 hover:bg-emerald-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 ${chiBieuTuong ? 'min-w-8 justify-center' : 'ml-1'}`}>
+      {!chiBieuTuong && <span className="underline underline-offset-4">Click vào đây</span>}
+      <Info className="h-5 w-5 shrink-0" aria-hidden="true" />
+    </button>
+  )
 
   return (
     <>
-      <p className="text-sm leading-6 text-[#607568]">
+      {chiBieuTuong ? nutHuongDan : <p className="text-sm leading-6 text-[#607568]">
         <span className="underline underline-offset-4">{goiY}</span>
-        <button type="button" onClick={moHuongDan} aria-label={`Click vào đây để xem ${tieuDe.toLocaleLowerCase('vi-VN')}`} aria-haspopup="dialog" aria-expanded={dangMo} className="ml-1 inline-flex min-h-8 items-center gap-1.5 rounded-lg px-1 align-middle text-emerald-800 hover:bg-emerald-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700">
-          <span className="underline underline-offset-4">Click vào đây</span>
-          <Info className="h-5 w-5 shrink-0" aria-hidden="true" />
-        </button>
-      </p>
+        {nutHuongDan}
+      </p>}
       {dangMo && <HopThoai tieuDe={tieuDe} khiDong={dongHuongDan}>
         <div className="space-y-5 p-5 text-sm leading-6 text-[#607568] sm:p-6">
           <ol className="list-decimal space-y-4 pl-5 marker:font-semibold marker:text-emerald-800">

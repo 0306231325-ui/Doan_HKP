@@ -72,12 +72,14 @@ class TraCuuController extends Controller
         $nguoiXem = $request->user('web');
         $banTin = TinDang::xemDuoc($nguoiXem)->with($duLieu->quanHe())->findOrFail($tin);
         $laChuTin = $nguoiXem !== null && (string) $banTin->nguoi_dung_id === (string) $nguoiXem->id;
+        $coTheLienHe = $nguoiXem?->trang_thai === 'hoat_dong' && ($laChuTin || $banTin->daDuyetYeuCau($nguoiXem->id));
         $duLieuTin = $duLieu->congKhai($banTin, true);
 
         return response()->json(['data' => [
             ...$duLieuTin,
             'laChuTin' => $laChuTin,
-            'coTheLienHe' => $laChuTin || ($nguoiXem?->trang_thai === 'hoat_dong' && in_array($banTin->trang_thai, ['cho_ban_giao', 'da_hoan_tat']) && $banTin->yeuCauNhanDo()->where('nguoi_yeu_cau_id', $nguoiXem->id)->where('trang_thai', 'da_xac_minh')->exists()),
+            'coTheLienHe' => $coTheLienHe,
+            ...($coTheLienHe ? ['contactPhone' => $banTin->thong_tin_lien_he, 'contactEmail' => $banTin->email_lien_he] : []),
             'hasClaim' => $duLieuTin['canClaim'] && ! $laChuTin && $nguoiXem?->trang_thai === 'hoat_dong'
                 && $banTin->daGuiYeuCau($nguoiXem->id),
         ]])->header('Cache-Control', 'private, no-store');

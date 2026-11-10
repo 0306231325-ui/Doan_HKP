@@ -221,7 +221,12 @@ class QuanLyYeuCauTest extends TestCase
         $body = $this->lichHen();
         $this->postJson('/api/me/cuoc-hen', $body)->assertUnauthorized();
         $this->actingAs($this->user)->postJson('/api/me/cuoc-hen', $body)->assertConflict();
+        $this->assertDatabaseCount('cuoc_hen', 0);
+        $this->getJson('/api/me/yeu-cau')->assertOk()->assertJsonPath('data.data.0.coTheDatLich', false);
+        $this->getJson('/api/me/yeu-cau?loai=lich_hen')->assertOk()->assertJsonPath('data.total', 0);
         $this->approve();
+        $this->actingAs($this->user)->getJson('/api/me/yeu-cau')->assertOk()->assertJsonPath('data.data.0.coTheDatLich', true);
+        $this->getJson('/api/me/yeu-cau?loai=lich_hen')->assertOk()->assertJsonPath('data.total', 0);
         $nguoiNgoai = NguoiDung::create(['ho_ten' => 'Khách', 'email' => 'khach@test.vn', 'mat_khau' => 'password', 'vai_tro' => 'nguoi_dung', 'trang_thai' => 'hoat_dong']);
         $this->actingAs($nguoiNgoai)->postJson('/api/me/cuoc-hen', $body)->assertNotFound();
         $this->actingAs($this->user)->postJson('/api/me/cuoc-hen', [...$body, 'diaDiemId' => 999])->assertUnprocessable();
@@ -237,6 +242,8 @@ class QuanLyYeuCauTest extends TestCase
         $this->assertDatabaseHas('thong_bao', ['nguoi_dung_id' => $this->admin->id, 'cuoc_hen_id' => $hen->id, 'loai_thong_bao' => 'tao_cuoc_hen']);
         $this->getJson('/api/me/yeu-cau/'.$this->yc->id)->assertOk()->assertJsonPath('data.coTheDatLich', false)
             ->assertJsonPath('data.cuoc_hen.0.dungMaBanGiao', true)->assertJsonMissingPath('data.cuoc_hen.0.ban_giao.ma_ban_giao_hash');
+        $this->getJson('/api/me/yeu-cau?loai=lich_hen')->assertOk()
+            ->assertJsonPath('data.total', 1)->assertJsonPath('data.data.0.cuoc_hen.0.id', $hen->id);
         $url = '/api/me/cuoc-hen/xac-nhan-ban-giao';
         $this->postJson($url, ['ma' => $ma])->assertUnprocessable();
         $this->actingAs($nguoiNgoai)->postJson($url, ['ma' => $ma])->assertUnprocessable();

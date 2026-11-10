@@ -25,13 +25,14 @@ const HUONG_DAN_TAO_LICH = {
 
 export default function LapLichHen() {
   const nguonYeuCau = useDanhSachYeuCauHen()
-  const [yeuCauDaChon, datYeuCau] = useState(null)
+  const [yeuCauIdDaChon, datYeuCau] = useState(null)
   const [params] = useSearchParams()
-  const chonSan = nguonYeuCau.danhSach.find((muc) => String(muc.id) === params.get('yeuCau'))
-  const yeuCau = yeuCauDaChon || (chonSan ? {
+  const idDangChon = params.get('yeuCau') ?? yeuCauIdDaChon ?? params.get('yeuCauId')
+  const chonSan = nguonYeuCau.danhSach.find((muc) => String(muc.id) === String(idDangChon))
+  const yeuCau = chonSan ? {
     id: chonSan.id, ma: `YC-${String(chonSan.id).padStart(4, '0')}`, ten: chonSan.tin_dang.tieu_de,
     vaiTro: chonSan.laNguoiGiu ? 'Bạn là người giữ đồ' : 'Bạn là người nhận đồ', nguoiConLai: chonSan.lienHe?.hoTen,
-  } : null)
+  } : null
   const [tuKhoa, datTuKhoa] = useState('')
 
   return (
@@ -44,7 +45,6 @@ export default function LapLichHen() {
 export function ChonYeuCauHen() {
   const { yeuCau, datYeuCau, tuKhoa, datTuKhoa, danhSach, dangTai, loi, taiLai } = useOutletContext()
   const dieuHuong = useNavigate()
-  const [thamSo] = useSearchParams()
   const vungCuon = useRef(null)
   const [yeuCauDangXem, datYeuCauDangXem] = useState(null)
   const tuKhoaChuan = chuanHoaTimKiem(tuKhoa)
@@ -55,8 +55,7 @@ export function ChonYeuCauHen() {
     vaiTro: muc.laNguoiGiu ? 'Bạn là người giữ đồ' : 'Bạn là người nhận đồ',
     nguoiConLai: muc.lienHe?.hoTen,
   })).filter((muc) => chuanHoaTimKiem(`${muc.ma} ${muc.ten}`).includes(tuKhoaChuan))
-  const idDangChon = yeuCau?.id ?? thamSo.get('yeuCauId')
-  const dangChon = ketQua.find((muc) => String(muc.id) === String(idDangChon))
+  const dangChon = ketQua.find((muc) => muc.id === yeuCau?.id)
 
   function doiTuKhoa(suKien) {
     datTuKhoa(suKien.target.value)
@@ -69,8 +68,8 @@ export function ChonYeuCauHen() {
 
   function xacNhanYeuCau(suKien) {
     suKien.preventDefault()
-    if (!dangChon) return
-    datYeuCau(dangChon)
+    if (dangTai || !dangChon) return
+    datYeuCau(dangChon.id)
     dieuHuong('thong-tin')
   }
 
@@ -95,7 +94,7 @@ export function ChonYeuCauHen() {
                 {ketQua.map((muc) => (
                   <div key={muc.id} className="flex flex-wrap items-center gap-2 rounded-xl border border-[#ceded3] bg-white p-4 hover:bg-emerald-50 has-checked:border-emerald-700 has-checked:bg-emerald-50 sm:flex-nowrap sm:gap-4">
                     <label className="flex min-w-0 basis-full cursor-pointer items-start gap-3 sm:flex-1">
-                      <input type="radio" name="yeuCau" value={muc.id} checked={dangChon?.id === muc.id} onChange={() => datYeuCau(muc)} className="mt-1.5 shrink-0 accent-emerald-800" />
+                      <input type="radio" name="yeuCau" value={muc.id} checked={dangChon?.id === muc.id} onChange={() => datYeuCau(muc.id)} className="mt-1.5 shrink-0 accent-emerald-800" />
                       <span className="min-w-0">
                         <span className="block font-semibold text-emerald-950">{muc.ten}</span>
                         <span className="mt-1 block text-sm leading-5 text-[#526c5b]">{muc.ma} · {muc.vaiTro}</span>
@@ -119,7 +118,7 @@ export function ChonYeuCauHen() {
         </div>
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-b-3xl border-t border-[#e1eae4] bg-[#f9fbfa] px-5 py-4 sm:px-7">
           {dangChon && <p className="text-sm font-semibold text-emerald-900">Đã chọn {dangChon.ten} · {dangChon.ma}</p>}
-          <Button type="submit" disabled={!dangChon} className="ml-auto">Xác nhận và tiếp tục</Button>
+          <Button type="submit" disabled={dangTai || !dangChon} className="ml-auto">Xác nhận và tiếp tục</Button>
         </div>
       </form>
       {yeuCauDangXem && (
@@ -153,7 +152,7 @@ export function NhapThongTinLichHen() {
   const [lichDaTao, datLichDaTao] = useState(null)
 
   async function taoCuocHen({ ngay, gio, diaDiem: noiGap }) {
-    if (khoaGui.current || !noiGap) return
+    if (khoaGui.current || !yeuCau || !noiGap) return
     khoaGui.current = true
     datDangGui(true)
     datLoiGui('')
@@ -181,7 +180,7 @@ export function NhapThongTinLichHen() {
         <p className="mt-1 font-mono text-3xl tracking-widest">{lichDaTao.ma}</p>
       </div>
       <p className="text-sm leading-6 text-[#526c5b]">Mã chỉ hiện một lần. Hãy lưu lại và đưa cho người còn lại sau khi giao nhận đồ. Mã dùng từ giờ hẹn đến {dinhDangGioHen(lichDaTao.hetHanLuc)}.</p>
-      <Link to={`/chi-tiet-yeu-cau?id=${lichDaTao.yeuCauId}`} className="font-semibold text-emerald-800 hover:underline">Xem chi tiết cuộc hẹn</Link>
+      <Link to={`/chi-tiet-yeu-cau?id=${lichDaTao.yeuCauId}&tab=lich-hen`} className="font-semibold text-emerald-800 hover:underline">Xem chi tiết cuộc hẹn</Link>
     </section>
   )
 

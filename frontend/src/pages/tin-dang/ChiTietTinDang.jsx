@@ -96,7 +96,7 @@ export default function ChiTietTinDang() {
               <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#edf5ef] text-[#9bb3a2]"><UserRound className="h-6 w-6" aria-hidden="true" /></span>
               <p className="text-sm font-medium leading-6 text-[#718276]">{tin.contactPerson}</p>
             </div>
-            <LienHeTinDang key={tin.id} tin={tin} />
+            <LienHeTinDang tin={tin} />
           </section>
         </div>
 

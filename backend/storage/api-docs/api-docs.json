@@ -348,7 +348,7 @@
                                         "maxLength": 255
                                     },
                                     "soDienThoai": {
-                                        "description": "Điện thoại hoặc email phải có ít nhất một. Liên hệ bị che trên API công khai.",
+                                        "description": "Điện thoại hoặc email phải có ít nhất một. Chỉ chủ tin và người có yêu cầu đã duyệt được xem liên hệ.",
                                         "type": "string",
                                         "maxLength": 20
                                     },
@@ -592,7 +592,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "data gồm DTO thẻ, images, gioXayRa (null nếu không có giờ), laChuTin và hasClaim theo phiên hiện tại. Liên hệ trong DTO đã che. Không có câu trả lời nhận diện."
+                        "description": "data gồm DTO thẻ, images, gioXayRa (null nếu không có giờ), laChuTin, hasClaim và coTheLienHe theo phiên hiện tại. Chỉ trả contactPhone và contactEmail cho tài khoản đang hoạt động là chủ tin hoặc có yêu cầu đã được duyệt. Không có câu trả lời nhận diện. Phản hồi private, no-store."
                     },
                     "404": {
                         "description": "Tin không tồn tại, đã xóa mềm hoặc đã ẩn và người xem không phải chủ tin đang hoạt động"
@@ -799,7 +799,7 @@
                 "tags": [
                     "Đăng tin"
                 ],
-                "summary": "Chủ tin xem điện thoại và email đã đăng",
+                "summary": "Xem liên hệ của tin theo quyền của tài khoản",
                 "operationId": "953625ee982b7fcc38a13b558acb2a2d",
                 "parameters": [
                     {
@@ -814,13 +814,13 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "data.soDienThoai/email/laChuTin/daGui, private no-store. Chỉ chủ tin đang hoạt động được xem liên hệ đầy đủ."
+                        "description": "data.soDienThoai/email/laChuTin/daGui, private no-store. Dành cho tài khoản đang hoạt động là chủ tin hoặc có yêu cầu đã được duyệt."
                     },
                     "401": {
                         "description": "Chưa đăng nhập"
                     },
                     "403": {
-                        "description": "Không phải chủ tin hoặc tài khoản bị khóa"
+                        "description": "Tài khoản bị khóa hoặc không có quyền xem liên hệ"
                     },
                     "404": {
                         "description": "Tin không tồn tại, đã xóa mềm hoặc là tin ẩn của người khác"
@@ -2687,6 +2687,17 @@
                         "schema": {
                             "type": "integer",
                             "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "loai",
+                        "in": "query",
+                        "description": "lich_hen chỉ lấy yêu cầu đã duyệt và có lịch hẹn",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "lich_hen"
+                            ]
                         }
                     }
                 ],

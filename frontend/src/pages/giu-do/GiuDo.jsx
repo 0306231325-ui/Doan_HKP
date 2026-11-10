@@ -4,9 +4,15 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../auth/useAuth'
 import Button from '../../components/shared/Button'
 import HopThoai from '../../components/shared/HopThoai'
+import HuongDanThaoTac from '../../components/shared/HuongDanThaoTac'
 import PhanTrang from '../../components/shared/PhanTrang'
 import { dinhDangNgay } from '../danh-sach-do/hooks/xuLyDanhSachDo.js'
 import useGiuDo from './hooks/useGiuDo'
+
+const cacBuocGiuDo = [
+  ['Chọn tin nhặt được.', 'Chọn tin bạn đã đăng về đúng món đồ này.'],
+  ['Gửi thông báo.', 'Người báo mất sẽ nhận được liên kết đến tin để gửi yêu cầu nhận lại đồ.'],
+]
 
 export default function GiuDo({ tin }) {
   const { user, loading } = useAuth()
@@ -38,14 +44,21 @@ function ChonTinGiuDo({ tin, khiDong }) {
   const tieuDe = laHuy ? 'Xác nhận hủy' : thaoTac ? 'Xác nhận gửi thông báo' : 'Chọn tin nhặt được'
   const moTa = laHuy ? 'Bạn có muốn dừng thao tác và đóng hộp chọn tin?' : thaoTac
     ? 'Người báo mất sẽ nhận được liên kết đến tin nhặt được bên dưới.'
-    : 'Chọn tin bạn đã đăng về món đồ này. Người báo mất sẽ nhận được thông báo kèm đường dẫn để gửi yêu cầu nhận lại.'
+    : undefined
   const lopNutPhu = 'min-h-12 rounded-xl border border-[#ceded3] bg-white px-5 py-3 text-sm font-semibold text-emerald-900 hover:bg-emerald-50 focus-visible:outline-2 focus-visible:outline-emerald-700 disabled:opacity-50'
 
   useEffect(function tapTrungNutQuayLai() {
     if (thaoTac) nutQuayLai.current?.focus()
   }, [thaoTac])
 
-  return <HopThoai rong tieuDe={tieuDe} moTa={moTa} khiDong={dongHopThoai}>
+  return <HopThoai rong tieuDe={tieuDe} moTa={moTa} khiDong={dongHopThoai}
+    tuyChonTieuDe={!thaoTac && <HuongDanThaoTac
+      chiBieuTuong
+      tieuDe="Hướng dẫn báo tìm thấy đồ"
+      cacBuoc={cacBuocGiuDo}
+      ghiChu="Nếu chưa có tin phù hợp, chọn Đăng tin nhặt được. Sau khi đăng, quay lại tin báo mất này để gửi thông báo."
+    />}
+  >
     {thaoTac ? <div className="space-y-5 p-5 sm:p-7" aria-busy={dangGui}>
       {!laHuy && <dl className="grid gap-4 rounded-2xl bg-emerald-50 p-4 text-sm sm:grid-cols-2 sm:p-5">
         <div className="min-w-0 wrap-break-word"><dt className="font-semibold text-emerald-900">Tin báo mất</dt><dd className="mt-1 text-[#526c5b]">{tin.title}</dd></div>
@@ -59,7 +72,7 @@ function ChonTinGiuDo({ tin, khiDong }) {
     </div> : <form onSubmit={moXacNhanGui} className="space-y-5 p-5 sm:p-7" aria-busy={dangTai}>
       {dangTai && <p role="status" className="text-sm text-[#607568]">Đang tải tin nhặt được…</p>}
       {loiTai && <div className="space-y-2 text-sm"><p role="alert" className="text-rose-700">{loiTai}</p><Button onClick={taiLai}>Thử lại</Button></div>}
-      {danhSach?.length === 0 && <p className="rounded-xl bg-emerald-50 p-4 text-sm leading-6 text-[#526c5b]">Bạn chưa có tin nhặt được phù hợp. Sau khi đăng, quay lại tin báo mất này để gửi thông báo.</p>}
+      {danhSach?.length === 0 && <p role="status" className="text-sm text-[#526c5b]">Chưa có tin nhặt được phù hợp.</p>}
       {danhSach?.length > 0 && <fieldset className="space-y-3">
         <legend className="mb-3 text-base font-semibold text-emerald-950">Tin nhặt được của bạn</legend>
         {danhSach.map((muc) => <div key={muc.id} className="flex items-center gap-3 rounded-xl border border-[#ceded3] p-3 hover:bg-emerald-50 has-checked:border-emerald-700 has-checked:bg-emerald-50 sm:p-4">

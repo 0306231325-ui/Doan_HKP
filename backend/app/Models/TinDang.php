@@ -112,6 +112,12 @@ class TinDang extends Model
         return $this->yeuCauDangXuLyId($nguoiDungId) !== null;
     }
 
+    public function daDuyetYeuCau(int|string $nguoiDungId): bool
+    {
+        return $this->yeuCauNhanDo()->where('nguoi_yeu_cau_id', $nguoiDungId)
+            ->where('trang_thai', 'da_xac_minh')->exists();
+    }
+
     public function yeuCauDangXuLyId(int|string $nguoiDungId): int|string|null
     {
         return $this->yeuCauNhanDo()->where('nguoi_yeu_cau_id', $nguoiDungId)

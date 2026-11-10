@@ -61,7 +61,8 @@ class CuocHenController extends Controller
             $q->where('nguoi_yeu_cau_id', $userId)->orWhere(function ($q) use ($userId) {
                 $q->where('trang_thai', 'da_xac_minh')->whereHas('tinDang', fn ($q) => $q->where('nguoi_dung_id', $userId));
             });
-        })->with(['tinDang.nguoiDung', 'nguoiYeuCau'])->latest('id')->paginate(20);
+        })->when($request->query('loai') === 'lich_hen', fn ($q) => $q->where('trang_thai', 'da_xac_minh')->whereHas('cuocHen'))
+            ->with(['tinDang.nguoiDung', 'nguoiYeuCau'])->latest('id')->paginate(20);
         $xuLy->capNhatLichHetHan($rows->getCollection()->modelKeys());
         $rows->getCollection()->load(['cuocHen.diaDiem', 'cuocHen.banGiao']);
         $rows->through(fn ($yc) => $this->duLieu($yc, $userId));

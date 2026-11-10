@@ -52,7 +52,7 @@ export default function NhapMaBanGiao() {
       <section className="max-w-lg rounded-3xl border border-emerald-100 bg-white p-5 shadow-sm sm:p-8">
         {ketQua ? <div className="space-y-4">
           <p role="status" className="font-semibold text-emerald-950">{ketQua.message}</p>
-          <Link to={`/chi-tiet-yeu-cau?id=${ketQua.yeuCauId}`} className="text-sm font-semibold text-emerald-800 hover:underline">Xem chi tiết cuộc hẹn</Link>
+          <Link to={`/chi-tiet-yeu-cau?id=${ketQua.yeuCauId}&tab=lich-hen`} className="text-sm font-semibold text-emerald-800 hover:underline">Xem chi tiết cuộc hẹn</Link>
         </div> : <form onSubmit={xacNhanBanGiao} className="space-y-4">
           <label className="block text-sm font-semibold text-emerald-950">
             Mã bàn giao
