@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { ArrowLeft, ArrowRight, Inbox, RefreshCw } from 'lucide-react'
 import { nut, nhan, useDuLieu } from './duLieuYeuCau'
 import { NhanTrangThai, PhanTrang } from './ThanhPhanYeuCau'
@@ -8,6 +8,7 @@ import TheTinYeuCau from './TheTinYeuCau'
 import ChiTietTinPopup from './ChiTietTinPopup'
 
 export default function YeuCauNhanLai() {
+  const khungDanhSach = useRef(null)
   const [moTin, datMoTin] = useState(false)
   const [trangThaiNhom, datTrangThaiNhom] = useState('')
   const [danhMucId, datDanhMucId] = useState('')
@@ -32,6 +33,10 @@ export default function YeuCauNhanLai() {
       ? ['nhom_da_duyet', 'tam_cho_ban_giao', 'nhom_tu_choi']
       : ['san_sang_duyet', 'nhom_tu_choi']
   function chonDo(nhomDo) { datDoVat(nhomDo); datTrangHoSo(1); datLoc(''); datMaHoSo(null) }
+  function doiTrangDanhSach(value) {
+    datTrang(value)
+    khungDanhSach.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
   function doiTrangHoSo(value) { datTrangHoSo(value); datMaHoSo(null) }
 
   return <div className="space-y-5">
@@ -39,9 +44,9 @@ export default function YeuCauNhanLai() {
     {!doVat ? <>
       <div className="flex justify-end"><button type="button" className={nut} onClick={() => datLanTai((n) => n + 1)}><RefreshCw size={16} />Làm mới</button></div>
       <BoLocLoaiDo trangThai={trangThaiNhom} khiLocTrangThai={(value) => { datTrangThaiNhom(value); datTrang(1) }} danhSach={danhMuc.data?.data || []} giaTri={danhMucId} khiChon={(id) => { datDanhMucId(id); datTrang(1) }} loi={danhMuc.loi} tuKhoa={tuKhoa} khiTimKiem={(value) => { datTuKhoa(value); datTrang(1) }} />
-      <section className="overflow-hidden rounded-2xl border border-[#d6e4db] bg-white"><div className="flex flex-wrap items-center justify-between gap-4 p-5"><div><h3 className="font-bold text-[#243c30]">Đồ vật có yêu cầu <span className="ml-2 text-sm font-normal text-[#718276]">{cacNhom?.total ?? '…'}</span></h3></div></div>
+      <section ref={khungDanhSach} className="scroll-mt-24 overflow-hidden rounded-2xl border border-[#d6e4db] bg-white"><div className="flex flex-wrap items-center justify-between gap-4 p-5"><div><h3 className="font-bold text-[#243c30]">Đồ vật có yêu cầu <span className="ml-2 text-sm font-normal text-[#718276]">{cacNhom?.total ?? '…'}</span></h3></div></div>
         {nhom.loi ? <p role="alert" className="p-8 text-rose-700">{nhom.loi}</p> : !cacNhom ? <p role="status" className="p-10 text-center text-sm text-[#718276]">Đang tải đồ vật…</p> : !cacNhom.data.length ? <Trong /> : <div className="grid grid-cols-1 gap-5 px-5 pb-5 sm:grid-cols-2 lg:grid-cols-3">{cacNhom.data.map((n) => <TheTinYeuCau key={n.tin_dang_id} nhom={n} khiChon={() => chonDo(n)} />)}</div>}
-        <PhanTrang duLieu={cacNhom} trang={trang} doiTrang={datTrang} />
+        <PhanTrang duLieu={cacNhom} trang={trang} doiTrang={doiTrangDanhSach} />
       </section>
     </> : <>
       <section className="overflow-hidden rounded-2xl border border-[#d6e4db] bg-white">

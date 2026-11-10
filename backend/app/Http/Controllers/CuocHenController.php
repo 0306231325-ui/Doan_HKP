@@ -41,7 +41,7 @@ class CuocHenController extends Controller
                 ->orWhereHas('nguoiGiuDo', fn ($nguoi) => $nguoi->whereRaw("ho_ten LIKE ? ESCAPE '!'", [$mau]))
                 ->orWhereHas('yeuCauNhanDo.nguoiYeuCau', fn ($nguoi) => $nguoi->whereRaw("ho_ten LIKE ? ESCAPE '!'", [$mau])));
         }
-        $rows = $truyVan->latest('thoi_gian_hen_gap')->latest('id')->paginate(20);
+        $rows = $truyVan->latest('thoi_gian_hen_gap')->latest('id')->paginate(5);
         $rows->through(fn (CuocHen $hen) => [
             ...$hen->only(['id', 'yeu_cau_id', 'trang_thai', 'thoi_gian_hen_gap', 'ly_do_huy', 'nguoi_giu_xac_nhan_luc', 'nguoi_nhan_xac_nhan_luc']),
             'tin_dang' => $hen->yeuCauNhanDo?->tinDang?->only(['id', 'tieu_de']),
@@ -56,15 +56,16 @@ class CuocHenController extends Controller
 
     public function danhSach(Request $request, XuLyCuocHen $xuLy)
     {
+        $request->validate(['loai' => 'nullable|in:lich_hen']);
         $userId = $request->user()->id;
         $rows = YeuCauNhanDo::where(function ($q) use ($userId) {
             $q->where('nguoi_yeu_cau_id', $userId)->orWhere(function ($q) use ($userId) {
                 $q->where('trang_thai', 'da_xac_minh')->whereHas('tinDang', fn ($q) => $q->where('nguoi_dung_id', $userId));
             });
-        })->when($request->query('loai') === 'lich_hen', fn ($q) => $q->where('trang_thai', 'da_xac_minh')->whereHas('cuocHen'))
-            ->with(['tinDang.nguoiDung', 'nguoiYeuCau'])->latest('id')->paginate(20);
+        })->when($request->input('loai') === 'lich_hen', fn ($q) => $q->where('trang_thai', 'da_xac_minh')->whereHas('cuocHen'))
+            ->with(['tinDang.nguoiDung', 'nguoiYeuCau'])->latest('id')->paginate(5);
         $xuLy->capNhatLichHetHan($rows->getCollection()->modelKeys());
-        $rows->getCollection()->load(['cuocHen.diaDiem', 'cuocHen.banGiao']);
+        $rows->getCollection()->load(['cuocHen' => fn ($q) => $q->latest('id'), 'cuocHen.diaDiem', 'cuocHen.banGiao']);
         $rows->through(fn ($yc) => $this->duLieu($yc, $userId));
 
         return response()->json(['data' => $rows])->header('Cache-Control', 'private, no-store');
@@ -75,15 +76,22 @@ class CuocHenController extends Controller
         $yeuCau = $this->thamGia($request, $id);
         $xuLy->capNhatLichHetHan([$yeuCau->id]);
         $duLieu = $this->duLieu($yeuCau, $request->user()->id);
+        $yeuCau->loadMissing('diaDiemMat');
         $tin = $yeuCau->tinDang;
         $chiTiet = null;
         if ($tin && $tin->trang_thai_kiem_duyet !== 'da_an') {
             $tin->loadMissing($duLieuTin->quanHe());
             $chiTiet = [
+                'moTa' => $tin->mo_ta,
                 'loaiTin' => $tin->loai_tin, 'danhMuc' => $tin->danhMuc?->ten_danh_muc,
                 'thoiGianXayRa' => $tin->thoi_gian_xay_ra?->format('Y-m-d'), 'gioXayRa' => $tin->gioXayRa(),
                 'diaDiem' => $tin->diaDiem?->ten_dia_diem, 'viTriChiTiet' => $tin->dia_diem_chi_tiet,
-                'anh' => $tin->hinhAnh->map(fn ($anh) => ['url' => $anh->duongDanHienThi(), 'moTa' => $anh->mo_ta])->values(),
+                'loiNhan' => $yeuCau->loi_nhan,
+                'thoiGianMat' => $yeuCau->thoi_gian_mat?->toISOString(),
+                'diaDiemMat' => $yeuCau->diaDiemMat?->ten_dia_diem,
+                'viTriMat' => $yeuCau->dia_diem_mat_chi_tiet,
+                'thoiGianXuLy' => $yeuCau->thoi_gian_xu_ly?->toISOString(),
+                'anh' => $tin->hinhAnh->map(fn ($anh) => ['id' => $anh->id, 'url' => $anh->duongDanHienThi(), 'moTa' => $anh->mo_ta])->values(),
             ];
         }
 

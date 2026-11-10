@@ -31,6 +31,19 @@ class QuanLyYeuCauController extends Controller
         $hoanTat = $tienDo->hoanTat(YeuCauNhanDo::query())->count();
         $stats = ['tong' => $tong, 'choKiemTra' => YeuCauNhanDo::where('trang_thai', 'cho_kiem_tra')->count(), 'dangGiaoNhan' => $tienDo->loc(YeuCauNhanDo::query(), 'dang_giao_nhan')->count(), 'hoanTat' => $hoanTat];
         $q = YeuCauNhanDo::with(['tinDang', 'nguoiYeuCau', 'cuocHen.banGiao']);
+        $request->validate(['trangThaiNhom' => 'nullable|in:cho_duyet,cho_ban_giao,hoan_tat,tu_choi']);
+        if ($request->boolean('nhom') && $request->filled('trangThaiNhom')) {
+            $state = $request->input('trangThaiNhom');
+            $q->whereHas('tinDang', function ($tin) use ($state) {
+                if ($state === 'cho_ban_giao' || $state === 'hoan_tat') {
+                    $tin->where('trang_thai', $state === 'hoan_tat' ? 'da_hoan_tat' : 'cho_ban_giao');
+                } elseif ($state === 'cho_duyet') {
+                    $tin->where('trang_thai', 'dang_mo')->whereHas('yeuCauNhanDo', fn ($yc) => $yc->whereIn('trang_thai', ['cho_kiem_tra', 'can_bo_sung']));
+                } else {
+                    $tin->where('trang_thai', '!=', 'da_hoan_tat')->whereDoesntHave('yeuCauNhanDo', fn ($yc) => $yc->whereNotIn('trang_thai', ['tu_choi', 'da_huy']));
+                }
+            });
+        }
         if (! empty($filters['danhMucId'])) {
             $q->whereHas('tinDang', fn ($tin) => $tin->where('danh_muc_id', $filters['danhMucId']));
         }
@@ -68,14 +81,15 @@ class QuanLyYeuCauController extends Controller
                 ->selectRaw('COUNT(*) as so_yeu_cau, MAX(created_at) as moi_nhat')
                 ->selectRaw("SUM(CASE WHEN trang_thai = 'cho_kiem_tra' THEN 1 ELSE 0 END) as cho_kiem_tra")
                 ->selectRaw("SUM(CASE WHEN trang_thai = 'can_bo_sung' THEN 1 ELSE 0 END) as can_bo_sung")
-                ->groupBy('tin_dang_id')->orderByDesc('cho_kiem_tra')->orderByDesc('moi_nhat')->orderByDesc('tin_dang_id')->paginate(20);
+                ->selectRaw("SUM(CASE WHEN trang_thai = 'da_xac_minh' THEN 1 ELSE 0 END) as so_da_duyet")
+                ->groupBy('tin_dang_id')->orderByDesc('cho_kiem_tra')->orderByDesc('moi_nhat')->orderByDesc('tin_dang_id')->paginate(9);
             $daDuyet = YeuCauNhanDo::whereIn('tin_dang_id', $rows->getCollection()->pluck('tin_dang_id'))->where('trang_thai', 'da_xac_minh')
                 ->with(['nguoiYeuCau', 'cuocHen' => fn ($h) => $h->whereIn('trang_thai', ['cho_xac_nhan', 'da_xac_nhan', 'da_hoan_tat'])->latest('id')])->get()->keyBy('tin_dang_id');
             $rows->through(function ($nhom) use ($daDuyet) {
                 $yc = $daDuyet->get($nhom->tin_dang_id);
                 $nhom->setAttribute('anh_bia', $nhom->tinDang?->hinhAnh->first()?->duongDanHienThi() ?? '/do-vat-trong.svg');
                 $nhom->setAttribute('nguoi_nhan', $yc?->nguoiYeuCau?->ho_ten);
-                $nhom->setAttribute('lich_hen', $yc?->cuocHen->first()?->only(['id', 'thoi_gian_hen_gap']));
+                $nhom->setAttribute('lich_hen', $yc?->cuocHen->first()?->only(['id', 'thoi_gian_hen_gap', 'trang_thai']));
                 $nhom->tinDang?->unsetRelation('hinhAnh');
 
                 return $nhom;
