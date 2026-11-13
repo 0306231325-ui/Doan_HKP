@@ -23,9 +23,8 @@ test('Chặn tiêu đề trắng, ngày sai hoặc tương lai và thiếu vị 
   for (const thayDoi of [{ tieuDe: ' ' }, { ngayXayRa: '2026-02-30' }, { ngayXayRa: '2026-11-05' }, { diaDiemChiTiet: '' }]) assert.notEqual(kiemTraTinDang({ ...mau, ...thayDoi }, danhMuc, cauHoi, { 8: 'Đỏ' }, '2026-11-04'), '')
 })
 
-test('Multipart giữ ID phiên bản, số 0 và đúng mã gửi khi thử lại', () => {
-  const data = taoDuLieuGui(mau, cauHoi, { 8: 0 }, [], 'submission-key')
-  assert.equal(data.get('maGui'), 'submission-key')
+test('Multipart giữ ID phiên bản và câu trả lời số 0', () => {
+  const data = taoDuLieuGui(mau, cauHoi, { 8: 0 }, [])
   assert.equal(data.get('cauTraLoi[0][id]'), '8')
   assert.equal(data.get('cauTraLoi[0][phienBanId]'), '12')
   assert.equal(data.get('cauTraLoi[0][giaTri]'), '0')

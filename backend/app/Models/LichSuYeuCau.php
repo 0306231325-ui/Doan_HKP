@@ -19,17 +19,7 @@ class LichSuYeuCau extends Model
         'trang_thai_cu',
         'trang_thai_moi',
         'noi_dung',
-        'du_lieu_cu',
-        'du_lieu_moi',
     ];
-
-    protected function casts(): array
-    {
-        return [
-            'du_lieu_cu' => 'array',
-            'du_lieu_moi' => 'array',
-        ];
-    }
 
     public function yeuCauNhanDo(): BelongsTo
     {

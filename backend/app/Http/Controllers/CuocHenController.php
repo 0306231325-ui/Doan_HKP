@@ -94,7 +94,6 @@ class CuocHenController extends Controller
         $yeuCau = $this->thamGia($request, $id);
         $xuLy->capNhatLichHetHan([$yeuCau->id]);
         $duLieu = $this->duLieu($yeuCau, $request->user()->id);
-        $yeuCau->loadMissing('diaDiemMat');
         $tin = $yeuCau->tinDang;
         $chiTiet = null;
         if ($tin && $tin->trang_thai_kiem_duyet !== 'da_an') {
@@ -105,9 +104,6 @@ class CuocHenController extends Controller
                 'thoiGianXayRa' => $tin->thoi_gian_xay_ra?->format('Y-m-d'), 'gioXayRa' => $tin->gioXayRa(),
                 'diaDiem' => $tin->diaDiem?->ten_dia_diem, 'viTriChiTiet' => $tin->dia_diem_chi_tiet,
                 'loiNhan' => $yeuCau->loi_nhan,
-                'thoiGianMat' => $yeuCau->thoi_gian_mat?->toISOString(),
-                'diaDiemMat' => $yeuCau->diaDiemMat?->ten_dia_diem,
-                'viTriMat' => $yeuCau->dia_diem_mat_chi_tiet,
                 'thoiGianXuLy' => $yeuCau->thoi_gian_xu_ly?->toISOString(),
                 'anh' => $tin->hinhAnh->map(fn ($anh) => ['id' => $anh->id, 'url' => $anh->duongDanHienThi(), 'moTa' => $anh->mo_ta])->values(),
             ];

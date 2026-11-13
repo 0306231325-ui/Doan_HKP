@@ -9,7 +9,6 @@ export const nhan = {
   nhom_tu_choi: 'Từ chối',
   tam_cho_ban_giao: 'Tạm dừng', da_dong: 'Đã đóng', tu_choi: 'Từ chối', da_huy: 'Đã hủy',
 }
-export const ngay = (value) => value ? new Date(value).toLocaleString('vi-VN') : 'Chưa có'
 export function loiApi(error) {
   return Object.values(error.response?.data?.errors || {}).flat().join(' ') || error.response?.data?.message || 'Không tải được dữ liệu. Vui lòng thử lại.'
 }

@@ -85,7 +85,6 @@ class DangTinTest extends TestCase
             $t->string('dia_diem_chi_tiet');
             $t->string('thong_tin_lien_he')->nullable();
             $t->string('email_lien_he', 254)->nullable();
-            $t->uuid('ma_gui')->nullable()->unique();
             $t->string('trang_thai')->default('dang_mo');
             $t->string('trang_thai_kiem_duyet')->default('hien_thi');
             $t->softDeletes();
@@ -188,7 +187,7 @@ class DangTinTest extends TestCase
         $cacCau = $this->getJson('/api/dang-tin/cau-hoi?danhMucId='.$this->danhMuc->id)->assertOk()->json('data');
 
         return [
-            'maGui' => (string) Str::uuid(), 'loaiTin' => 'found', 'danhMucId' => $this->danhMuc->id,
+            'loaiTin' => 'found', 'danhMucId' => $this->danhMuc->id,
             'tieuDe' => 'Nhặt được tai nghe', 'moTa' => 'Mô tả công khai', 'ngayXayRa' => '2026-01-01',
             'diaDiemChiTiet' => 'Thư viện tầng 2', 'soDienThoai' => '0901234567', 'email' => 'lienhe@gmail.com',
             'cauTraLoi' => array_map(fn ($cau) => ['id' => $cau['id'], 'phienBanId' => $cau['phienBanId'], 'giaTri' => 'SECRET-ANSWER'], $cacCau),
@@ -210,7 +209,7 @@ class DangTinTest extends TestCase
         ]];
     }
 
-    public function test_dang_tin_luu_db_hien_ngay_khong_lo_bi_mat_va_khong_trung(): void
+    public function test_dang_tin_luu_db_hien_ngay_khong_lo_bi_mat(): void
     {
         $mau = $this->mau();
         $khac = DanhMucDoVat::create(['ten_danh_muc' => 'Giấy tờ']);
@@ -232,7 +231,6 @@ class DangTinTest extends TestCase
         foreach (['SECRET-ANSWER', 'Dấu hiệu bí mật?', 'khong-doi-mat-khau'] as $biMat) {
             $this->assertStringNotContainsString($biMat, $response->getContent());
         }
-        $this->postJson('/api/tin-dang', $mau)->assertOk()->assertJsonPath('data.id', $id);
         $this->assertDatabaseCount('tin_dang', 1);
         $this->assertDatabaseCount('loi_khai_tin_dang', 1);
         $this->assertDatabaseCount('lich_su_tin_dang', 1);
@@ -252,7 +250,6 @@ class DangTinTest extends TestCase
         $mau['cauTraLoi'][0]['giaTri'] = 'Sọc đỏ';
         $this->postJson('/api/tin-dang', $mau)->assertCreated();
         $this->assertDatabaseCount('loi_khai_tin_dang', 1);
-        $mau['maGui'] = (string) Str::uuid();
         $mau['email'] = '';
         $this->postJson('/api/tin-dang', $mau)->assertUnprocessable()->assertJsonValidationErrors(['email', 'soDienThoai']);
     }
@@ -266,7 +263,6 @@ class DangTinTest extends TestCase
         $moi = $this->mau();
         $this->postJson('/api/tin-dang', $moi)->assertCreated();
         $this->assertDatabaseHas('loi_khai_tin_dang', ['cau_hoi_id' => $this->rieng->id, 'cau_hoi_phien_ban_id' => $moi['cauTraLoi'][0]['phienBanId']]);
-        $moi['maGui'] = (string) Str::uuid();
         $cu = CauHoi::whereNull('danh_muc_id')->firstOrFail();
         $this->postJson('/api/tin-dang', [...$moi, 'cauTraLoi' => []])->assertUnprocessable();
         $this->postJson('/api/tin-dang', [...$moi, 'cauTraLoi' => [...$moi['cauTraLoi'], ['id' => $cu->id, 'phienBanId' => $cu->lichSu()->firstOrFail()->id, 'giaTri' => 'Giả']]])->assertConflict();
@@ -354,12 +350,12 @@ class DangTinTest extends TestCase
         $id = $this->postJson('/api/tin-dang', $mau)->assertCreated()->json('data.id');
         $tin = TinDang::findOrFail($id);
         for ($viTri = 0; $viTri < 6; $viTri++) {
-            $tin->replicate()->fill(['slug' => 'tin-thu-'.$viTri, 'ma_gui' => null])->save();
+            $tin->replicate()->fill(['slug' => 'tin-thu-'.$viTri])->save();
         }
         $tin->update(['trang_thai_kiem_duyet' => 'da_an', 'tieu_de' => 'Vi da thu nghiem']);
-        $tin->replicate()->fill(['slug' => 'tin-da-xoa', 'ma_gui' => null])->save();
+        $tin->replicate()->fill(['slug' => 'tin-da-xoa'])->save();
         TinDang::where('slug', 'tin-da-xoa')->delete();
-        $tinKhac = $tin->replicate()->fill(['slug' => 'tin-nguoi-khac', 'ma_gui' => null, 'nguoi_dung_id' => $this->nguoiNhan->id, 'trang_thai_kiem_duyet' => 'hien_thi']);
+        $tinKhac = $tin->replicate()->fill(['slug' => 'tin-nguoi-khac', 'nguoi_dung_id' => $this->nguoiNhan->id, 'trang_thai_kiem_duyet' => 'hien_thi']);
         $tinKhac->save();
 
         $this->getJson($url.'?trang=0')->assertUnprocessable();
@@ -590,10 +586,10 @@ class DangTinTest extends TestCase
         $this->postJson('/api/tin-dang/1/giu-do', [])->assertUnauthorized();
         $mau = $this->mau();
         $tinNhat = $this->postJson('/api/tin-dang', $mau)->assertCreated()->json('data.id');
-        $tinMatCuaNguoiGiu = $this->postJson('/api/tin-dang', [...$mau, 'maGui' => (string) Str::uuid(), 'loaiTin' => 'lost'])->assertCreated()->json('data.id');
+        $tinMatCuaNguoiGiu = $this->postJson('/api/tin-dang', [...$mau, 'loaiTin' => 'lost'])->assertCreated()->json('data.id');
         $this->app['auth']->forgetGuards();
         $this->actingAs($this->nguoiNhan, 'web');
-        $tinMat = $this->postJson('/api/tin-dang', [...$mau, 'maGui' => (string) Str::uuid(), 'loaiTin' => 'lost'])->assertCreated()->json('data.id');
+        $tinMat = $this->postJson('/api/tin-dang', [...$mau, 'loaiTin' => 'lost'])->assertCreated()->json('data.id');
         $url = '/api/tin-dang/'.$tinMat.'/giu-do';
         $this->getJson($url)->assertForbidden();
 
@@ -625,11 +621,11 @@ class DangTinTest extends TestCase
     {
         $mau = $this->mau();
         $tinMat = $this->postJson('/api/tin-dang', [...$mau, 'loaiTin' => 'lost'])->assertCreated()->json('data.id');
-        $tinNhatKhac = $this->postJson('/api/tin-dang', [...$mau, 'maGui' => (string) Str::uuid()])->assertCreated()->json('data.id');
+        $tinNhatKhac = $this->postJson('/api/tin-dang', $mau)->assertCreated()->json('data.id');
         $this->app['auth']->forgetGuards();
         $this->actingAs($this->nguoiNhan, 'web');
-        $tinNhat = TinDang::findOrFail($this->postJson('/api/tin-dang', [...$mau, 'maGui' => (string) Str::uuid()])->assertCreated()->json('data.id'));
-        $tinCu = $tinNhat->replicate(['ma_gui']);
+        $tinNhat = TinDang::findOrFail($this->postJson('/api/tin-dang', $mau)->assertCreated()->json('data.id'));
+        $tinCu = $tinNhat->replicate();
         $tinCu->slug = 'tin-cu-khong-co-cau-hoi';
         $tinCu->save();
         $url = '/api/tin-dang/'.$tinMat.'/giu-do';
