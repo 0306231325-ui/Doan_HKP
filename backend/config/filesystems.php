@@ -64,8 +64,7 @@ return [
 
         'minh-chung-yeu-cau' => [
             'driver' => 'local',
-            'root' => public_path('minh-chung-yeu-cau'),
-            'visibility' => 'public',
+            'root' => storage_path('app/private/minh-chung-yeu-cau'),
             'throw' => false,
             'report' => false,
         ],

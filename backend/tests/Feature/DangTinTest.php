@@ -311,11 +311,11 @@ class DangTinTest extends TestCase
         $maTin = sprintf('TIN-%06d', $id);
         $this->getJson('/api/tra-cuu/'.$id)->assertOk()->assertJsonCount(3, 'data.images')
             ->assertJsonPath('data.referenceCode', $maTin)
-            ->assertJsonPath('data.images.0', '/api/tin-dang/anh/'.$maTin.'-vi-da.jpg')
-            ->assertJsonPath('data.images.1', '/api/tin-dang/anh/'.$maTin.'-vi-da-2.jpg')
-            ->assertJsonPath('data.images.2', '/api/tin-dang/anh/'.$maTin.'-hai.png');
+            ->assertJsonPath('data.images.0', '/api/tin-dang/anh/'.$maTin.'-1.jpg')
+            ->assertJsonPath('data.images.1', '/api/tin-dang/anh/'.$maTin.'-2.jpg')
+            ->assertJsonPath('data.images.2', '/api/tin-dang/anh/'.$maTin.'-3.png');
         $tenCu = str_repeat('a', 40).'.jpg';
-        Storage::disk('anh-tin-dang')->move('tin/tin-nhat/'.$maTin.'-vi-da-2.jpg', 'tin/tin-nhat/'.$tenCu);
+        Storage::disk('anh-tin-dang')->move('tin/tin-nhat/'.$maTin.'-2.jpg', 'tin/tin-nhat/'.$tenCu);
         HinhAnhTinDang::where('thu_tu', 1)->update(['duong_dan' => '/api/tin-dang/anh/'.$tenCu]);
         $this->get('/api/tin-dang/anh/'.$tenCu)->assertOk();
         $url = HinhAnhTinDang::first()->duong_dan;
@@ -490,7 +490,9 @@ class DangTinTest extends TestCase
         $this->assertSame('cho_kiem_tra', $yeuCau->trang_thai);
         $minhChung = $yeuCau->minhChung()->orderBy('thu_tu')->get();
         $this->assertSame([0, 1, 2], $minhChung->pluck('thu_tu')->all());
-        $this->assertSame(public_path('minh-chung-yeu-cau'), config('filesystems.disks.minh-chung-yeu-cau.root'));
+        $this->assertSame(storage_path('app/private/minh-chung-yeu-cau'), config('filesystems.disks.minh-chung-yeu-cau.root'));
+        $maYeuCau = sprintf('YC-%04d', $yeuCau->id);
+        $this->assertSame([$maYeuCau.'-1.jpg', $maYeuCau.'-2.png', $maYeuCau.'-3.jpg'], $minhChung->map(fn ($muc) => basename($muc->duong_dan))->all());
         foreach ($minhChung as $muc) {
             $this->assertStringStartsWith('minh-chung-yeu-cau/'.$yeuCau->id.'/', $muc->duong_dan);
             Storage::disk('minh-chung-yeu-cau')->assertExists(Str::after($muc->duong_dan, 'minh-chung-yeu-cau/'));

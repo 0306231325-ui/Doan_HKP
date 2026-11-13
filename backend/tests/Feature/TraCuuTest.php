@@ -219,16 +219,18 @@ class TraCuuTest extends TestCase
         $this->seed(DatabaseSeeder::class);
         $this->assertDatabaseCount('tin_dang', 5);
         $tin = TinDang::where('slug', 'mau-tra-cuu-laptop-asus')->firstOrFail();
-        $urlAnh = '/api/tin-dang/anh/anhtin1.webp';
+        $urlAnh = '/api/tin-dang/anh/hanghoa01.jpg';
+        $tinVeXe = TinDang::where('slug', 'mau-tra-cuu-the-ve-xe')->firstOrFail();
+        $this->getJson('/api/tra-cuu/'.$tinVeXe->id)->assertJsonPath('data.images', [$urlAnh, $urlAnh]);
         $this->getJson('/api/tra-cuu/'.$tin->id)->assertJsonPath('data.imageUrl', $urlAnh);
-        $this->get($urlAnh)->assertOk()->assertHeader('Content-Type', 'image/webp');
+        $this->get($urlAnh)->assertOk()->assertHeader('Content-Type', 'image/jpeg');
         $tin->hinhAnh()->update(['duong_dan' => '/tin/tin-mat/anhtin1.webp']);
-        $this->getJson('/api/tra-cuu/'.$tin->id)->assertJsonPath('data.images.0', $urlAnh);
-        $this->get($urlAnh)->assertOk();
+        $this->getJson('/api/tra-cuu/'.$tin->id)->assertJsonPath('data.images.0', '/api/tin-dang/anh/anhtin1.webp');
+        $tin->hinhAnh()->create(['nguoi_tai_len_id' => $tin->nguoi_dung_id, 'duong_dan' => '/api/tin-dang/anh/anhtin1_a.jpg', 'thu_tu' => 1]);
         $tin->update(['tieu_de' => 'Da sua boi nguoi dung']);
         TinDang::where('slug', 'mau-tra-cuu-vi-da-den')->firstOrFail()->delete();
         $this->seed(DatabaseSeeder::class);
-        $this->assertDatabaseCount('nguoi_dung', 6);
+        $this->assertDatabaseCount('nguoi_dung', 8);
         $this->assertSame(1, NguoiDung::withTrashed()->where('vai_tro', 'quan_tri')->count());
         $this->assertDatabaseHas('nguoi_dung', [
             'ho_ten' => 'Vũ Thiên Phú',
@@ -237,7 +239,9 @@ class TraCuuTest extends TestCase
             'deleted_at' => null,
         ]);
         $this->assertDatabaseCount('tin_dang', 5);
-        $this->assertDatabaseCount('hinh_anh_tin_dang', 6);
+        $this->assertDatabaseCount('hinh_anh_tin_dang', 8);
+        $this->assertSame(8, HinhAnhTinDang::where('duong_dan', $urlAnh)->count());
+        $this->getJson('/api/tra-cuu/'.$tin->id)->assertJsonPath('data.images', [$urlAnh, $urlAnh, $urlAnh]);
         $this->assertDatabaseCount('lich_su_tin_dang', 5);
         $this->assertDatabaseCount('cau_hoi', 15);
         $this->assertDatabaseCount('lich_su_cau_hoi', 15);

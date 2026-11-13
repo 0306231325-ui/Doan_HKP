@@ -10,10 +10,10 @@ const HUONG_DAN_NHAP_MA = {
   tieuDe: 'Hướng dẫn nhập mã bàn giao',
   cacBuoc: [
     ['Nhận mã sau khi giao nhận đồ.', 'Người tạo cuộc hẹn đưa mã bàn giao 6 số cho người còn lại.'],
-    ['Nhập đủ 6 số.', 'Đăng nhập bằng tài khoản của người nhận mã và nhập mã, kể cả số 0 ở đầu nếu có.'],
+    ['Nhập đủ 6 số.', 'Người nhận mã đăng nhập vào tài khoản của mình, mở Đặt hẹn → Nhập mã bàn giao và nhập cả số 0 ở đầu nếu có.'],
     ['Xác nhận bàn giao.', 'Bấm Tiếp tục, kiểm tra mã rồi bấm Xác nhận bàn giao để ghi nhận hoàn tất cho cả hai bên.'],
   ],
-  ghiChu: 'Mã có hiệu lực từ giờ hẹn đến trước mốc 24 giờ sau. Nếu mã đã hết hạn, hai bên có thể tạo cuộc hẹn mới.',
+  ghiChu: 'Mã dùng được từ giờ hẹn và hết hạn sau 24 giờ. Nếu mã đã hết hạn, hai bên có thể đặt lại lịch.',
 }
 
 const kieuNutPhu = 'rounded-xl border border-[#ceded3] px-4 py-2.5 text-sm font-semibold text-[#526c5b] hover:bg-emerald-50 focus-visible:outline-2 focus-visible:outline-emerald-700 disabled:opacity-50'

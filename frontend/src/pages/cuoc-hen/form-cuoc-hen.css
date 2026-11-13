@@ -1,0 +1,21 @@
+@supports (appearance: base-select) and selector(::picker(select)) {
+  .chon-gio-hen,
+  .chon-gio-hen::picker(select) {
+    appearance: base-select;
+  }
+
+  .chon-gio-hen::picker(select) {
+    max-block-size: min(14rem, 40dvh);
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    scrollbar-gutter: stable;
+    border: 1px solid #ceded3;
+    border-radius: 0.75rem;
+    background: white;
+    box-shadow: 0 4px 12px #00000012;
+  }
+
+  .chon-gio-hen option {
+    padding: 0.375rem 0.75rem;
+  }
+}

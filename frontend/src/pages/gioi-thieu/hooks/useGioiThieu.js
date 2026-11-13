@@ -9,17 +9,17 @@ const CAC_CAU_HOI = [
   {
     id: 'mat-do',
     cauHoi: 'Tôi nên làm gì khi bị mất đồ?',
-    traLoi: 'Hãy bắt đầu từ mục Tra cứu để tìm những tin nhặt được có thể liên quan đến món đồ của bạn. Bạn cũng có thể chọn Báo mất đồ để cung cấp thông tin về đồ vật, thời gian và khu vực làm mất.',
+    traLoi: 'Vào Danh sách để tìm tin nhặt được. Nếu thấy đúng món đồ, chọn Yêu cầu nhận lại đồ, trả lời câu hỏi đối chiếu rồi xem kết quả ở Theo dõi yêu cầu. Bạn cũng có thể vào Đăng tin và chọn loại Báo mất.',
   },
   {
     id: 'nhat-duoc',
     cauHoi: 'Nếu nhặt được đồ, tôi có thể giúp như thế nào?',
-    traLoi: 'Bạn có thể đăng tin nhặt được, mô tả đặc điểm nhận biết và khu vực tìm thấy. Hãy giữ lại một vài đặc điểm riêng để đối chiếu với người nhận, tránh công khai đầy đủ giấy tờ hoặc thông tin cá nhân của chủ sở hữu.',
+    traLoi: 'Bạn có thể đăng tin nhặt được và dùng câu hỏi đối chiếu để giữ kín các đặc điểm nhận biết. Nếu thấy tin báo mất đúng món đồ, chọn Tôi đang giữ đồ này để gửi thông báo kèm tin nhặt được của bạn, hoặc chọn Tạo lịch hẹn trả đồ khi hai bên đã thống nhất lịch.',
   },
   {
     id: 'nhan-lai',
     cauHoi: 'Cần lưu ý gì khi nhận lại hoặc trao trả đồ?',
-    traLoi: 'Hai bên nên đối chiếu kỹ đặc điểm đồ vật và thông tin liên quan trước khi trao trả. Ưu tiên hẹn ở nơi công cộng trong trường và không chia sẻ mật khẩu, mã OTP hoặc chuyển tiền theo yêu cầu từ người lạ.',
+    traLoi: 'Hai bên đối chiếu đồ vật và thống nhất địa điểm công cộng trong trường. Sau khi giao nhận, người tạo lịch đưa mã bàn giao 6 số cho người còn lại để xác nhận. Giữ kín mật khẩu và mã OTP.',
   },
 ]
 

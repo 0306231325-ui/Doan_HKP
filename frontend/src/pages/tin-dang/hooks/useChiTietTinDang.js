@@ -3,12 +3,12 @@ import { useLocation, useSearchParams } from 'react-router-dom'
 import api from '../../../services/api'
 import { useAuth } from '../../../auth/useAuth'
 
-export default function useChiTietTinDang() {
+export default function useChiTietTinDang(tinId) {
   const { user } = useAuth()
   const nguoiXem = user?.id || ''
   const [thamSo] = useSearchParams()
   const viTri = useLocation()
-  const id = thamSo.get('id') || ''
+  const id = tinId ?? thamSo.get('id') ?? ''
   const hopLe = /^[1-9]\d{0,18}$/.test(id)
   const [lanTai, datLanTai] = useState(0)
   const khoa = `${id}#${lanTai}#${nguoiXem}`

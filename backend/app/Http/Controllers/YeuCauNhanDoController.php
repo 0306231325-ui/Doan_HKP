@@ -74,9 +74,11 @@ class YeuCauNhanDoController extends Controller
                 ]);
                 $yeuCau->traLoi()->createMany($cotTraLoi);
                 $thuMuc = (string) $yeuCau->id;
+                $maYeuCau = 'YC-'.str_pad($thuMuc, 4, '0', STR_PAD_LEFT);
                 foreach (array_values($mau['anh'] ?? []) as $thuTu => $tep) {
-                    $tepDaLuu[] = $tep->hashName($thuMuc);
-                    $duongDan = $tep->store($thuMuc, 'minh-chung-yeu-cau');
+                    $tenAnh = $maYeuCau.'-'.($thuTu + 1).'.'.$tep->guessExtension();
+                    $tepDaLuu[] = $thuMuc.'/'.$tenAnh;
+                    $duongDan = $tep->storeAs($thuMuc, $tenAnh, 'minh-chung-yeu-cau');
                     if (! $duongDan) {
                         throw new RuntimeException('Không lưu được ảnh xác minh.');
                     }

@@ -2,6 +2,7 @@ import { CalendarDays, Clock3, MapPin } from 'lucide-react'
 import { useEffect, useId, useState } from 'react'
 import Button from '../../components/shared/Button'
 import { layNgayVietNam } from '../admin/tong-quan/hooks/xuLyThongKe.js'
+import './form-cuoc-hen.css'
 
 const cacGio = Array.from({ length: 24 }, (_, gio) => String(gio).padStart(2, '0'))
 const cacPhut = Array.from({ length: 60 }, (_, phut) => String(phut).padStart(2, '0'))
@@ -82,11 +83,11 @@ export default function FormCuocHen({ cacDiaDiem, khiXemLai, khiHuy, giaTriBanDa
         <div>
           <div className="flex items-center gap-2 text-sm font-semibold text-[#243c30]"><Clock3 className="h-4 w-4 text-[#718276]" aria-hidden="true" />Giờ gặp (giờ Việt Nam) <span className="text-red-600" aria-hidden="true">*</span></div>
           <div className="grid grid-cols-2 gap-3">
-            <select name="gio" aria-label="Giờ gặp (giờ Việt Nam)" required value={gio} className={kieuTruong} onChange={(event) => datGio(event.target.value)} aria-invalid={loiGio || undefined} aria-describedby={loiGio ? maLoi : undefined}>
+            <select name="gio" aria-label="Giờ gặp (giờ Việt Nam)" required value={gio} className={`${kieuTruong} chon-gio-hen`} onChange={(event) => datGio(event.target.value)} aria-invalid={loiGio || undefined} aria-describedby={loiGio ? maLoi : undefined}>
               <option value="" disabled>Giờ</option>
               {cacGio.map((muc) => <option key={muc} value={muc} disabled={chonHomNay && muc < gioHienTai}>{muc}</option>)}
             </select>
-            <select name="phut" aria-label="Phút gặp" required value={phut} className={kieuTruong} onChange={(event) => datPhut(event.target.value)} aria-invalid={loiGio || undefined} aria-describedby={loiGio ? maLoi : undefined}>
+            <select name="phut" aria-label="Phút gặp" required value={phut} className={`${kieuTruong} chon-gio-hen`} onChange={(event) => datPhut(event.target.value)} aria-invalid={loiGio || undefined} aria-describedby={loiGio ? maLoi : undefined}>
               <option value="" disabled>Phút</option>
               {cacPhut.map((muc) => <option key={muc} value={muc} disabled={chonHomNay && gio !== '' && `${gio}:${muc}` < `${gioHienTai}:${phutHienTai}`}>{muc}</option>)}
             </select>

@@ -120,9 +120,14 @@ class QuanLyYeuCauController extends Controller
         abort_unless(str_starts_with($file->duong_dan, $prefix), 404);
         $disk = Storage::disk('minh-chung-yeu-cau');
         $path = substr($file->duong_dan, strlen($prefix));
-        abort_if(str_contains($path, '..') || ! $disk->exists($path), 404);
+        abort_if(str_contains($path, '..'), 404);
+        $tep = $disk->path($path);
+        if (! $disk->exists($path) && preg_match('~\A[0-9]+/[a-zA-Z0-9]{40}\.(?:jpg|jpeg|png|webp)\z~', $path)) {
+            $tep = public_path($prefix.$path);
+        }
+        abort_unless(is_file($tep), 404);
 
-        return response()->file($disk->path($path), ['Cache-Control' => 'private, no-store', 'X-Content-Type-Options' => 'nosniff']);
+        return response()->file($tep, ['Cache-Control' => 'private, no-store', 'X-Content-Type-Options' => 'nosniff']);
     }
 
     public function xuLy(Request $request, string $id)

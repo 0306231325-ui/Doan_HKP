@@ -10,8 +10,9 @@ import { dinhDangNgay } from '../danh-sach-do/hooks/xuLyDanhSachDo.js'
 import useGiuDo from './hooks/useGiuDo'
 
 const cacBuocGiuDo = [
-  ['Chọn tin nhặt được.', 'Chọn tin bạn đã đăng về đúng món đồ này.'],
-  ['Gửi thông báo.', 'Hai bên tự liên hệ, thống nhất và tạo lịch hẹn, không cần admin duyệt.'],
+  ['Chọn tin nhặt được.', 'Chọn tin bạn đã đăng về đúng món đồ. Tin cần đang mở, công khai và có câu hỏi nhận diện.'],
+  ['Xác nhận gửi thông báo.', 'Bấm Gửi thông báo, kiểm tra hai tin rồi bấm Xác nhận gửi. Chủ tin báo mất sẽ nhận thông báo.'],
+  ['Thống nhất lịch gặp.', 'Hệ thống ghi nhận yêu cầu đã xác minh. Hai bên liên hệ rồi chọn yêu cầu tại Đặt hẹn → Tạo cuộc hẹn.'],
 ]
 
 export default function GiuDo({ tin }) {
@@ -56,7 +57,7 @@ function ChonTinGiuDo({ tin, khiDong }) {
       chiBieuTuong
       tieuDe="Hướng dẫn báo tìm thấy đồ"
       cacBuoc={cacBuocGiuDo}
-      ghiChu="Nếu chưa có tin phù hợp, chọn Đăng tin nhặt được. Sau khi đăng, quay lại tin báo mất này để gửi thông báo."
+      ghiChu="Nếu chưa có tin nhặt được, bạn có thể đăng tin rồi quay lại gửi thông báo. Nếu hai bên đã thống nhất giờ và địa điểm, dùng Tạo lịch hẹn trả đồ ngay trên tin báo mất."
     />}
   >
     {thaoTac ? <div className="space-y-5 p-5 sm:p-7" aria-busy={dangGui}>

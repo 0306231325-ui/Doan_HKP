@@ -8,7 +8,6 @@ import ThongBaoTrong from '../../components/shared/ThongBaoTrong'
 import BaoCaoTinDang from './BaoCaoTinDang'
 import LienHeTinDang from './LienHeTinDang'
 import ThaoTacTinDang from './ThaoTacTinDang'
-import TaoLichTraDo from './TaoLichTraDo'
 import useChiTietTinDang from './hooks/useChiTietTinDang'
 import { dinhDangNgay } from '../danh-sach-do/hooks/xuLyDanhSachDo'
 
@@ -55,7 +54,7 @@ export default function ChiTietTinDang() {
             {anh.length ? (
               <div className={`grid gap-3 ${cotAnh}`}>
                 {anh.map((url, i) => (
-                  <button key={url} type="button" aria-label={`Phóng to ảnh ${i + 1}`} aria-haspopup="dialog" onClick={() => datAnhDangXem({ url, viTri: i + 1, tinId: tin.id })} className="relative cursor-zoom-in overflow-hidden rounded-2xl bg-[#f5faf7] hover:ring-2 hover:ring-emerald-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700">
+                  <button key={`${url}-${i}`} type="button" aria-label={`Phóng to ảnh ${i + 1}`} aria-haspopup="dialog" onClick={() => datAnhDangXem({ url, viTri: i + 1, tinId: tin.id })} className="relative cursor-zoom-in overflow-hidden rounded-2xl bg-[#f5faf7] hover:ring-2 hover:ring-emerald-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700">
                     <img src={url} alt={`${tin.title} · Ảnh ${i + 1}`} className="aspect-[4/3] max-h-96 w-full object-contain" onError={dungAnhThayThe} />
                     <span className="absolute bottom-3 right-3 rounded-full bg-white/90 p-2 text-emerald-900 shadow-sm"><ZoomIn className="h-4 w-4" aria-hidden="true" /></span>
                   </button>
@@ -108,7 +107,11 @@ export default function ChiTietTinDang() {
             ) : (
               <>
                 {tin.canClaim && <Link to={`/yeu-cau-nhan-do?id=${tin.id}`} className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-emerald-900 px-4 py-3 text-center text-sm font-bold text-white hover:bg-emerald-800 sm:w-auto"><HandHeart className="h-4 w-4" aria-hidden="true" />{tin.hasClaim ? 'Xem yêu cầu đã gửi' : 'Yêu cầu nhận lại đồ'}</Link>}
-                {tin.coTheTaoLichTraDo && <TaoLichTraDo key={tin.id} tin={tin} taiLai={taiLai} />}
+                {tin.coTheTaoLichTraDo && (
+                  <Link to={`/cuoc-hen/tao/tra-do/${tin.id}`} className="form-button inline-flex items-center gap-2">
+                    <CalendarDays size={18} aria-hidden="true" />Tạo lịch hẹn trả đồ
+                  </Link>
+                )}
                 <BaoCaoTinDang key={tin.id} tin={tin} />
               </>
             )}
