@@ -21,6 +21,30 @@ class XuLyCuocHen
 
     public const LICH_DANG_HIEU_LUC = ['cho_xac_nhan', 'da_xac_nhan', 'da_hoan_tat'];
 
+    public function taoLichTraDo(string $tinId, array $duLieu, int $nguoiGiuId): array
+    {
+        return DB::transaction(function () use ($tinId, $duLieu, $nguoiGiuId) {
+            $tin = TinDang::where('trang_thai_kiem_duyet', 'hien_thi')->lockForUpdate()->findOrFail($tinId);
+            abort_unless($tin->loai_tin === 'bao_mat' && in_array($tin->trang_thai, self::TIN_DUOC_DAT_LICH, true), 409, 'Tin này không thể tạo lịch trả đồ.');
+            abort_if((int) $tin->nguoi_dung_id === $nguoiGiuId, 403, 'Bạn không thể tạo lịch trả đồ cho tin của mình.');
+            abort_unless(NguoiDung::whereKey($tin->nguoi_dung_id)->where('trang_thai', 'hoat_dong')->exists(), 409, 'Tài khoản người nhận hiện không thể nhận lịch hẹn.');
+
+            $this->capNhatLichHetHan($tin->yeuCauNhanDo()->pluck('id')->all());
+            abort_if($tin->yeuCauNhanDo()->where('nguoi_yeu_cau_id', '!=', $nguoiGiuId)
+                ->whereHas('cuocHen', fn ($q) => $q->whereIn('trang_thai', self::LICH_DANG_HIEU_LUC))->exists(), 409, 'Tin báo mất đã có lịch trả đồ đang hiệu lực.');
+            $tin->yeuCauNhanDo()->where('nguoi_yeu_cau_id', '!=', $nguoiGiuId)
+                ->where('trang_thai', 'da_xac_minh')->update(['trang_thai' => 'da_huy']);
+            $yeuCau = $tin->yeuCauNhanDo()->firstOrCreate([
+                'nguoi_yeu_cau_id' => $nguoiGiuId,
+            ], ['trang_thai' => 'da_xac_minh', 'nguoi_xu_ly_id' => $nguoiGiuId, 'thoi_gian_xu_ly' => now()]);
+            if ($yeuCau->trang_thai !== 'da_xac_minh') {
+                $yeuCau->update(['trang_thai' => 'da_xac_minh', 'nguoi_xu_ly_id' => $nguoiGiuId, 'thoi_gian_xu_ly' => now()]);
+            }
+
+            return $this->taoLich([...$duLieu, 'yeuCauId' => $yeuCau->id], $nguoiGiuId);
+        }, 3);
+    }
+
     public function taoLich(array $duLieu, int $nguoiTaoId): array
     {
         $gioHen = CarbonImmutable::createFromFormat('!Y-m-d H:i', $duLieu['thoiGianHen'], 'Asia/Ho_Chi_Minh')
@@ -32,10 +56,17 @@ class XuLyCuocHen
                 return DB::transaction(function () use ($yeuCauGoc, $nguoiTaoId, $duLieu, $gioHen) {
                     $tin = TinDang::lockForUpdate()->findOrFail($yeuCauGoc->tin_dang_id);
                     $yeuCau = YeuCauNhanDo::lockForUpdate()->findOrFail($yeuCauGoc->id);
-                    $nguoiGiuId = (int) $tin->nguoi_dung_id;
-                    $nguoiNhanId = (int) $yeuCau->nguoi_yeu_cau_id;
+                    $yeuCau->setRelation('tinDang', $tin);
+                    $nguoiGiuId = $yeuCau->nguoiGiuId();
+                    $nguoiNhanId = $yeuCau->nguoiNhanId();
                     abort_unless(in_array($nguoiTaoId, [$nguoiGiuId, $nguoiNhanId], true), 404);
                     abort_unless($yeuCau->trang_thai === 'da_xac_minh' && in_array($tin->trang_thai, self::TIN_DUOC_DAT_LICH, true), 409, 'Yêu cầu hiện không thể đặt lịch.');
+                    if ($tin->loai_tin === 'bao_mat') {
+                        abort_unless($tin->trang_thai_kiem_duyet === 'hien_thi', 409, 'Tin này hiện không thể đặt lịch.');
+                        $this->capNhatLichHetHan($tin->yeuCauNhanDo()->whereKeyNot($yeuCau->id)->pluck('id')->all());
+                        abort_if($tin->yeuCauNhanDo()->whereKeyNot($yeuCau->id)
+                            ->whereHas('cuocHen', fn ($q) => $q->whereIn('trang_thai', self::LICH_DANG_HIEU_LUC))->exists(), 409, 'Tin báo mất đã có lịch trả đồ đang hiệu lực.');
+                    }
                     $nguoiNhapId = $nguoiTaoId === $nguoiGiuId ? $nguoiNhanId : $nguoiGiuId;
                     abort_if($nguoiNhapId === $nguoiTaoId || ! NguoiDung::whereKey($nguoiNhapId)->exists(), 409, 'Không xác định được tài khoản của người còn lại.');
 
@@ -136,6 +167,9 @@ class XuLyCuocHen
 
     private function hoanTatTinBaoMat(TinDang $tin, YeuCauNhanDo $yeuCau): void
     {
+        if ($tin->loai_tin === 'bao_mat') {
+            return;
+        }
         $truyVan = $tin->tin_bao_mat_lien_quan_id ? $tin->tinBaoMatLienQuan() : $tin->tinBaoMatDaThongBao();
         $tinBaoMat = $truyVan->withTrashed()->where('loai_tin', 'bao_mat')
             ->where('nguoi_dung_id', $yeuCau->nguoi_yeu_cau_id)->limit(2)->lockForUpdate()->get();

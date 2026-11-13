@@ -27,7 +27,7 @@ export default function TaoCuocHen() {
   if (xemLichHen) quayLai.set('tab', 'lich-hen')
   if (params.has(khoaTrang)) quayLai.set(khoaTrang, params.get(khoaTrang))
   const tamDung = ['cho_kiem_tra', 'can_bo_sung'].includes(yc?.trang_thai) && yc?.tin_dang?.trang_thai === 'cho_ban_giao'
-  const nhan = hoanTat ? duyet ? 'Đã nhận đồ' : 'Đã đóng' : tamDung ? 'Tạm dừng xét duyệt' : ({ da_xac_minh: 'Đã duyệt', cho_kiem_tra: 'Chờ duyệt', can_bo_sung: 'Chờ duyệt', tu_choi: 'Từ chối', da_huy: 'Đã hủy' }[yc?.trang_thai])
+  const nhan = hoanTat ? duyet ? 'Đã nhận đồ' : 'Đã đóng' : tamDung ? 'Tạm dừng xét duyệt' : ({ da_xac_minh: yc?.tin_dang?.loai_tin === 'bao_mat' ? 'Tự hẹn trả đồ' : 'Đã duyệt', cho_kiem_tra: 'Chờ duyệt', can_bo_sung: 'Chờ duyệt', tu_choi: 'Từ chối', da_huy: 'Đã hủy' }[yc?.trang_thai])
   const coTheDatHen = duyet && yc.coTheDatLich
   return <div className="mx-auto max-w-4xl space-y-5 pb-6">
     <div className="flex items-center justify-between gap-3"><Link to={{ pathname: '/theo-doi-yeu-cau', search: quayLai.toString() }} className="inline-flex items-center gap-2 rounded-lg py-2 text-sm font-medium text-[#607568] hover:text-emerald-900"><ArrowLeft size={16} />Theo dõi yêu cầu</Link><button type="button" aria-label="Làm mới yêu cầu" className={nut} onClick={() => datLanTai((n) => n + 1)}><RefreshCw size={16} /><span className="hidden sm:inline">Làm mới</span></button></div>

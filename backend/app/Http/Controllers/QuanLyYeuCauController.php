@@ -27,10 +27,11 @@ class QuanLyYeuCauController extends Controller
     public function danhSach(Request $request, TienDoYeuCau $tienDo)
     {
         $filters = $request->validate(['trangThai' => ['nullable', Rule::in(TienDoYeuCau::CAC_TRANG_THAI)], 'trangThaiNhom' => 'nullable|in:cho_duyet,cho_ban_giao,hoan_tat,tu_choi', 'tuKhoa' => 'nullable|string|max:200', 'nhom' => 'sometimes|boolean', 'tinDangId' => 'nullable|integer|min:1', 'danhMucId' => 'nullable|integer|min:1']);
-        $tong = YeuCauNhanDo::count();
-        $hoanTat = $tienDo->hoanTat(YeuCauNhanDo::query())->count();
-        $stats = ['tong' => $tong, 'choKiemTra' => YeuCauNhanDo::where('trang_thai', 'cho_kiem_tra')->count(), 'dangGiaoNhan' => $tienDo->loc(YeuCauNhanDo::query(), 'dang_giao_nhan')->count(), 'hoanTat' => $hoanTat];
-        $q = YeuCauNhanDo::with(['tinDang', 'nguoiYeuCau', 'cuocHen.banGiao']);
+        $yeuCauCanDuyet = fn () => YeuCauNhanDo::whereDoesntHave('tinDang', fn ($tin) => $tin->withTrashed()->where('loai_tin', 'bao_mat'));
+        $tong = $yeuCauCanDuyet()->count();
+        $hoanTat = $tienDo->hoanTat($yeuCauCanDuyet())->count();
+        $stats = ['tong' => $tong, 'choKiemTra' => $yeuCauCanDuyet()->where('trang_thai', 'cho_kiem_tra')->count(), 'dangGiaoNhan' => $tienDo->loc($yeuCauCanDuyet(), 'dang_giao_nhan')->count(), 'hoanTat' => $hoanTat];
+        $q = $yeuCauCanDuyet()->with(['tinDang', 'nguoiYeuCau', 'cuocHen.banGiao']);
         $request->validate(['trangThaiNhom' => 'nullable|in:cho_duyet,cho_ban_giao,hoan_tat,tu_choi']);
         if ($request->boolean('nhom') && $request->filled('trangThaiNhom')) {
             $state = $request->input('trangThaiNhom');

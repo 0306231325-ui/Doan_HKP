@@ -8,6 +8,16 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class YeuCauNhanDo extends Model
 {
+    public function nguoiGiuId(): int
+    {
+        return (int) ($this->tinDang?->loai_tin === 'bao_mat' ? $this->nguoi_yeu_cau_id : $this->tinDang?->nguoi_dung_id);
+    }
+
+    public function nguoiNhanId(): int
+    {
+        return (int) ($this->tinDang?->loai_tin === 'bao_mat' ? $this->tinDang?->nguoi_dung_id : $this->nguoi_yeu_cau_id);
+    }
+
     protected $table = 'yeu_cau_nhan_do';
 
     protected $fillable = [

@@ -19,7 +19,6 @@ export default function BoLocLoaiDo({ danhSach, giaTri, khiChon, loi, tuKhoa, kh
           <option value="">Tất cả trạng thái</option>
           <option value="cho_duyet">Chờ duyệt</option>
           <option value="cho_ban_giao">Đã duyệt</option>
-          <option value="hoan_tat">Hoàn tất</option>
           <option value="tu_choi">Từ chối</option>
         </select>
       </label>

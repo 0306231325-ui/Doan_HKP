@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import useThongBaoThaoTac from '../../../components/shared/hooks/useThongBaoThaoTac'
 import api, { prepareCsrf } from '../../../services/api'
 import { layLoiGui } from '../../tin-dang/hooks/xuLyDangTin.js'
 
 export default function useGiuDo(tinMatId, khiDong) {
   const hienThongBao = useThongBaoThaoTac()
+  const dieuHuong = useNavigate()
   const [trang, datTrang] = useState(1)
   const [lanTai, datLanTai] = useState(0)
   const [ketQua, datKetQua] = useState(null)
@@ -69,6 +71,7 @@ export default function useGiuDo(tinMatId, khiDong) {
       if (!signal.aborted) {
         hienThongBao(data.message, status === 201 ? 'success' : 'info')
         khiDong()
+        if (data.yeuCauId) dieuHuong(`/chi-tiet-yeu-cau?id=${data.yeuCauId}`)
       }
     } catch (loi) {
       if (!signal.aborted) datLoiGui(layLoiGui(loi))

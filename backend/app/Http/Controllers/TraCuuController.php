@@ -73,13 +73,16 @@ class TraCuuController extends Controller
         $nguoiXem = $request->user('web');
         $banTin = TinDang::xemDuoc($nguoiXem)->with($duLieu->quanHe())->findOrFail($tin);
         $laChuTin = $nguoiXem !== null && (string) $banTin->nguoi_dung_id === (string) $nguoiXem->id;
-        $coTheLienHe = $nguoiXem?->trang_thai === 'hoat_dong' && ($laChuTin || $banTin->daDuyetYeuCau($nguoiXem->id));
+        $coTheLienHe = $banTin->loai_tin === 'bao_mat' || ($nguoiXem?->trang_thai === 'hoat_dong' && ($laChuTin || $banTin->daDuyetYeuCau($nguoiXem->id)));
         $duLieuTin = $duLieu->congKhai($banTin, true);
 
         return response()->json(['data' => [
             ...$duLieuTin,
             'laChuTin' => $laChuTin,
             'coTheLienHe' => $coTheLienHe,
+            'coTheTaoLichTraDo' => $banTin->loai_tin === 'bao_mat' && ! $laChuTin
+                && $banTin->trang_thai_kiem_duyet === 'hien_thi'
+                && in_array($banTin->trang_thai, ['dang_mo', 'cho_ban_giao'], true),
             ...($coTheLienHe ? ['contactPhone' => $banTin->thong_tin_lien_he, 'contactEmail' => $banTin->email_lien_he] : []),
             'hasClaim' => $duLieuTin['canClaim'] && ! $laChuTin && $nguoiXem?->trang_thai === 'hoat_dong'
                 && $banTin->daGuiYeuCau($nguoiXem->id),

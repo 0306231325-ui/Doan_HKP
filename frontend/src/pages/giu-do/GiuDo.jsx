@@ -11,7 +11,7 @@ import useGiuDo from './hooks/useGiuDo'
 
 const cacBuocGiuDo = [
   ['Chọn tin nhặt được.', 'Chọn tin bạn đã đăng về đúng món đồ này.'],
-  ['Gửi thông báo.', 'Người báo mất sẽ nhận được liên kết đến tin để gửi yêu cầu nhận lại đồ.'],
+  ['Gửi thông báo.', 'Hai bên tự liên hệ, thống nhất và tạo lịch hẹn, không cần admin duyệt.'],
 ]
 
 export default function GiuDo({ tin }) {
@@ -43,7 +43,7 @@ function ChonTinGiuDo({ tin, khiDong }) {
   const laHuy = thaoTac === 'huy'
   const tieuDe = laHuy ? 'Xác nhận hủy' : thaoTac ? 'Xác nhận gửi thông báo' : 'Chọn tin nhặt được'
   const moTa = laHuy ? 'Bạn có muốn dừng thao tác và đóng hộp chọn tin?' : thaoTac
-    ? 'Người báo mất sẽ nhận được liên kết đến tin nhặt được bên dưới.'
+    ? 'Xác nhận đây là đồ của người báo mất. Hai bên sẽ được đặt lịch ngay, không qua admin.'
     : undefined
   const lopNutPhu = 'min-h-12 rounded-xl border border-[#ceded3] bg-white px-5 py-3 text-sm font-semibold text-emerald-900 hover:bg-emerald-50 focus-visible:outline-2 focus-visible:outline-emerald-700 disabled:opacity-50'
 

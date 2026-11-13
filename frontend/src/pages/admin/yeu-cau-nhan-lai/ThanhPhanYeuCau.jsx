@@ -1,7 +1,7 @@
 import { nhan, nut } from './duLieuYeuCau'
 
 export function NhanTrangThai({ yc }) {
-  const status = yc.trang_thai_xu_ly || yc.tien_do || yc.trang_thai
+  const status = yc.trang_thai === 'da_xac_minh' ? 'da_xac_minh' : yc.trang_thai_xu_ly || yc.trang_thai
   const mau = status === 'cho_kiem_tra' ? 'bg-amber-50 text-amber-800' : ['tu_choi', 'da_huy', 'da_dong', 'tam_cho_ban_giao'].includes(status) ? 'bg-slate-100 text-slate-600' : 'bg-emerald-50 text-emerald-800'
   return <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${mau}`}>{nhan[status] || status}</span>
 }

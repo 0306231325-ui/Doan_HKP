@@ -7,9 +7,7 @@ export const nhan = {
   san_sang_duyet: 'Chờ duyệt', nhom_da_duyet: 'Đã duyệt',
   cho_kiem_tra: 'Chờ duyệt', can_bo_sung: 'Chờ duyệt', da_xac_minh: 'Đã duyệt',
   nhom_tu_choi: 'Từ chối',
-  tam_cho_ban_giao: 'Tạm dừng xét duyệt', da_dong: 'Đã đóng', tu_choi: 'Từ chối', da_huy: 'Từ chối',
-  cho_xac_nhan_lich: 'Chờ xác nhận lịch', da_thong_nhat_lich: 'Đã thống nhất lịch',
-  cho_xac_nhan_giao_nhan: 'Chờ xác nhận giao nhận', da_hoan_tat: 'Đã bàn giao',
+  tam_cho_ban_giao: 'Tạm dừng', da_dong: 'Đã đóng', tu_choi: 'Từ chối', da_huy: 'Đã hủy',
 }
 export const ngay = (value) => value ? new Date(value).toLocaleString('vi-VN') : 'Chưa có'
 export function loiApi(error) {

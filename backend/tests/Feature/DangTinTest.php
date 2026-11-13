@@ -116,8 +116,13 @@ class DangTinTest extends TestCase
             $t->foreignId('tin_dang_id')->constrained('tin_dang');
             $t->foreignId('nguoi_yeu_cau_id')->constrained('nguoi_dung');
             $t->text('loi_nhan')->nullable();
+            $t->timestamp('thoi_gian_xu_ly')->nullable();
+            $t->unsignedBigInteger('nguoi_xu_ly_id')->nullable();
             $t->string('trang_thai');
             $t->timestamps();
+        });
+        Schema::table('tin_dang', function (Blueprint $t) {
+            $t->unsignedBigInteger('tin_bao_mat_lien_quan_id')->nullable();
         });
         Schema::create('tra_loi_yeu_cau', function (Blueprint $t) {
             $t->id();
@@ -594,23 +599,24 @@ class DangTinTest extends TestCase
         $this->actingAs($this->chuTin, 'web');
         $this->getJson($url)->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.id', $tinNhat)->assertDontSee('SECRET-ANSWER');
         $this->postJson($url, ['tinNhatId' => $tinMatCuaNguoiGiu])->assertUnprocessable();
-        $this->postJson($url, ['tinNhatId' => $tinNhat])->assertCreated();
+        $yeuCauId = $this->postJson($url, ['tinNhatId' => $tinNhat])->assertCreated()->json('yeuCauId');
         $this->postJson($url, ['tinNhatId' => $tinNhat])->assertOk();
         $this->assertDatabaseHas('doi_chieu_tin_dang', ['tin_nhat_id' => $tinNhat, 'tin_mat_id' => $tinMat]);
         $this->assertDatabaseCount('doi_chieu_tin_dang', 1);
         $this->assertDatabaseCount('thong_bao', 1);
-        $this->assertDatabaseCount('yeu_cau_nhan_do', 0);
+        $this->assertDatabaseCount('yeu_cau_nhan_do', 1);
+        $this->assertDatabaseHas('yeu_cau_nhan_do', ['id' => $yeuCauId, 'nguoi_yeu_cau_id' => $this->nguoiNhan->id, 'trang_thai' => 'da_xac_minh']);
         $this->getJson('/api/thong-bao')->assertOk()->assertJsonCount(0, 'data');
 
         $this->app['auth']->forgetGuards();
         $this->actingAs($this->nguoiNhan, 'web');
         $this->getJson('/api/thong-bao')->assertOk()->assertJsonCount(1, 'data')
-            ->assertJsonPath('soChuaDoc', 1)->assertJsonPath('data.0.duongDan', '/chi-tiet-tin-dang?id='.$tinNhat);
+            ->assertJsonPath('soChuaDoc', 1)->assertJsonPath('data.0.duongDan', '/chi-tiet-yeu-cau?id='.$yeuCauId);
         $this->getJson('/api/tra-cuu/'.$tinNhat)->assertOk()->assertJsonPath('data.canClaim', true);
         $cauHoi = $this->getJson('/api/tin-dang/'.$tinNhat.'/nhan-lai')->assertOk()->json('data.0.id');
         $this->postJson('/api/tin-dang/'.$tinNhat.'/nhan-lai', [
             'xacNhan' => true, 'cauTraLoi' => [['id' => $cauHoi, 'giaTri' => 'Có dấu xước']],
-        ])->assertCreated();
+        ])->assertOk()->assertJsonPath('yeuCauId', $yeuCauId);
     }
 
     public function test_khong_the_gui_tin_nhat_cua_nguoi_khac_an_dong_hoac_thieu_cau_hoi(): void

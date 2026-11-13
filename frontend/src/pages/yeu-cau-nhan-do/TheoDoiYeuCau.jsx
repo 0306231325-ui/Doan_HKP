@@ -10,7 +10,7 @@ const ngayGio = (value) => value ? new Date(value).toLocaleString('vi-VN', { hou
 function trangThai(y) {
   if (y.tin_dang?.trang_thai === 'da_hoan_tat') return y.trang_thai === 'da_xac_minh' ? 'Đã nhận đồ' : 'Đã đóng'
   if (['cho_kiem_tra', 'can_bo_sung'].includes(y.trang_thai)) return y.tin_dang?.trang_thai === 'cho_ban_giao' ? 'Tạm dừng xét duyệt' : 'Chờ duyệt'
-  return { da_xac_minh: 'Đã duyệt', tu_choi: 'Từ chối', da_huy: 'Đã hủy' }[y.trang_thai] || y.trang_thai
+  return { da_xac_minh: y.tin_dang?.loai_tin === 'bao_mat' ? 'Tự hẹn trả đồ' : 'Đã duyệt', tu_choi: 'Từ chối', da_huy: 'Đã hủy' }[y.trang_thai] || y.trang_thai
 }
 
 function mauTrangThai(y) {

@@ -5,8 +5,9 @@ const cacBuocBanGiao = ['Tạo cuộc hẹn', 'Nhập mã', 'Xác nhận thành 
 
 export default function TienDoYeuCau({ yc, xemLichHen = false }) {
   const { soBuocXong, dungLai, thongBao, tuChoi } = layTienDo(yc, xemLichHen)
-  const buocDuyet = yc.trang_thai === 'da_xac_minh' ? 'Được duyệt' : 'Chờ duyệt'
-  const cacBuoc = xemLichHen ? cacBuocBanGiao : ['Gửi yêu cầu', buocDuyet, 'Có lịch hẹn', 'Hoàn tất']
+  const laTinMat = yc.tin_dang?.loai_tin === 'bao_mat'
+  const buocDuyet = laTinMat ? 'Tự thống nhất' : yc.trang_thai === 'da_xac_minh' ? 'Được duyệt' : 'Chờ duyệt'
+  const cacBuoc = xemLichHen ? cacBuocBanGiao : [laTinMat ? 'Liên hệ' : 'Gửi yêu cầu', buocDuyet, 'Có lịch hẹn', 'Hoàn tất']
   if (soBuocXong === null && !thongBao) return null
 
   return <section aria-label={xemLichHen ? 'Tiến trình bàn giao' : 'Tiến trình yêu cầu nhận đồ'} className="border-t border-[#edf2ee] px-4 py-5 sm:px-6">

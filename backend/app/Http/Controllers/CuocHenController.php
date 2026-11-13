@@ -13,6 +13,18 @@ use Illuminate\Http\Request;
 
 class CuocHenController extends Controller
 {
+    public function taoLichTraDo(Request $request, string $tin, XuLyCuocHen $xuLy): JsonResponse
+    {
+        $duLieu = $request->validate([
+            'diaDiemId' => ['required', 'integer', 'min:1'],
+            'thoiGianHen' => ['required', 'date_format:Y-m-d H:i'],
+        ]);
+        $ketQua = $xuLy->taoLichTraDo($tin, $duLieu, (int) $request->user()->id);
+
+        return response()->json(['message' => $ketQua['message'] ?? 'Đã tạo lịch hẹn trả đồ.', 'data' => $ketQua], ($ketQua['daCoLich'] ?? false) ? 409 : 201)
+            ->header('Cache-Control', 'private, no-store');
+    }
+
     public function danhSachQuanTri(Request $request)
     {
         $loc = $request->validate([
@@ -21,9 +33,13 @@ class CuocHenController extends Controller
             'trangThai' => 'nullable|in:cho_xac_nhan,da_xac_nhan,da_hoan_tat,da_huy',
             'yeuCau' => 'nullable|integer|min:1',
         ]);
-        $truyVan = CuocHen::with(['yeuCauNhanDo.tinDang', 'yeuCauNhanDo.nguoiYeuCau', 'nguoiGiuDo', 'diaDiem', 'banGiao']);
+        $truyVan = CuocHen::with(['yeuCauNhanDo.tinDang.nguoiDung', 'yeuCauNhanDo.nguoiYeuCau', 'nguoiGiuDo', 'diaDiem', 'banGiao']);
         if (! empty($loc['trangThai'])) {
-            $truyVan->where('trang_thai', $loc['trangThai']);
+            if (in_array($loc['trangThai'], ['cho_xac_nhan', 'da_xac_nhan'], true)) {
+                $truyVan->whereIn('trang_thai', ['cho_xac_nhan', 'da_xac_nhan']);
+            } else {
+                $truyVan->where('trang_thai', $loc['trangThai']);
+            }
         }
         if (! empty($loc['yeuCau'])) {
             $truyVan->where('yeu_cau_id', $loc['yeuCau']);
@@ -39,14 +55,16 @@ class CuocHenController extends Controller
             $truyVan->where(fn ($q) => $q
                 ->whereHas('yeuCauNhanDo.tinDang', fn ($tin) => $tin->whereRaw("tieu_de LIKE ? ESCAPE '!'", [$mau]))
                 ->orWhereHas('nguoiGiuDo', fn ($nguoi) => $nguoi->whereRaw("ho_ten LIKE ? ESCAPE '!'", [$mau]))
-                ->orWhereHas('yeuCauNhanDo.nguoiYeuCau', fn ($nguoi) => $nguoi->whereRaw("ho_ten LIKE ? ESCAPE '!'", [$mau])));
+                ->orWhereHas('yeuCauNhanDo.nguoiYeuCau', fn ($nguoi) => $nguoi->whereRaw("ho_ten LIKE ? ESCAPE '!'", [$mau]))
+                ->orWhereHas('yeuCauNhanDo.tinDang.nguoiDung', fn ($nguoi) => $nguoi->whereRaw("ho_ten LIKE ? ESCAPE '!'", [$mau])));
         }
         $rows = $truyVan->latest('thoi_gian_hen_gap')->latest('id')->paginate(5);
         $rows->through(fn (CuocHen $hen) => [
             ...$hen->only(['id', 'yeu_cau_id', 'trang_thai', 'thoi_gian_hen_gap', 'ly_do_huy', 'nguoi_giu_xac_nhan_luc', 'nguoi_nhan_xac_nhan_luc']),
             'tin_dang' => $hen->yeuCauNhanDo?->tinDang?->only(['id', 'tieu_de']),
             'nguoi_giu' => $hen->nguoiGiuDo?->only(['ho_ten', 'so_dien_thoai', 'email']),
-            'nguoi_nhan' => $hen->yeuCauNhanDo?->nguoiYeuCau?->only(['ho_ten', 'so_dien_thoai', 'email']),
+            'nguoi_nhan' => ($hen->yeuCauNhanDo?->tinDang?->loai_tin === 'bao_mat'
+                ? $hen->yeuCauNhanDo?->tinDang?->nguoiDung : $hen->yeuCauNhanDo?->nguoiYeuCau)?->only(['ho_ten', 'so_dien_thoai', 'email']),
             'dia_diem' => $hen->diaDiem?->only(['id', 'ten_dia_diem']),
             'ban_giao' => $hen->banGiao?->only(['thoi_gian_ban_giao']),
         ]);
@@ -143,13 +161,14 @@ class CuocHenController extends Controller
     {
         $yc->loadMissing(['tinDang.nguoiDung', 'nguoiYeuCau', 'cuocHen.diaDiem', 'cuocHen.banGiao']);
         $approved = $yc->trang_thai === 'da_xac_minh';
-        $holder = (string) $yc->tinDang?->nguoi_dung_id === (string) $userId;
-        $contact = $holder ? $yc->nguoiYeuCau : $yc->tinDang?->nguoiDung;
+        $holder = $yc->nguoiGiuId() === (int) $userId;
+        $laChuTin = (string) $yc->tinDang?->nguoi_dung_id === (string) $userId;
+        $contact = $laChuTin ? $yc->nguoiYeuCau : $yc->tinDang?->nguoiDung;
 
         return [
             ...$yc->only(['id', 'tin_dang_id', 'trang_thai', 'created_at', 'ghi_chu_admin']), 'laNguoiGiu' => $holder,
-            'tin_dang' => $yc->tinDang?->only(['id', 'tieu_de', 'trang_thai']),
-            'lienHe' => $approved ? ['hoTen' => $contact?->ho_ten, 'soDienThoai' => $holder ? $contact?->so_dien_thoai : ($yc->tinDang?->thong_tin_lien_he ?: $contact?->so_dien_thoai), 'email' => $holder ? $contact?->email : ($yc->tinDang?->email_lien_he ?: $contact?->email)] : null,
+            'tin_dang' => $yc->tinDang?->only(['id', 'tieu_de', 'trang_thai', 'loai_tin']),
+            'lienHe' => $approved ? ['hoTen' => $contact?->ho_ten, 'soDienThoai' => $laChuTin ? $contact?->so_dien_thoai : ($yc->tinDang?->thong_tin_lien_he ?: $contact?->so_dien_thoai), 'email' => $laChuTin ? $contact?->email : ($yc->tinDang?->email_lien_he ?: $contact?->email)] : null,
             'coTheDatLich' => $approved && in_array($yc->tinDang?->trang_thai, XuLyCuocHen::TIN_DUOC_DAT_LICH, true)
                 && ! $yc->cuocHen->contains(fn ($h) => in_array($h->trang_thai, XuLyCuocHen::LICH_DANG_HIEU_LUC, true)),
             'cuoc_hen' => $approved ? $yc->cuocHen->sortByDesc('id')->map(fn ($h) => [

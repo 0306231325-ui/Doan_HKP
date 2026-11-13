@@ -107,7 +107,7 @@ class YeuCauNhanDoController extends Controller
         $banTin = TinDang::xemDuoc($user)->findOrFail($tin);
         $laChuTin = (string) $user->id === (string) $banTin->nguoi_dung_id;
         $daDuyet = $banTin->daDuyetYeuCau($user->id);
-        abort_unless($laChuTin || $daDuyet, 403, 'Liên hệ chỉ mở cho người đăng và người có yêu cầu đã được duyệt.');
+        abort_unless($banTin->loai_tin === 'bao_mat' || $laChuTin || $daDuyet, 403, 'Liên hệ chỉ mở cho người đăng và người có yêu cầu đã được duyệt.');
         return response()->json(['data' => ['soDienThoai' => $banTin->thong_tin_lien_he, 'email' => $banTin->email_lien_he, 'laChuTin' => $laChuTin, 'daGui' => $daDuyet]])->header('Cache-Control', 'private, no-store');
     }
 

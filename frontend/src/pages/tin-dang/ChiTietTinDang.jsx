@@ -8,7 +8,7 @@ import ThongBaoTrong from '../../components/shared/ThongBaoTrong'
 import BaoCaoTinDang from './BaoCaoTinDang'
 import LienHeTinDang from './LienHeTinDang'
 import ThaoTacTinDang from './ThaoTacTinDang'
-import GiuDo from '../giu-do/GiuDo'
+import TaoLichTraDo from './TaoLichTraDo'
 import useChiTietTinDang from './hooks/useChiTietTinDang'
 import { dinhDangNgay } from '../danh-sach-do/hooks/xuLyDanhSachDo'
 
@@ -108,7 +108,7 @@ export default function ChiTietTinDang() {
             ) : (
               <>
                 {tin.canClaim && <Link to={`/yeu-cau-nhan-do?id=${tin.id}`} className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-emerald-900 px-4 py-3 text-center text-sm font-bold text-white hover:bg-emerald-800 sm:w-auto"><HandHeart className="h-4 w-4" aria-hidden="true" />{tin.hasClaim ? 'Xem yêu cầu đã gửi' : 'Yêu cầu nhận lại đồ'}</Link>}
-                {tin.type === 'lost' && tin.statusType === 'urgent' && <GiuDo key={tin.id} tin={tin} />}
+                {tin.coTheTaoLichTraDo && <TaoLichTraDo key={tin.id} tin={tin} taiLai={taiLai} />}
                 <BaoCaoTinDang key={tin.id} tin={tin} />
               </>
             )}

@@ -6,18 +6,19 @@ import PhanTrang from '../../../components/shared/PhanTrang'
 import dinhDangGioHen from '../../cuoc-hen/dinhDangGioHen'
 import { nut, useDuLieu } from '../yeu-cau-nhan-lai/duLieuYeuCau'
 
-const nhan = { cho_xac_nhan: 'Chờ xác nhận', da_xac_nhan: 'Đã xác nhận', da_hoan_tat: 'Đã bàn giao', da_huy: 'Đã hủy' }
-const mau = { cho_xac_nhan: 'bg-amber-50 text-amber-800', da_xac_nhan: 'bg-blue-50 text-blue-800', da_hoan_tat: 'bg-emerald-50 text-emerald-800', da_huy: 'bg-rose-50 text-rose-800' }
+const nhan = { cho_xac_nhan: 'Chờ bàn giao', da_hoan_tat: 'Đã bàn giao', da_huy: 'Đã hủy' }
+const mau = { cho_xac_nhan: 'bg-amber-50 text-amber-800', da_hoan_tat: 'bg-emerald-50 text-emerald-800', da_huy: 'bg-rose-50 text-rose-800' }
 const ngayGio = (value) => value ? dinhDangGioHen(value) : 'Chưa có'
 const truong = 'min-h-11 w-full rounded-xl border border-[#d6e4db] bg-white px-3 text-sm text-[#315a43] focus-visible:outline-2 focus-visible:outline-emerald-700'
 
 export default function QuanLyLichHen() {
   const [params, datParams] = useSearchParams()
+  const trangThaiLoc = params.get('trangThai') === 'da_xac_nhan' ? 'cho_xac_nhan' : params.get('trangThai') || ''
   const [tuKhoa, datTuKhoa] = useState(params.get('tuKhoa') || '')
   const [lanTai, datLanTai] = useState(0)
   const [chon, datChon] = useState(null)
   const trang = Math.max(1, Number.parseInt(params.get('page'), 10) || 1)
-  const nguon = useDuLieu('/admin/lich-hen', { tuKhoa: params.get('tuKhoa') || undefined, ngay: params.get('ngay') || undefined, trangThai: params.get('trangThai') || undefined, yeuCau: params.get('yeuCau') || undefined, page: trang }, lanTai)
+  const nguon = useDuLieu('/admin/lich-hen', { tuKhoa: params.get('tuKhoa') || undefined, ngay: params.get('ngay') || undefined, trangThai: trangThaiLoc || undefined, yeuCau: params.get('yeuCau') || undefined, page: trang }, lanTai)
   const ds = nguon.data?.data
   function doiLoc(ten, value) {
     const moi = new URLSearchParams(params)
@@ -32,7 +33,7 @@ export default function QuanLyLichHen() {
     <form onSubmit={(e) => { e.preventDefault(); doiLoc('tuKhoa', tuKhoa.trim()) }} className="grid gap-4 rounded-2xl border border-[#d6e4db] bg-white p-5 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_auto]">
       <label className="space-y-2"><span className="text-xs font-medium text-[#607568]">Đồ vật hoặc người tham gia</span><div className="flex gap-2"><input className={truong} value={tuKhoa} maxLength={150} onChange={(e) => datTuKhoa(e.target.value)} placeholder="Nhập tên đồ vật, người giữ, người nhận…" /><button type="submit" aria-label="Tìm kiếm" className={nut}><Search size={17} /></button></div></label>
       <label className="space-y-2"><span className="text-xs font-medium text-[#607568]">Ngày hẹn</span><input type="date" className={truong} value={params.get('ngay') || ''} onChange={(e) => doiLoc('ngay', e.target.value)} /></label>
-      <label className="space-y-2"><span className="text-xs font-medium text-[#607568]">Trạng thái</span><select className={truong} value={params.get('trangThai') || ''} onChange={(e) => doiLoc('trangThai', e.target.value)}><option value="">Tất cả trạng thái</option>{Object.entries(nhan).map(([id, ten]) => <option key={id} value={id}>{ten}</option>)}</select></label>
+      <label className="space-y-2"><span className="text-xs font-medium text-[#607568]">Trạng thái</span><select className={truong} value={trangThaiLoc} onChange={(e) => doiLoc('trangThai', e.target.value)}><option value="">Tất cả trạng thái</option>{Object.entries(nhan).map(([id, ten]) => <option key={id} value={id}>{ten}</option>)}</select></label>
       <button type="button" className={`${nut} self-end min-h-11`} onClick={() => { datTuKhoa(''); datParams({}); datChon(null) }}><X size={15} />Xóa lọc</button>
     </form>
     <section className="overflow-hidden rounded-2xl border border-[#d6e4db] bg-white">
@@ -59,7 +60,10 @@ export default function QuanLyLichHen() {
   </div>
 }
 
-function TrangThai({ hen }) { return <span className={`inline-block whitespace-nowrap rounded-full px-3 py-1 text-xs font-semibold ${mau[hen.trang_thai] || 'bg-gray-50 text-gray-700'}`}>{nhan[hen.trang_thai] || hen.trang_thai}</span> }
+function TrangThai({ hen }) {
+  const trangThai = hen.trang_thai === 'da_xac_nhan' ? 'cho_xac_nhan' : hen.trang_thai
+  return <span className={`inline-block whitespace-nowrap rounded-full px-3 py-1 text-xs font-semibold ${mau[trangThai] || 'bg-gray-50 text-gray-700'}`}>{nhan[trangThai] || trangThai}</span>
+}
 function Nguoi({ ten, nguoi, daXacNhan }) {
   return <section className="min-w-0 rounded-xl border border-[#e1eae4] p-4"><h4 className="text-xs text-[#718276]">{ten}</h4><p className="mt-1 font-semibold text-[#315a43]">{nguoi?.ho_ten || 'Chưa có tên'}</p><p className="mt-3 break-words text-sm text-[#607568]">{nguoi?.so_dien_thoai || 'Chưa có số điện thoại'}</p><p className="mt-1 break-words text-sm text-[#607568]">{nguoi?.email || 'Chưa có email'}</p><p className="mt-3 text-xs text-[#718276]">{daXacNhan ? `Đã xác nhận giao nhận · ${ngayGio(daXacNhan)}` : 'Chưa xác nhận giao nhận'}</p></section>
 }

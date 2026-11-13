@@ -27,8 +27,7 @@ export function daXacNhanBanGiao(hen) {
 }
 
 export function nhanTrangThaiLichHen(hen) {
-  if (daXacNhanBanGiao(hen)) return 'Xác nhận thành công'
+  if (daXacNhanBanGiao(hen)) return 'Đã bàn giao'
   if (hen.trang_thai === 'da_huy') return 'Đã hủy'
-  if (hen.dungMaBanGiao) return 'Chờ nhập mã'
-  return hen.trang_thai === 'da_xac_nhan' ? 'Đã xác nhận lịch' : 'Chờ xác nhận lịch'
+  return 'Chờ bàn giao'
 }

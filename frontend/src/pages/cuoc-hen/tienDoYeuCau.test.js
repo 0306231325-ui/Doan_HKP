@@ -10,7 +10,7 @@ test('tiến độ chỉ hoàn tất khi có kết quả giao nhận', () => {
   yc.cuoc_hen = [{ trang_thai: 'cho_xac_nhan', dungMaBanGiao: true }]
   assert.equal(layTienDo(yc).soBuocXong, 3)
   assert.equal(layTienDo(yc, true).soBuocXong, 1)
-  assert.equal(nhanTrangThaiLichHen(yc.cuoc_hen[0]), 'Chờ nhập mã')
+  assert.equal(nhanTrangThaiLichHen(yc.cuoc_hen[0]), 'Chờ bàn giao')
   yc.cuoc_hen[0].trang_thai = 'da_huy'
   yc.coTheDatLich = true
   assert.equal(layTienDo(yc, true).soBuocXong, 0)
@@ -18,7 +18,7 @@ test('tiến độ chỉ hoàn tất khi có kết quả giao nhận', () => {
   yc.cuoc_hen = [{ trang_thai: 'da_hoan_tat' }]
   assert.equal(layTienDo(yc).soBuocXong, 4)
   assert.equal(layTienDo(yc, true).soBuocXong, 3)
-  assert.equal(nhanTrangThaiLichHen(yc.cuoc_hen[0]), 'Xác nhận thành công')
+  assert.equal(nhanTrangThaiLichHen(yc.cuoc_hen[0]), 'Đã bàn giao')
   yc.cuoc_hen = [{ trang_thai: 'da_xac_nhan', ban_giao: { thoi_gian_ban_giao: '2026-11-09' } }]
   assert.equal(layTienDo(yc, true).soBuocXong, 3)
 })

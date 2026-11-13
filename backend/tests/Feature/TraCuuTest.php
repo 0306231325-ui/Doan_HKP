@@ -16,6 +16,15 @@ use Tests\TestCase;
 
 class TraCuuTest extends TestCase
 {
+    public function test_tin_bao_mat_hien_lien_he_ngay_ca_khi_chua_dang_nhap(): void
+    {
+        $tin = $this->taoTin(['loai_tin' => 'bao_mat', 'thong_tin_lien_he' => '0901234567', 'email_lien_he' => 'mat@example.com']);
+        $this->getJson('/api/tra-cuu/'.$tin->id)->assertOk()
+            ->assertJsonPath('data.coTheLienHe', true)
+            ->assertJsonPath('data.contactPhone', '0901234567')
+            ->assertJsonPath('data.contactEmail', 'mat@example.com');
+    }
+
     private NguoiDung $nguoiDung;
 
     private DanhMucDoVat $danhMuc;
