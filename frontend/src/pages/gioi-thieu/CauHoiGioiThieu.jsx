@@ -1,4 +1,4 @@
-import { ChevronDown, MessageCircleQuestion } from 'lucide-react'
+import { ChevronDown } from 'lucide-react'
 import useGioiThieu from './hooks/useGioiThieu'
 
 export default function CauHoiGioiThieu() {
@@ -7,8 +7,7 @@ export default function CauHoiGioiThieu() {
   return (
     <section aria-labelledby="cau-hoi-gioi-thieu" className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr] lg:gap-12">
       <div>
-        <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-emerald-800"><MessageCircleQuestion className="h-5 w-5" aria-hidden="true" /></span>
-        <h2 id="cau-hoi-gioi-thieu" className="mt-4 text-2xl font-extrabold tracking-tight text-emerald-950 sm:text-3xl">Một vài điều bạn có thể muốn biết</h2>
+        <h2 id="cau-hoi-gioi-thieu" className="text-2xl font-extrabold tracking-tight text-emerald-950 sm:text-3xl">Một vài điều bạn có thể muốn biết</h2>
         <p className="mt-3 max-w-sm text-sm leading-7 text-[#607568]">Bắt đầu với Lạc Ơi từ những điều đơn giản nhất.</p>
       </div>
       <div className="divide-y divide-[#e1eae4] overflow-hidden rounded-3xl border border-[#d6e4db] bg-white">

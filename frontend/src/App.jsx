@@ -25,7 +25,6 @@ import TinDaDang from './pages/trang-ca-nhan/TinDaDang'
 import { AuthProvider, RequireAuth } from './auth/AuthContext'
 import AuthNotice from './auth/AuthNotice'
 import QuanLyNguoiDung from './pages/admin/nguoi-dung/QuanLyNguoiDung'
-import GioiThieu from './pages/gioi-thieu/GioiThieu'
 import TaoCuocHen from './pages/cuoc-hen/TaoCuocHen'
 import TrangCuocHen from './pages/cuoc-hen/TrangCuocHen'
 import LapLichHen, { ChonYeuCauHen, NhapThongTinLichHen } from './pages/cuoc-hen/LapLichHen'
@@ -43,7 +42,7 @@ export default function App() {
             <Route index element={<Home />} />
             <Route path="danh-sach-do" element={<DanhSachDo />} />
             <Route path="chi-tiet-tin-dang" element={<ChiTietTinDang />} />
-            <Route path="gioi-thieu" element={<GioiThieu />} />
+            <Route path="gioi-thieu" element={<Navigate to="/" replace />} />
             <Route element={<RequireAuth />}>
               <Route path="chi-tiet-yeu-cau" element={<TaoCuocHen />} />
               <Route path="tao-cuoc-hen" element={<TaoCuocHen />} />

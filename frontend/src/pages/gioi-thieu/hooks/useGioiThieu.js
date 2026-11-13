@@ -25,7 +25,7 @@ const CAC_CAU_HOI = [
 
 export default function useGioiThieu() {
   const maVung = useId()
-  const [cauHoiDangMo, datCauHoiDangMo] = useState(CAC_CAU_HOI[0].id)
+  const [cauHoiDangMo, datCauHoiDangMo] = useState(null)
 
   function doiCauHoi(id) {
     datCauHoiDangMo((hienTai) => hienTai === id ? null : id)
