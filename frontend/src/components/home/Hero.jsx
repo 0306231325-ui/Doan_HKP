@@ -2,9 +2,9 @@ import { Link } from 'react-router-dom'
 import TrinhChieuAnh from '../shared/TrinhChieuAnh'
 
 const bannerImages = [
-  { src: '/banner/bannr2.png', alt: 'Banner 1' },
-  { src: '/banner/banner3.png', alt: 'Banner 2' },
-  { src: '/banner/banner4.png', alt: 'Banner 3' },
+  { src: '/banner/banner1.png', alt: 'Banner 1' },
+  { src: '/banner/banner2.png', alt: 'Banner 2' },
+  { src: '/banner/banner3.png', alt: 'Banner 3' },
 ]
 
 const lopNut = 'inline-flex min-h-12 items-center justify-center px-4 py-3 rounded-xl text-sm font-bold bg-[#86efac] text-emerald-950 hover:bg-[#6ee7a0] active:scale-95 transition-all shadow-sm cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white'
