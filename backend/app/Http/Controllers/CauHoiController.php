@@ -16,7 +16,10 @@ class CauHoiController extends Controller
 {
     public function danhSach(): JsonResponse
     {
-        return response()->json(['data' => CauHoi::whereNotNull('danh_muc_id')->with('lichSu')->withExists('loiKhaiTinDang')->orderBy('id')->get()->map(fn ($cau) => $this->duLieu($cau))]);
+        return response()->json([
+            'data' => CauHoi::whereNotNull('danh_muc_id')->with('lichSu')->withExists('loiKhaiTinDang')->orderBy('id')->get()->map(fn ($cau) => $this->duLieu($cau)),
+            'gioiHanMoiDanhMuc' => CauHoi::GIOI_HAN_MOI_DANH_MUC,
+        ]);
     }
 
     public function them(Request $request): JsonResponse
@@ -44,6 +47,12 @@ class CauHoiController extends Controller
                 abort_if($cu->trang_thai !== $mau['dangHoatDong'], 409, 'Trạng thái câu hỏi đã thay đổi. Vui lòng tải lại.');
             }
             $this->kiemTraPhamVi($mau, $danhMuc, $cu);
+            if ((string) $cu?->danh_muc_id !== (string) $mau['danhMucId']
+                && $danhSach->where('danh_muc_id', $mau['danhMucId'])->count() >= CauHoi::GIOI_HAN_MOI_DANH_MUC) {
+                throw ValidationException::withMessages([
+                    'danhMucId' => 'Mỗi danh mục chỉ được có tối đa '.CauHoi::GIOI_HAN_MOI_DANH_MUC.' câu hỏi, kể cả câu đã ẩn.',
+                ]);
+            }
             $this->kiemTraTrung($mau, $danhSach->reject(fn ($cau) => $cau->id === $cu?->id)->map(fn ($cau) => ['nhanDangTin' => $cau->noi_dung, 'kieuNhap' => $cau->kieu_nhap, 'danhMucId' => $cau->danh_muc_id]));
             $cot = $this->cacCot($mau);
             if ($cu && collect($cot)->every(fn ($giaTri, $tenCot) => $giaTri == $cu->$tenCot)) {

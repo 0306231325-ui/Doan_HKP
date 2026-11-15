@@ -34,13 +34,15 @@ export default function useQuanLyCauHoi() {
   const ketQuaLoc = useMemo(() => locCauHoi(danhSach, danhMucId, tuKhoa, trangThai), [danhSach, danhMucId, tuKhoa, trangThai])
   const phanTrang = phanTrangDanhSach(ketQuaLoc, trang, 8)
   const tongCauHoi = locCauHoi(danhSach, danhMucId).length
+  const gioiHanMoiDanhMuc = nguon.gioiHanMoiDanhMuc
+  const coTheThem = !dangTai && !loiTai && danhMucChon?.dangHoatDong && tongCauHoi < gioiHanMoiDanhMuc
 
   useEffect(function napDanhSach() {
     const yeuCau = new AbortController()
     api.get('/admin/cau-hoi', { signal: yeuCau.signal }).then(({ data }) => {
       if (!yeuCau.signal.aborted) {
         datDanhSach(data.data)
-        datNguon({ lan: lanTai, loi: '' })
+        datNguon({ lan: lanTai, loi: '', gioiHanMoiDanhMuc: data.gioiHanMoiDanhMuc })
       }
     }).catch((loi) => {
       if (!yeuCau.signal.aborted) datNguon({ lan: lanTai, loi: loi.response?.data?.message || 'Không tải được câu hỏi từ DB. Vui lòng thử lại.' })
@@ -90,7 +92,7 @@ export default function useQuanLyCauHoi() {
   }
 
   function moThem() {
-    if (khoaGui.current || dangTai || loiTai || !danhMucChon?.dangHoatDong) return
+    if (khoaGui.current || !coTheThem) return
     ghiNhanFocus()
     const mau = taoBieuMau(danhMucId)
     datBieuMau({ ...mau, thuTu: Math.min(999, Math.max(0, ...locCauHoi(danhSach, danhMucId).map((muc) => muc.thuTu)) + 1) })
@@ -214,7 +216,7 @@ export default function useQuanLyCauHoi() {
     datXemTruoc(false)
   }
 
-  return { ...phanTrang, dangTai, loiTai, taiLai, dangLuu, danhMuc, dangTaiDanhMuc, loiTaiDanhMuc, taiLaiDanhMuc, danhMucChon, danhSach, cacCauHoi: phanTrang.cacMuc, tongCauHoi, tuKhoa, trangThai, bieuMau, loi, loiLuu, thaoTacChoXacNhan, cauHoiChon, xemTruoc,
+  return { ...phanTrang, dangTai, loiTai, taiLai, dangLuu, danhMuc, dangTaiDanhMuc, loiTaiDanhMuc, taiLaiDanhMuc, danhMucChon, danhSach, cacCauHoi: phanTrang.cacMuc, tongCauHoi, gioiHanMoiDanhMuc, coTheThem, tuKhoa, trangThai, bieuMau, loi, loiLuu, thaoTacChoXacNhan, cauHoiChon, xemTruoc,
     doiDanhMuc, doiTuKhoa, doiTrangThai, xoaBoLoc, chuyenTrang, moThem, moSua, dongBieuMau, doiBieuMau, luuCauHoi,
     moDoiTrangThai, moXoa, dongXacNhanThaoTac, xacNhanThaoTac, moChiTiet, dongChiTiet, moXemTruoc, dongXemTruoc }
 }
