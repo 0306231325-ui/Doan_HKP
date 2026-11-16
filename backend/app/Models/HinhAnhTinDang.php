@@ -19,7 +19,6 @@ class HinhAnhTinDang extends Model
         'tin_dang_id',
         'nguoi_tai_len_id',
         'duong_dan',
-        'mo_ta',
         'pham_vi',
         'thu_tu',
     ];

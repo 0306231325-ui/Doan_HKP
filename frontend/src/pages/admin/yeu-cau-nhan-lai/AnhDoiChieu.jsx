@@ -23,8 +23,8 @@ function CotAnh({ tieuDe, anh, khiXem }) {
   return <div className="min-w-0 rounded-xl border border-[#e1eae4] bg-[#fafcfb] p-3">
     <p className="mb-3 text-xs font-semibold text-[#607568]">{tieuDe}</p>
     {dauTien ? <button type="button" aria-haspopup="dialog" aria-label={`Xem ${anh.length} ảnh — ${tieuDe}`} onClick={() => khiXem({ danhSach: anh, ten: tieuDe })} className="block w-full overflow-hidden rounded-lg border border-[#e1eae4] bg-white text-left focus-visible:outline-2 focus-visible:outline-emerald-700">
-      <span className="relative block"><img src={dauTien.url} alt={dauTien.mo_ta || dauTien.ten} loading="lazy" className="aspect-[4/3] w-full object-contain" />{anh.length > 1 && <span className="absolute bottom-3 right-3 flex h-12 min-w-12 items-center justify-center rounded-xl bg-black/65 px-3 text-xl font-semibold text-white">+{anh.length - 1}</span>}</span>
-      <span className="flex min-h-11 items-center justify-between gap-2 border-t border-[#edf2ee] p-2.5 text-xs text-[#607568]"><span className="line-clamp-2 break-words">{dauTien.mo_ta || dauTien.ten}</span><ZoomIn size={15} className="shrink-0 text-emerald-800" aria-hidden="true" /></span>
+      <span className="relative block"><img src={dauTien.url} alt={dauTien.ten} loading="lazy" className="aspect-[4/3] w-full object-contain" />{anh.length > 1 && <span className="absolute bottom-3 right-3 flex h-12 min-w-12 items-center justify-center rounded-xl bg-black/65 px-3 text-xl font-semibold text-white">+{anh.length - 1}</span>}</span>
+      <span className="flex min-h-11 items-center justify-between gap-2 border-t border-[#edf2ee] p-2.5 text-xs text-[#607568]"><span className="line-clamp-2 break-words">{dauTien.ten}</span><ZoomIn size={15} className="shrink-0 text-emerald-800" aria-hidden="true" /></span>
     </button> : <p className="py-8 text-center text-sm text-[#718276]">Tin đăng không có ảnh đồ vật.</p>}
   </div>
 }

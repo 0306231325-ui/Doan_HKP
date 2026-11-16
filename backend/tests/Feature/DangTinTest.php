@@ -90,7 +90,6 @@ class DangTinTest extends TestCase
             $t->softDeletes();
             $t->timestamps();
         });
-        (require database_path('migrations/2026_11_10_000003_create_doi_chieu_tin_dang.php'))->up();
         Schema::create('loi_khai_tin_dang', function (Blueprint $t) {
             $t->id();
             $t->foreignId('tin_dang_id')->constrained('tin_dang');
@@ -430,6 +429,8 @@ class DangTinTest extends TestCase
         $this->actingAs($this->taiKhoan(), 'web');
         $this->getJson('/api/tin-dang/'.$id.'/nhan-lai')->assertOk()
             ->assertJsonPath('daGui', false)->assertJsonPath('yeuCauId', null);
+        $this->getJson('/api/tra-cuu/'.$id)->assertOk()->assertJsonPath('data.canClaim', true)
+            ->assertJsonPath('data.yeuCauId', null);
         $this->getJson('/api/thong-bao')->assertOk()->assertJsonCount(0, 'data');
         $this->app['auth']->forgetGuards();
         $this->actingAs($this->nguoiNhan, 'web');
@@ -447,6 +448,8 @@ class DangTinTest extends TestCase
         $yeuCau->update(['trang_thai' => 'da_xac_minh']);
         TinDang::findOrFail($id)->update(['trang_thai' => 'cho_ban_giao']);
         $this->getJson('/api/tra-cuu/'.$id)->assertOk()->assertJsonPath('data.coTheLienHe', true)
+            ->assertJsonPath('data.statusBadge', 'Chờ bàn giao')->assertJsonPath('data.canClaim', false)
+            ->assertJsonPath('data.hasClaim', true)->assertJsonPath('data.yeuCauId', $yeuCau->id)
             ->assertJsonPath('data.contactEmail', 'lienhe@gmail.com')->assertJsonPath('data.contactPhone', '0901234567');
         $this->getJson('/api/tin-dang/'.$id.'/lien-he')->assertOk()->assertJsonPath('data.daGui', true);
         $yeuCau->update(['trang_thai' => 'tu_choi']);
@@ -461,6 +464,7 @@ class DangTinTest extends TestCase
         $this->app['auth']->forgetGuards();
         $this->actingAs($this->taiKhoan('quan_tri'), 'web');
         $this->getJson('/api/tra-cuu/'.$id)->assertOk()->assertJsonPath('data.coTheLienHe', false)
+            ->assertJsonPath('data.canClaim', false)->assertJsonPath('data.yeuCauId', null)
             ->assertJsonMissingPath('data.contactPhone')->assertJsonMissingPath('data.contactEmail');
         $this->getJson('/api/tin-dang/'.$id.'/lien-he')->assertForbidden()->assertDontSee('lienhe@gmail.com')->assertDontSee('0901234567');
     }
@@ -599,8 +603,7 @@ class DangTinTest extends TestCase
         $this->postJson($url, ['tinNhatId' => $tinMatCuaNguoiGiu])->assertUnprocessable();
         $yeuCauId = $this->postJson($url, ['tinNhatId' => $tinNhat])->assertCreated()->json('yeuCauId');
         $this->postJson($url, ['tinNhatId' => $tinNhat])->assertOk();
-        $this->assertDatabaseHas('doi_chieu_tin_dang', ['tin_nhat_id' => $tinNhat, 'tin_mat_id' => $tinMat]);
-        $this->assertDatabaseCount('doi_chieu_tin_dang', 1);
+        $this->assertDatabaseHas('tin_dang', ['id' => $tinNhat, 'tin_bao_mat_lien_quan_id' => $tinMat]);
         $this->assertDatabaseCount('thong_bao', 1);
         $this->assertDatabaseCount('yeu_cau_nhan_do', 1);
         $this->assertDatabaseHas('yeu_cau_nhan_do', ['id' => $yeuCauId, 'nguoi_yeu_cau_id' => $this->nguoiNhan->id, 'trang_thai' => 'da_xac_minh']);

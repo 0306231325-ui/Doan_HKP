@@ -18,6 +18,9 @@ export default function ChiTietTinDang() {
   const cotAnh = anh.length >= 3 ? 'sm:grid-cols-2 lg:grid-cols-3' : anh.length === 2 ? 'sm:grid-cols-2' : ''
   const thoiGian = tin ? [dinhDangNgay(tin.date), tin.gioXayRa].filter(Boolean).join(' · ') : ''
   const lopTieuDeMuc = 'mb-4 flex items-center gap-2.5 text-base font-bold text-[#243c30]'
+  const khongNhanYeuCau = tin?.type === 'found' && !tin.canClaim
+  const lopNut = 'inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl px-4 py-3 text-center text-sm font-bold sm:w-auto'
+  const lopNutNhanDo = `${lopNut} bg-emerald-900 text-white hover:bg-emerald-800`
 
   function dungAnhThayThe(suKien) {
     const img = suKien.currentTarget
@@ -103,10 +106,31 @@ export default function ChiTietTinDang() {
           <h2 className={lopTieuDeMuc}><HandHeart className="h-5 w-5 text-emerald-700" aria-hidden="true" />Thao tác với tin đăng</h2>
           <div className="flex flex-wrap gap-3">
             {tin.laChuTin ? (
-              <ThaoTacTinDang key={tin.id} tin={tin} taiLai={taiLai} hienNutTrucTiep quayLaiKhiXoa={quayLai} />
+              <>
+                {tin.canClaim && (
+                  <p className="w-full text-sm leading-6 text-[#315a43]">
+                    Bạn là người đăng tin. Người mất đồ có thể mở tin bằng tài khoản của họ để gửi yêu cầu nhận lại.
+                  </p>
+                )}
+                <ThaoTacTinDang key={tin.id} tin={tin} taiLai={taiLai} hienNutTrucTiep quayLaiKhiXoa={quayLai} />
+              </>
             ) : (
               <>
-                {tin.canClaim && <Link to={`/yeu-cau-nhan-do?id=${tin.id}`} className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-emerald-900 px-4 py-3 text-center text-sm font-bold text-white hover:bg-emerald-800 sm:w-auto"><HandHeart className="h-4 w-4" aria-hidden="true" />{tin.hasClaim ? 'Xem yêu cầu đã gửi' : 'Yêu cầu nhận lại đồ'}</Link>}
+                {khongNhanYeuCau && (
+                  <p id="trang-thai-nhan-do" className="w-full rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
+                    Trạng thái: <strong>{tin.statusBadge}</strong>. Tin này không nhận yêu cầu mới.
+                  </p>
+                )}
+                {khongNhanYeuCau && (
+                  <button type="button" disabled aria-describedby="trang-thai-nhan-do" className={`${lopNut} cursor-not-allowed bg-slate-200 text-slate-600`}>
+                    <HandHeart className="h-4 w-4" aria-hidden="true" />Yêu cầu nhận lại đồ
+                  </button>
+                )}
+                {tin.yeuCauId ? (
+                  <Link to={`/chi-tiet-yeu-cau?id=${tin.yeuCauId}`} className={lopNutNhanDo}><ClipboardList className="h-4 w-4" aria-hidden="true" />Xem yêu cầu đã gửi</Link>
+                ) : tin.canClaim && (
+                  <Link to={`/yeu-cau-nhan-do?id=${tin.id}`} className={lopNutNhanDo}><HandHeart className="h-4 w-4" aria-hidden="true" />Yêu cầu nhận lại đồ</Link>
+                )}
                 {tin.coTheTaoLichTraDo && (
                   <Link to={`/cuoc-hen/tao/tra-do/${tin.id}`} className="form-button inline-flex items-center gap-2">
                     <CalendarDays size={18} aria-hidden="true" />Tạo lịch hẹn trả đồ

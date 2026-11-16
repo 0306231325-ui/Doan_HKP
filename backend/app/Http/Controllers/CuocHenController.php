@@ -105,7 +105,7 @@ class CuocHenController extends Controller
                 'diaDiem' => $tin->diaDiem?->ten_dia_diem, 'viTriChiTiet' => $tin->dia_diem_chi_tiet,
                 'loiNhan' => $yeuCau->loi_nhan,
                 'thoiGianXuLy' => $yeuCau->thoi_gian_xu_ly?->toISOString(),
-                'anh' => $tin->hinhAnh->map(fn ($anh) => ['id' => $anh->id, 'url' => $anh->duongDanHienThi(), 'moTa' => $anh->mo_ta])->values(),
+                'anh' => $tin->hinhAnh->map(fn ($anh) => ['id' => $anh->id, 'url' => $anh->duongDanHienThi()])->values(),
             ];
         }
 
@@ -132,14 +132,69 @@ class CuocHenController extends Controller
         return response()->json(['data' => $ketQua], 201)->header('Cache-Control', 'private, no-store');
     }
 
+    public function xemMaBanGiao(Request $request, string $id, string $hen): JsonResponse
+    {
+        $yeuCau = $this->thamGia($request, $id);
+        $cuocHen = $yeuCau->cuocHen()->where('nguoi_de_xuat_id', $request->user()->id)->with('banGiao')->findOrFail($hen);
+        $banGiao = $cuocHen->banGiao;
+        abort_unless($yeuCau->trang_thai === 'da_xac_minh' && $yeuCau->tinDang?->trang_thai === 'cho_ban_giao'
+            && $cuocHen->trang_thai === 'cho_xac_nhan' && $banGiao?->maConHan(), 409, 'Mã bàn giao không còn hiệu lực.');
+        $ma = $banGiao->ma_ban_giao_ma_hoa;
+        abort_if($ma === null, 409, 'Mã được tạo trước khi có chức năng xem lại.');
+
+        return response()->json(['data' => ['ma' => $ma, 'hetHanLuc' => $banGiao->ma_het_han_luc->toISOString()]])
+            ->header('Cache-Control', 'private, no-store');
+    }
+
+    public function capLaiMaBanGiao(Request $request, string $id, string $hen, XuLyCuocHen $xuLy): JsonResponse
+    {
+        $yeuCau = $this->thamGia($request, $id);
+        $ketQua = $xuLy->capLaiMaBanGiao($yeuCau, $hen, (int) $request->user()->id);
+
+        return response()->json(['data' => $ketQua])->header('Cache-Control', 'private, no-store');
+    }
+
+    public function lichChoNhapMa(Request $request): JsonResponse
+    {
+        $nguoiNhapId = (int) $request->user()->id;
+        $cacHen = CuocHen::query()
+            ->join('yeu_cau_nhan_do as yc', 'yc.id', '=', 'cuoc_hen.yeu_cau_id')
+            ->join('tin_dang as tin', 'tin.id', '=', 'yc.tin_dang_id')
+            ->whereNull('tin.deleted_at')
+            ->where('tin.trang_thai', 'cho_ban_giao')
+            ->where('yc.trang_thai', 'da_xac_minh')
+            ->where('cuoc_hen.trang_thai', 'cho_xac_nhan')
+            ->where('cuoc_hen.nguoi_de_xuat_id', '!=', $nguoiNhapId)
+            ->where(fn ($q) => $q
+                ->where(fn ($q) => $q->where('yc.nguoi_yeu_cau_id', $nguoiNhapId)
+                    ->whereColumn('cuoc_hen.nguoi_de_xuat_id', 'tin.nguoi_dung_id'))
+                ->orWhere(fn ($q) => $q->where('tin.nguoi_dung_id', $nguoiNhapId)
+                    ->whereColumn('cuoc_hen.nguoi_de_xuat_id', 'yc.nguoi_yeu_cau_id')))
+            ->whereHas('banGiao', fn ($q) => $q->whereNotNull('ma_ban_giao_hash')->where('ma_het_han_luc', '>', now()))
+            ->with('diaDiem:id,ten_dia_diem')
+            ->orderBy('cuoc_hen.thoi_gian_hen_gap')->orderBy('cuoc_hen.id')
+            ->get(['cuoc_hen.id', 'cuoc_hen.thoi_gian_hen_gap', 'cuoc_hen.dia_diem_id', 'tin.tieu_de']);
+
+        return response()->json(['data' => $cacHen->map(fn (CuocHen $hen) => [
+            'id' => $hen->id,
+            'tieuDe' => $hen->tieu_de,
+            'gioHen' => $hen->thoi_gian_hen_gap?->toISOString(),
+            'diaDiem' => $hen->diaDiem?->ten_dia_diem,
+        ])])->header('Cache-Control', 'private, no-store');
+    }
+
     public function xacNhanBanGiao(Request $request, XuLyCuocHen $xuLy): JsonResponse
     {
-        $duLieu = $request->validate(['ma' => ['required', 'string', 'regex:/\A[0-9]{6}\z/']], [
+        $duLieu = $request->validate([
+            'cuocHenId' => ['required', 'integer', 'min:1'],
+            'ma' => ['required', 'string', 'regex:/\A[0-9]{6}\z/'],
+        ], [
+            'cuocHenId.required' => 'Vui lòng chọn cuộc hẹn.',
             'ma.required' => 'Vui lòng nhập mã bàn giao gồm 6 số.',
             'ma.string' => 'Vui lòng nhập mã bàn giao gồm 6 số.',
             'ma.regex' => 'Vui lòng nhập mã bàn giao gồm 6 số.',
         ]);
-        $ketQua = $xuLy->xacNhan($duLieu['ma'], (int) $request->user()->id);
+        $ketQua = $xuLy->xacNhan((int) $duLieu['cuocHenId'], $duLieu['ma'], (int) $request->user()->id);
 
         return response()->json($ketQua, isset($ketQua['hetHan']) ? 409 : 200)->header('Cache-Control', 'private, no-store');
     }
@@ -167,13 +222,22 @@ class CuocHenController extends Controller
             'lienHe' => $approved ? ['hoTen' => $contact?->ho_ten, 'soDienThoai' => $laChuTin ? $contact?->so_dien_thoai : ($yc->tinDang?->thong_tin_lien_he ?: $contact?->so_dien_thoai), 'email' => $laChuTin ? $contact?->email : ($yc->tinDang?->email_lien_he ?: $contact?->email)] : null,
             'coTheDatLich' => $approved && in_array($yc->tinDang?->trang_thai, XuLyCuocHen::TIN_DUOC_DAT_LICH, true)
                 && ! $yc->cuocHen->contains(fn ($h) => in_array($h->trang_thai, XuLyCuocHen::LICH_DANG_HIEU_LUC, true)),
-            'cuoc_hen' => $approved ? $yc->cuocHen->sortByDesc('id')->map(fn ($h) => [
-                ...$h->only(['id', 'trang_thai', 'thoi_gian_hen_gap', 'nguoi_giu_xac_nhan_luc', 'nguoi_nhan_xac_nhan_luc', 'ly_do_huy']),
-                'laNguoiDeXuat' => (string) $h->nguoi_de_xuat_id === (string) $userId,
-                'dungMaBanGiao' => $h->banGiao?->ma_ban_giao_hash !== null,
-                'lichCu' => ! in_array((string) $h->nguoi_de_xuat_id, [(string) $yc->tinDang?->nguoi_dung_id, (string) $yc->nguoi_yeu_cau_id]),
-                'dia_diem' => $h->diaDiem?->only(['id', 'ten_dia_diem']), 'ban_giao' => $h->banGiao?->only(['thoi_gian_ban_giao']),
-            ])->values() : [],
+            'cuoc_hen' => $approved ? $yc->cuocHen->sortByDesc('id')->map(function ($h) use ($yc, $userId) {
+                $laNguoiTao = (string) $h->nguoi_de_xuat_id === (string) $userId;
+                $coTheLayMa = $laNguoiTao && $yc->tinDang?->trang_thai === 'cho_ban_giao'
+                    && $h->trang_thai === 'cho_xac_nhan' && $h->banGiao?->maConHan();
+                $coBanMaHoa = $h->banGiao?->getRawOriginal('ma_ban_giao_ma_hoa') !== null;
+
+                return [
+                    ...$h->only(['id', 'trang_thai', 'thoi_gian_hen_gap', 'nguoi_giu_xac_nhan_luc', 'nguoi_nhan_xac_nhan_luc', 'ly_do_huy']),
+                    'laNguoiDeXuat' => $laNguoiTao,
+                    'dungMaBanGiao' => $h->banGiao?->ma_ban_giao_hash !== null,
+                    'coTheXemMaBanGiao' => $coTheLayMa && $coBanMaHoa,
+                    'coTheCapLaiMaBanGiao' => $coTheLayMa && ! $coBanMaHoa,
+                    'lichCu' => ! in_array((string) $h->nguoi_de_xuat_id, [(string) $yc->tinDang?->nguoi_dung_id, (string) $yc->nguoi_yeu_cau_id]),
+                    'dia_diem' => $h->diaDiem?->only(['id', 'ten_dia_diem']), 'ban_giao' => $h->banGiao?->only(['thoi_gian_ban_giao']),
+                ];
+            })->values() : [],
         ];
     }
 }

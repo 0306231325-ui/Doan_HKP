@@ -61,10 +61,6 @@ class GiuDoController extends Controller
                 'yeu_cau_id' => $yeuCau->id,
             ]);
 
-            if ($thongBao->wasRecentlyCreated) {
-                $tinNhat->tinBaoMatDaThongBao()->syncWithoutDetaching([$tinMat->id]);
-            }
-
             return $thongBao->wasRecentlyCreated
                 ? response()->json(['message' => 'Đã thông báo cho người mất đồ. Hai bên có thể tự liên hệ và đặt lịch.', 'yeuCauId' => $yeuCau->id], 201)
                 : response()->json(['message' => 'Hai bên có thể tự liên hệ và đặt lịch.', 'yeuCauId' => $yeuCau->id]);

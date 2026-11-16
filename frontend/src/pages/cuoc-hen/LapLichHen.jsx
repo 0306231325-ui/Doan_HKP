@@ -13,14 +13,15 @@ import { chuanHoaTimKiem } from '../danh-sach-do/hooks/xuLyDanhSachDo.js'
 import useChiTietTinDang from '../tin-dang/hooks/useChiTietTinDang'
 import FormCuocHen from './FormCuocHen'
 import KhungCuocHen from './KhungCuocHen'
+import MaBanGiao from './MaBanGiao'
 import useDanhSachYeuCauHen from './hooks/useDanhSachYeuCauHen'
 import useChiTietYeuCau from './hooks/useChiTietYeuCau'
 import dinhDangGioHen from './dinhDangGioHen'
 import { daXacNhanBanGiao } from './xuLyTienDoYeuCau'
 
 const CAC_BUOC_DIEN_LICH = [
-  ['Điền thông tin lịch gặp.', 'Ở Bước 2 / 2, mở Thông tin cuộc hẹn để kiểm tra tin đăng, tên và vai trò. Chọn ngày, giờ Việt Nam và địa điểm đã thống nhất, rồi bấm Xác nhận tạo lịch.'],
-  ['Lưu mã bàn giao.', 'Mã 6 số chỉ hiện một lần sau khi tạo lịch. Người còn lại nhận thông báo kèm đường dẫn đến cuộc hẹn. Sau khi giao nhận đồ, đưa mã cho người đó để xác nhận.'],
+  ['Điền thông tin lịch gặp.', 'Ở Bước 2 / 2, chọn ngày, giờ Việt Nam và địa điểm đã thống nhất. Bấm Xem lại cuộc hẹn để kiểm tra thông tin, rồi bấm Xác nhận tạo lịch.'],
+  ['Xem mã bàn giao.', 'Bạn có thể xem lại mã 6 số trong mục Theo dõi yêu cầu → Lịch hẹn. Sau khi giao nhận đồ, đưa mã cho người còn lại để xác nhận.'],
 ]
 
 const HUONG_DAN_TAO_LICH = {
@@ -181,6 +182,7 @@ function ThongTinLichHen({ yeuCau, tinId, tin, dangTaiNguon, loiNguon, taiLaiNgu
   const hienThongBao = useThongBaoThaoTac()
   const { diaDiem, dangTai, loiTai, taiLai } = useDanhMuc()
   const khoaGui = useRef(false)
+  const [lichXemLai, datLichXemLai] = useState(null)
   const [dangGui, datDangGui] = useState(false)
   const [loiGui, datLoiGui] = useState(null)
   const [lichDaTao, datLichDaTao] = useState(null)
@@ -190,8 +192,19 @@ function ThongTinLichHen({ yeuCau, tinId, tin, dangTaiNguon, loiNguon, taiLaiNgu
   const daHuy = hen?.trang_thai === 'da_huy'
   const duongDanQuayLai = tinId ? `/chi-tiet-tin-dang?id=${tinId}` : '/cuoc-hen/tao'
 
-  async function taoCuocHen({ ngay, gio, diaDiem: noiGap }) {
-    if (khoaGui.current || !(yeuCau || tin?.coTheTaoLichTraDo) || !noiGap) return
+  function xemLaiCuocHen(lich) {
+    if (!lich.diaDiem || khoaGui.current) return
+    datLoiGui(null)
+    datLichXemLai(lich)
+  }
+
+  function dongXemLai() {
+    if (!khoaGui.current) datLichXemLai(null)
+  }
+
+  async function taoCuocHen() {
+    if (!lichXemLai || khoaGui.current || !(yeuCau || tin?.coTheTaoLichTraDo)) return
+    const { ngay, gio, diaDiem: noiGap } = lichXemLai
     khoaGui.current = true
     datDangGui(true)
     datLoiGui(null)
@@ -201,6 +214,7 @@ function ThongTinLichHen({ yeuCau, tinId, tin, dangTaiNguon, loiNguon, taiLaiNgu
       const { data } = tinId
         ? await api.post(`/tin-dang/${tin.id}/lich-tra-do`, lich)
         : await api.post('/me/cuoc-hen', { ...lich, yeuCauId: yeuCau.id })
+      datLichXemLai(null)
       datLichDaTao(data.data)
       if (!tinId) taiLaiNguon()
     } catch (loi) {
@@ -228,11 +242,8 @@ function ThongTinLichHen({ yeuCau, tinId, tin, dangTaiNguon, loiNguon, taiLaiNgu
       {daBanGiao ? <p role="status" className="rounded-xl bg-emerald-50 p-4 font-semibold text-emerald-950">Hai bên đã xác nhận bàn giao thành công.</p>
         : daHuy ? <p role="status" className="rounded-xl bg-amber-50 p-4 text-sm text-amber-800">{hen.ly_do_huy || 'Cuộc hẹn đã bị hủy.'}</p>
           : <>
-            <div className="rounded-xl bg-emerald-50 p-4 text-emerald-950">
-              <p className="text-sm font-semibold">Mã bàn giao</p>
-              <p className="mt-1 font-mono text-3xl tracking-widest">{lichDaTao.ma}</p>
-            </div>
-            <p className="text-sm leading-6 text-[#526c5b]">Mã chỉ hiện một lần. Hãy lưu lại và đưa cho người còn lại sau khi giao nhận đồ. Mã dùng từ giờ hẹn đến {dinhDangGioHen(lichDaTao.hetHanLuc)}.</p>
+            <MaBanGiao ma={lichDaTao.ma} />
+            <p className="text-sm leading-6 text-[#526c5b]">Bạn có thể xem lại mã trong chi tiết cuộc hẹn. Đưa mã cho người còn lại sau khi giao nhận đồ. Mã dùng từ giờ hẹn đến {dinhDangGioHen(lichDaTao.hetHanLuc)}.</p>
           </>}
       <Link to={`/chi-tiet-yeu-cau?id=${lichDaTao.yeuCauId}&tab=lich-hen`} className="font-semibold text-emerald-800 hover:underline">Xem chi tiết cuộc hẹn</Link>
     </section>
@@ -272,18 +283,47 @@ function ThongTinLichHen({ yeuCau, tinId, tin, dangTaiNguon, loiNguon, taiLaiNgu
       </div>
       {dangTai && <p role="status" className="px-5 pt-4 text-sm text-[#526c5b] sm:px-7">Đang tải địa điểm…</p>}
       {loiTai && <div className="flex flex-wrap items-center gap-3 px-5 pt-4 text-sm text-rose-700 sm:px-7"><p role="alert">Không tải được địa điểm.</p><Button onClick={taiLai}>Thử lại</Button></div>}
-      {loiGui && <div className="space-y-2 px-5 pt-4 text-sm sm:px-7">
-        <p role="alert" className="text-rose-700">{loiGui.noiDung}</p>
-        {loiGui.xemLich && <Link to={`/chi-tiet-yeu-cau?id=${yeuCau.id}&tab=lich-hen`} className="font-semibold text-emerald-800 hover:underline">Xem lịch hẹn của yêu cầu</Link>}
-      </div>}
       <FormCuocHen
         cacDiaDiem={diaDiem.map((muc) => ({ id: String(muc.id), ten: muc.name }))}
-        khiXemLai={taoCuocHen}
+        khiXemLai={xemLaiCuocHen}
         dangGui={dangGui}
         khiHuy={() => dieuHuong(duongDanQuayLai)}
-        nhanXemLai="Xác nhận tạo lịch"
         nhanHuy="Quay lại"
       />
+      {lichXemLai && (
+        <HopThoai
+          tieuDe="Xác nhận tạo cuộc hẹn"
+          moTa="Người còn lại sẽ nhận được thông báo sau khi bạn xác nhận."
+          khiDong={dongXemLai}
+        >
+          <div className="space-y-4 p-5 sm:p-6">
+            <dl className="space-y-3 rounded-xl bg-emerald-50 p-4 text-sm text-emerald-950">
+              <div>
+                <dt className="font-semibold">Tin đăng</dt>
+                <dd>{tinId ? tin.title : yeuCau.ten}</dd>
+              </div>
+              <div>
+                <dt className="font-semibold">Thời gian gặp</dt>
+                <dd>{dinhDangGioHen(lichXemLai.batDau)} (giờ Việt Nam)</dd>
+              </div>
+              <div>
+                <dt className="font-semibold">Địa điểm gặp</dt>
+                <dd>{lichXemLai.diaDiem.ten}</dd>
+              </div>
+            </dl>
+            {loiGui && (
+              <div className="space-y-2 text-sm">
+                <p role="alert" className="text-rose-700">{loiGui.noiDung}</p>
+                {loiGui.xemLich && <Link to={`/chi-tiet-yeu-cau?id=${yeuCau.id}&tab=lich-hen`} className="font-semibold text-emerald-800 hover:underline">Xem lịch hẹn của yêu cầu</Link>}
+              </div>
+            )}
+            <div className="flex flex-wrap justify-end gap-3">
+              <button type="button" onClick={dongXemLai} disabled={dangGui} className="rounded-xl border border-[#ceded3] px-4 py-2.5 text-sm font-semibold text-[#526c5b] hover:bg-emerald-50 focus-visible:outline-2 focus-visible:outline-emerald-700 disabled:opacity-50">Sửa thông tin</button>
+              <Button onClick={taoCuocHen} disabled={dangGui}>{dangGui ? 'Đang tạo cuộc hẹn…' : 'Xác nhận tạo lịch'}</Button>
+            </div>
+          </div>
+        </HopThoai>
+      )}
     </section>
   )
 }

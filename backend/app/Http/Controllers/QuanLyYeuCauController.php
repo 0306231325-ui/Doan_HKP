@@ -107,7 +107,7 @@ class QuanLyYeuCauController extends Controller
     public function chiTiet(string $id)
     {
         $yc = YeuCauNhanDo::with(['tinDang.nguoiDung', 'tinDang.hinhAnh' => fn ($anh) => $anh->where('pham_vi', 'cong_khai')->orderBy('thu_tu')->orderBy('id'), 'nguoiYeuCau', 'traLoi.loiKhaiTinDang.phienBanCauHoi', 'minhChung' => fn ($anh) => $anh->orderBy('thu_tu')->orderBy('id'), 'lichSu.nguoiThucHien', 'cuocHen.banGiao'])->findOrFail($id);
-        $yc->setAttribute('anh_tin_dang', $yc->tinDang?->hinhAnh->map(fn ($anh) => ['id' => $anh->id, 'url' => $anh->duongDanHienThi(), 'mo_ta' => $anh->mo_ta])->values() ?? []);
+        $yc->setAttribute('anh_tin_dang', $yc->tinDang?->hinhAnh->map(fn ($anh) => ['id' => $anh->id, 'url' => $anh->duongDanHienThi()])->values() ?? []);
         $yc->tinDang?->unsetRelation('hinhAnh');
 
         return response()->json(['data' => app(TienDoYeuCau::class)->duLieu($yc)])->header('Cache-Control', 'private, no-store');
