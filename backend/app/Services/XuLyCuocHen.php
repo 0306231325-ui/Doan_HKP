@@ -96,6 +96,7 @@ class XuLyCuocHen
                     $hetHan = $gioHen->addHours(24);
                     $hen->banGiao()->create([
                         'ma_ban_giao_hash' => $this->bamMa($nguoiNhapId, $ma),
+                        'ma_ban_giao_ma_hoa' => $ma,
                         'ma_het_han_luc' => $hetHan,
                     ]);
                     if ($tin->trang_thai === 'dang_mo') {
@@ -116,23 +117,60 @@ class XuLyCuocHen
         abort(503, 'Chưa thể tạo mã bàn giao. Vui lòng thử lại.');
     }
 
-    public function xacNhan(string $ma, int $nguoiNhapId): array
+    public function capLaiMaBanGiao(YeuCauNhanDo $yeuCauGoc, string $henId, int $nguoiTaoId): array
     {
-        $maHash = $this->bamMa($nguoiNhapId, $ma);
-        $banGiaoGoc = BanGiao::where('ma_ban_giao_hash', $maHash)->first();
-        abort_unless($banGiaoGoc, 422, 'Mã bàn giao không hợp lệ.');
-        $henGoc = CuocHen::findOrFail($banGiaoGoc->cuoc_hen_id);
+        for ($lan = 0; $lan < 5; $lan++) {
+            try {
+                return DB::transaction(function () use ($yeuCauGoc, $henId, $nguoiTaoId) {
+                    $tin = TinDang::lockForUpdate()->findOrFail($yeuCauGoc->tin_dang_id);
+                    $yeuCau = YeuCauNhanDo::lockForUpdate()->findOrFail($yeuCauGoc->id);
+                    $hen = $yeuCau->cuocHen()->where('nguoi_de_xuat_id', $nguoiTaoId)->lockForUpdate()->findOrFail($henId);
+                    $haiBen = [(int) $tin->nguoi_dung_id, (int) $yeuCau->nguoi_yeu_cau_id];
+                    abort_unless(in_array($nguoiTaoId, $haiBen, true), 404);
+
+                    $banGiao = $hen->banGiao()->lockForUpdate()->first();
+                    abort_unless($yeuCau->trang_thai === 'da_xac_minh' && $tin->trang_thai === 'cho_ban_giao'
+                        && $hen->trang_thai === 'cho_xac_nhan' && $banGiao?->maConHan(), 409, 'Mã bàn giao không còn hiệu lực.');
+
+                    $ma = $banGiao->ma_ban_giao_ma_hoa;
+                    if ($ma === null) {
+                        $nguoiNhapId = $haiBen[0] === $nguoiTaoId ? $haiBen[1] : $haiBen[0];
+                        abort_if($nguoiNhapId === $nguoiTaoId, 409, 'Không xác định được tài khoản của người còn lại.');
+                        do {
+                            $ma = sprintf('%06d', random_int(0, 999999));
+                            $maHash = $this->bamMa($nguoiNhapId, $ma);
+                        } while (hash_equals($banGiao->ma_ban_giao_hash, $maHash));
+                        $banGiao->update(['ma_ban_giao_hash' => $maHash, 'ma_ban_giao_ma_hoa' => $ma]);
+                    }
+
+                    return ['ma' => $ma, 'hetHanLuc' => $banGiao->ma_het_han_luc->toISOString()];
+                }, 3);
+            } catch (UniqueConstraintViolationException $exception) {
+                if (! str_contains($exception->errorInfo[2] ?? '', 'ma_ban_giao_hash')) {
+                    throw $exception;
+                }
+            }
+        }
+
+        abort(503, 'Chưa thể cấp lại mã bàn giao. Vui lòng thử lại.');
+    }
+
+    public function xacNhan(int $cuocHenId, string $ma, int $nguoiNhapId): array
+    {
+        $henGoc = CuocHen::findOrFail($cuocHenId);
         $yeuCauGoc = YeuCauNhanDo::findOrFail($henGoc->yeu_cau_id);
 
-        return DB::transaction(function () use ($yeuCauGoc, $henGoc, $banGiaoGoc, $maHash, $nguoiNhapId) {
+        return DB::transaction(function () use ($yeuCauGoc, $cuocHenId, $ma, $nguoiNhapId) {
             $tin = TinDang::lockForUpdate()->findOrFail($yeuCauGoc->tin_dang_id);
             $yeuCau = YeuCauNhanDo::lockForUpdate()->findOrFail($yeuCauGoc->id);
-            $hen = CuocHen::lockForUpdate()->findOrFail($henGoc->id);
-            $banGiao = BanGiao::lockForUpdate()->findOrFail($banGiaoGoc->id);
-            abort_unless(hash_equals($maHash, (string) $banGiao->ma_ban_giao_hash), 422, 'Mã bàn giao không hợp lệ.');
+            $hen = $yeuCau->cuocHen()->lockForUpdate()->findOrFail($cuocHenId);
             $haiBen = [(int) $tin->nguoi_dung_id, (int) $yeuCau->nguoi_yeu_cau_id];
             abort_unless(in_array($nguoiNhapId, $haiBen, true) && in_array((int) $hen->nguoi_de_xuat_id, $haiBen, true)
                 && $nguoiNhapId !== (int) $hen->nguoi_de_xuat_id, 422, 'Mã bàn giao không hợp lệ.');
+            $banGiao = $hen->banGiao()->lockForUpdate()->first();
+            $maHash = $this->bamMa($nguoiNhapId, $ma);
+            abort_unless($banGiao && hash_equals((string) $banGiao->ma_ban_giao_hash, $maHash), 422, 'Mã bàn giao không khớp với cuộc hẹn đã chọn.');
+
             $ketQua = ['message' => 'Hai bên đã xác nhận bàn giao thành công.', 'yeuCauId' => $yeuCau->id, 'cuocHenId' => $hen->id];
             if ($hen->trang_thai === 'da_hoan_tat' && (int) $hen->nguoi_xac_nhan_id === $nguoiNhapId) {
                 return $ketQua;
@@ -143,7 +181,9 @@ class XuLyCuocHen
             }
             abort_unless($yeuCau->trang_thai === 'da_xac_minh' && $tin->trang_thai === 'cho_ban_giao'
                 && $hen->trang_thai === 'cho_xac_nhan' && $banGiao->ma_het_han_luc, 409, 'Cuộc hẹn không còn hiệu lực.');
-            abort_if($bayGio->lt($hen->thoi_gian_hen_gap), 409, 'Chưa đến giờ hẹn. Vui lòng nhập mã sau khi giao nhận đồ.');
+            $kiemTraGioHen = ! app()->isLocal();
+            // $kiemTraGioHen = true; // Bỏ comment dòng này để bật lại kiểm tra giờ hẹn trên local.
+            abort_if($kiemTraGioHen && $bayGio->lt($hen->thoi_gian_hen_gap), 409, 'Chưa đến giờ hẹn. Vui lòng nhập mã sau khi giao nhận đồ.');
 
             $hen->update([
                 'trang_thai' => 'da_hoan_tat',
@@ -154,6 +194,7 @@ class XuLyCuocHen
             ]);
             $banGiao->update([
                 'thoi_gian_ban_giao' => $bayGio,
+                'ma_ban_giao_ma_hoa' => null,
                 'ma_het_han_luc' => null,
             ]);
             $tin->update(['trang_thai' => 'da_hoan_tat']);
@@ -167,17 +208,15 @@ class XuLyCuocHen
 
     private function hoanTatTinBaoMat(TinDang $tin, YeuCauNhanDo $yeuCau): void
     {
-        if ($tin->loai_tin === 'bao_mat') {
+        if ($tin->tin_bao_mat_lien_quan_id === null) {
             return;
         }
-        $truyVan = $tin->tin_bao_mat_lien_quan_id ? $tin->tinBaoMatLienQuan() : $tin->tinBaoMatDaThongBao();
-        $tinBaoMat = $truyVan->withTrashed()->where('loai_tin', 'bao_mat')
-            ->where('nguoi_dung_id', $yeuCau->nguoi_yeu_cau_id)->limit(2)->lockForUpdate()->get();
 
-        if ($tinBaoMat->count() === 1 && ! $tinBaoMat[0]->trashed() && $tinBaoMat[0]->trang_thai === 'dang_mo') {
-            $tinBaoMat[0]->update(['trang_thai' => 'da_hoan_tat']);
-            $tin->tinBaoMatLienQuan()->associate($tinBaoMat[0]);
-            $tin->save();
+        $tinBaoMat = $tin->tinBaoMatLienQuan()->where('loai_tin', 'bao_mat')
+            ->where('nguoi_dung_id', $yeuCau->nguoi_yeu_cau_id)->lockForUpdate()->first();
+
+        if ($tinBaoMat?->trang_thai === 'dang_mo') {
+            $tinBaoMat->update(['trang_thai' => 'da_hoan_tat']);
         }
     }
 
@@ -202,7 +241,8 @@ class XuLyCuocHen
         }
 
         $hen->update(['trang_thai' => 'da_huy', 'ly_do_huy' => self::HET_HAN]);
-        // Keep the expired code and its expiry together for constraints and expired-code feedback.
+        // The database requires the hash and expiry to remain paired.
+        $banGiao->update(['ma_ban_giao_ma_hoa' => null]);
 
         return true;
     }

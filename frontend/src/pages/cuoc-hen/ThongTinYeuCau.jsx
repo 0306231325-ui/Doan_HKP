@@ -22,7 +22,7 @@ export default function ThongTinYeuCau({ yc }) {
   function chuyenAnh(buoc) { datViTri((cu) => (cu + buoc + anh.length) % anh.length) }
   function boSuuTap(phongTo = false) {
     return <div className="relative overflow-hidden rounded-xl bg-[#f5f8f6]">
-      <img src={hienTai.url} alt={hienTai.moTa || yc.tin_dang?.tieu_de || 'Ảnh đồ vật'} onError={(e) => { if (!e.currentTarget.src.endsWith('/do-vat-trong.svg')) e.currentTarget.src = '/do-vat-trong.svg' }} className={phongTo ? 'h-[60vh] w-full object-contain' : 'h-52 w-full object-contain sm:h-64'} />
+      <img src={hienTai.url} alt={yc.tin_dang?.tieu_de || 'Ảnh đồ vật'} onError={(e) => { if (!e.currentTarget.src.endsWith('/do-vat-trong.svg')) e.currentTarget.src = '/do-vat-trong.svg' }} className={phongTo ? 'h-[60vh] w-full object-contain' : 'h-52 w-full object-contain sm:h-64'} />
       {anh.length > 1 && <><button type="button" aria-label="Ảnh trước" onClick={() => chuyenAnh(-1)} className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-white/95 p-2 text-emerald-900 shadow"><ChevronLeft size={20} /></button><button type="button" aria-label="Ảnh sau" onClick={() => chuyenAnh(1)} className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-white/95 p-2 text-emerald-900 shadow"><ChevronRight size={20} /></button><span aria-live="polite" className="absolute bottom-3 left-3 rounded-lg bg-white/95 px-2 py-1 text-xs text-[#607568]">{viTri + 1}/{anh.length}</span></>}
       {!phongTo && <button type="button" aria-label="Phóng to ảnh đồ vật" aria-haspopup="dialog" onClick={() => datMoAnh(true)} className="absolute bottom-3 right-3 rounded-full bg-white/95 p-2 text-emerald-900 shadow"><ZoomIn size={18} /></button>}
     </div>

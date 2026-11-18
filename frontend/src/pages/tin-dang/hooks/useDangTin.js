@@ -31,7 +31,6 @@ export default function useDangTin(loaiBanDau, duongDanNoiDung) {
   const [buoc, datBuoc] = useState('')
   const [dangGui, datDangGui] = useState(false)
   const coTheTiepTuc = !dangTaiDanhMuc && !loiTaiDanhMuc && !loiThongTin && !dangGui
-  const khoaGui = useRef(null)
   const dangXuLy = useRef(false)
   const nutGui = useRef(null)
 
@@ -94,10 +93,9 @@ export default function useDangTin(loaiBanDau, duongDanNoiDung) {
     dangXuLy.current = true
     datDangGui(true)
     datLoi('')
-    if (!khoaGui.current) khoaGui.current = crypto.randomUUID()
     try {
       await prepareCsrf()
-      const { data } = await api.post('/tin-dang', taoDuLieuGui(duLieu, cauHoi, cauTraLoi, anh, khoaGui.current), { headers: { 'Content-Type': undefined } })
+      const { data } = await api.post('/tin-dang', taoDuLieuGui(duLieu, cauHoi, cauTraLoi, anh), { headers: { 'Content-Type': undefined } })
       dieuHuong(`/chi-tiet-tin-dang?id=${data.data.id}`, { replace: true, state: { authMessage: data.message, authType: 'success' } })
     } catch (loiGui) {
       datLoi(layLoiGui(loiGui))

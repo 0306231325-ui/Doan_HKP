@@ -153,6 +153,33 @@ class QuanLyCauHoiTest extends TestCase
         $this->postJson('/api/admin/cau-hoi', $this->mau($ngung->id))->assertCreated();
     }
 
+    public function test_gioi_han_nam_cau_hoi_moi_danh_muc_tinh_ca_cau_da_an(): void
+    {
+        $this->actingAs($this->taiKhoan());
+        $day = DanhMucDoVat::create(['ten_danh_muc' => 'Điện tử']);
+        $conCho = DanhMucDoVat::create(['ten_danh_muc' => 'Giấy tờ']);
+        $mau = $this->mau($day->id);
+        for ($thuTu = 1; $thuTu <= 5; $thuTu++) {
+            $cau = $this->postJson('/api/admin/cau-hoi', [
+                ...$mau, 'nhanDangTin' => 'Câu hỏi '.$thuTu, 'thuTu' => $thuTu,
+            ])->assertCreated()->json('data');
+        }
+
+        $this->patchJson('/api/admin/cau-hoi/'.$cau['id'].'/trang-thai', [
+            'phienBan' => 1, 'dangHoatDong' => false, 'trangThaiHienTai' => true,
+        ])->assertOk();
+        $this->postJson('/api/admin/cau-hoi', $mau)->assertUnprocessable()->assertJsonValidationErrors('danhMucId');
+        $ngoaiDanhMuc = $this->postJson('/api/admin/cau-hoi', $this->mau($conCho->id))->assertCreated()->json('data');
+        $this->putJson('/api/admin/cau-hoi/'.$ngoaiDanhMuc['id'], [...$mau, 'phienBan' => 1])
+            ->assertUnprocessable()->assertJsonValidationErrors('danhMucId');
+        $suaCauAn = [...$mau, 'phienBan' => 1, 'dangHoatDong' => false, 'nhanDangTin' => 'Câu hỏi đã sửa'];
+        $this->putJson('/api/admin/cau-hoi/'.$cau['id'], $suaCauAn)->assertOk()->assertJsonPath('data.phienBan', 2);
+        $this->putJson('/api/admin/cau-hoi/'.$cau['id'], [...$suaCauAn, 'danhMucId' => $conCho->id, 'phienBan' => 2])->assertOk();
+        $this->postJson('/api/admin/cau-hoi', $mau)->assertCreated();
+        $this->getJson('/api/admin/cau-hoi')->assertOk()->assertJsonPath('gioiHanMoiDanhMuc', 5);
+        $this->assertSame(5, $day->cauHoi()->count());
+    }
+
     public function test_cau_rieng_luu_kieu_nhap_khong_nhan_cau_hinh_cu(): void
     {
         $this->actingAs($this->taiKhoan());

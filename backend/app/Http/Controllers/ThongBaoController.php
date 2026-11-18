@@ -63,7 +63,7 @@ class ThongBaoController extends Controller
         $duongDan = $muc->co_the_xem_tin ? '/chi-tiet-tin-dang?id='.$muc->tin_dang_id : null;
         if ($muc->yeu_cau_id) {
             $thamSo = ['id' => $muc->yeu_cau_id];
-            if ($muc->loai_thong_bao === 'tao_cuoc_hen') {
+            if (in_array($muc->loai_thong_bao, ['tao_cuoc_hen', 'xac_nhan_ban_giao'], true)) {
                 $thamSo['tab'] = 'lich-hen';
                 $thamSo['cuocHen'] = $muc->cuoc_hen_id;
             }

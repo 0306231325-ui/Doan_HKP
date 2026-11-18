@@ -43,9 +43,9 @@ export function kiemTraTinDang(duLieu, danhMuc, cauHoi, cauTraLoi, homNay) {
   return ''
 }
 
-export function taoDuLieuGui(duLieu, cauHoi, cauTraLoi, anh, maGui) {
+export function taoDuLieuGui(duLieu, cauHoi, cauTraLoi, anh) {
   const mau = new FormData()
-  Object.entries({ ...duLieu, maGui }).forEach(([ten, giaTri]) => mau.append(ten, String(giaTri).trim()))
+  Object.entries(duLieu).forEach(([ten, giaTri]) => mau.append(ten, String(giaTri).trim()))
   cauHoi.forEach((cau, i) => {
     mau.append(`cauTraLoi[${i}][id]`, cau.id)
     mau.append(`cauTraLoi[${i}][phienBanId]`, cau.phienBanId)

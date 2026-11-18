@@ -20,37 +20,52 @@ class CauHoiTinMauSeeder extends Seeder
 
         $boCauHoi = [
             'Đồ điện tử' => [
-                ['Đồ vật có xuất xứ theo hãng gì ?', 'Thiết bị thuộc hãng hoặc dòng máy nào?', 'van_ban'],
-                ['đồ vật mất có số lượng là ?', 'Có bao nhiêu thiết bị giống như mô tả?', 'so'],
-                ['đồ vật mất màu sắc ra sao ?', 'Thiết bị có màu sắc và kiểu dáng như thế nào?', 'van_ban'],
-                ['có mất vết xước', 'Thiết bị có bao nhiêu dấu hiệu riêng như vết xước, tem hoặc ký hiệu?', 'so'],
-                ['đồ dùng có ốp màu gì', 'Thiết bị có đi kèm phụ kiện gì, nếu có?', 'van_ban'],
+                [['Thiết bị thuộc hãng hoặc dòng máy nào?', 'Đồ vật có xuất xứ theo hãng gì ?'],
+                    'Thiết bị của hãng nào và thuộc mẫu máy nào, nếu biết?'],
+                [['Có bao nhiêu thiết bị giống như mô tả?', 'đồ vật mất có số lượng là ?'],
+                    'Nếu biết, ghi 4 ký tự cuối của số sê-ri hoặc mã tài sản in trên thiết bị.'],
+                [['Thiết bị có màu sắc và kiểu dáng như thế nào?', 'đồ vật mất màu sắc ra sao ?'],
+                    'Thân thiết bị có màu gì? Viền, nắp hoặc phím có màu khác gì so với thân?'],
+                [['Thiết bị có bao nhiêu dấu hiệu riêng như vết xước, tem hoặc ký hiệu?', 'có mất vết xước'],
+                    'Thiết bị có vết trầy, chỗ móp hoặc ký hiệu riêng nào? Mô tả vị trí và hình dạng nếu có.'],
+                [['Thiết bị có đi kèm phụ kiện gì, nếu có?', 'đồ dùng có ốp màu gì'],
+                    'Thiết bị có ốp, bao đựng hoặc phụ kiện đi kèm nào? Nếu có, mô tả màu hoặc đặc điểm dễ nhận ra.'],
             ],
             'Đồ dùng học tập' => [
-                ['Nắp trượt của máy tính có dấu hiệu nhận biết gì?', 'Đồ dùng có dấu hiệu riêng nào để nhận biết?', 'van_ban'],
-                ['Có bao nhiêu tem dán ở mặt sau máy tính?', 'Có bao nhiêu tem, nhãn hoặc ký hiệu riêng trên đồ dùng?', 'so'],
+                [['Đồ dùng có dấu hiệu riêng nào để nhận biết?', 'Nắp trượt của máy tính có dấu hiệu nhận biết gì?'],
+                    'Đồ dùng có vết trầy, nứt hoặc sứt ở đâu? Mô tả hình dạng của vết nếu có.'],
+                [['Có bao nhiêu tem, nhãn hoặc ký hiệu riêng trên đồ dùng?', 'Có bao nhiêu tem dán ở mặt sau máy tính?'],
+                    'Trên đồ dùng có tem dán, tên viết hoặc ký hiệu nào? Mô tả dấu đó và vị trí nếu có.'],
             ],
             'Giấy tờ' => [
-                ['Thẻ được để trong loại bao đựng nào?', 'Giấy tờ được cất trong vật gì, nếu có?', 'van_ban'],
-                ['Bao đựng thẻ có dấu hiệu nhận biết gì ở góc?', 'Giấy tờ hoặc vật đựng có đặc điểm riêng nào để nhận biết?', 'van_ban'],
+                [['Giấy tờ được cất trong vật gì, nếu có?', 'Thẻ được để trong loại bao đựng nào?'],
+                    'Giấy tờ được đựng trong bao, bìa hay ví nào? Mô tả màu và chất liệu nếu có.'],
+                [['Giấy tờ hoặc vật đựng có đặc điểm riêng nào để nhận biết?', 'Bao đựng thẻ có dấu hiệu nhận biết gì ở góc?'],
+                    'Giấy tờ hoặc bao đựng có dấu gì như vết gập, rách hay nhãn dán? Mô tả dấu đó và vị trí nếu có.'],
             ],
             'Chìa khóa và vé xe' => [
-                [null, 'Đồ vật có màu sắc và kiểu dáng như thế nào?', 'van_ban'],
-                [null, 'Đồ vật có dấu hiệu riêng nào như ký hiệu, móc treo hoặc vết xước?', 'van_ban'],
+                [['Đồ vật có màu sắc và kiểu dáng như thế nào?'],
+                    'Nếu là chùm chìa, có mấy chìa và đầu chìa có hình dạng hoặc màu gì? Nếu là vé xe, vé làm bằng gì và có logo hoặc chữ gì?'],
+                [['Đồ vật có dấu hiệu riêng nào như ký hiệu, móc treo hoặc vết xước?'],
+                    'Móc chìa có hình gì hoặc trên chìa hay vé xe có dấu riêng nào như vết trầy, vết nứt hoặc chữ viết tay?'],
             ],
             'Ví và túi xách' => [
-                ['Lớp lót bên trong ví màu gì?', 'Bên trong đồ vật có màu sắc hoặc đặc điểm gì dễ nhận ra?', 'van_ban'],
-                ['Ví có bao nhiêu ngăn nhỏ để thẻ?', 'Đồ vật có bao nhiêu ngăn nhỏ?', 'so'],
+                [['Bên trong đồ vật có màu sắc hoặc đặc điểm gì dễ nhận ra?', 'Lớp lót bên trong ví màu gì?'],
+                    'Lớp lót bên trong ví hoặc túi có màu gì và có hoa văn gì, nếu có?'],
+                [['Đồ vật có bao nhiêu ngăn nhỏ?', 'Ví có bao nhiêu ngăn nhỏ để thẻ?'],
+                    'Trong ví hoặc túi có vật gì và nằm ở ngăn nào? Chỉ mô tả vật, bỏ qua thông tin cá nhân.'],
             ],
             'Khác' => [
-                [null, 'Đồ vật có màu sắc, hình dáng hoặc chất liệu như thế nào?', 'van_ban'],
-                [null, 'Đồ vật có dấu hiệu riêng nào để nhận biết?', 'van_ban'],
+                [['Đồ vật có màu sắc, hình dáng hoặc chất liệu như thế nào?'],
+                    'Món đồ dùng để làm gì, làm bằng chất liệu gì và có kích thước khoảng bao nhiêu?'],
+                [['Đồ vật có dấu hiệu riêng nào để nhận biết?'],
+                    'Món đồ có chỗ đã sửa, phần bị hỏng hoặc dấu đánh dấu nào? Mô tả dấu đó và vị trí nếu có.'],
             ],
         ];
         $loiKhaiMau = [
-            'Đồ dùng học tập' => ['mau-tra-cuu-may-tinh-flexio', ['Có một vết xước chéo ở góc dưới của nắp.', '1']],
+            'Đồ dùng học tập' => ['mau-tra-cuu-may-tinh-flexio', ['Có một vết xước chéo ở góc dưới của nắp.', 'Tem tròn màu trắng ở góc trên bên phải mặt lưng.']],
             'Giấy tờ' => ['mau-tra-cuu-the-can-cuoc', ['Bao nhựa trong có viền xanh.', 'Góc trên bên phải của bao bị gập.']],
-            'Ví và túi xách' => ['mau-tra-cuu-vi-da-den', ['Lớp lót màu nâu.', '4']],
+            'Ví và túi xách' => ['mau-tra-cuu-vi-da-den', ['Lớp lót màu nâu.', 'Một biên lai gấp đôi nằm trong ngăn có khóa kéo.']],
         ];
 
         DB::transaction(function () use ($boCauHoi, $loiKhaiMau, $traLoi) {
@@ -59,11 +74,21 @@ class CauHoiTinMauSeeder extends Seeder
 
             foreach ($danhMuc as $muc) {
                 $ten = $muc->ten_danh_muc;
-                $cauHienCo = $muc->cauHoi()->orderBy('id')->lockForUpdate()->get()->keyBy('noi_dung');
+                $cauHienCo = $muc->cauHoi()->orderBy('id')->lockForUpdate()->get();
+                $tongCau = $cauHienCo->count();
+                $theoNoiDung = $cauHienCo->keyBy('noi_dung');
                 $cacBan = [];
-                foreach ($boCauHoi[$ten] as $thuTu => [$noiDungCu, $noiDung, $kieuNhap]) {
-                    $cau = $cauHienCo->get($noiDung) ?? ($noiDungCu === null ? null : $cauHienCo->get($noiDungCu));
-                    $cacBan[] = $this->luuCauHoi($cau ?? new CauHoi, $muc, $noiDung, $kieuNhap, $thuTu + 1);
+                foreach ($boCauHoi[$ten] as $thuTu => [$cacNhanCu, $noiDung]) {
+                    $cau = $theoNoiDung->get($noiDung)
+                        ?? collect($cacNhanCu)->map(fn ($nhan) => $theoNoiDung->get($nhan))->first(fn ($cu) => $cu !== null);
+                    if (! $cau) {
+                        if ($tongCau >= CauHoi::GIOI_HAN_MOI_DANH_MUC) {
+                            continue;
+                        }
+                        $cau = new CauHoi;
+                        $tongCau++;
+                    }
+                    $cacBan[$thuTu] = $this->luuCauHoi($cau, $muc, $noiDung, $thuTu + 1);
                 }
 
                 if (! isset($loiKhaiMau[$ten])) {
@@ -87,11 +112,11 @@ class CauHoiTinMauSeeder extends Seeder
         }, 3);
     }
 
-    private function luuCauHoi(CauHoi $cau, DanhMucDoVat $muc, string $noiDung, string $kieuNhap, int $thuTu): LichSuCauHoi
+    private function luuCauHoi(CauHoi $cau, DanhMucDoVat $muc, string $noiDung, int $thuTu): LichSuCauHoi
     {
         $cau->fill([
             'danh_muc_id' => $muc->id, 'noi_dung' => $noiDung,
-            'kieu_nhap' => $kieuNhap, 'thu_tu' => $thuTu, 'trang_thai' => true,
+            'kieu_nhap' => 'van_ban', 'thu_tu' => $thuTu, 'trang_thai' => true,
         ]);
         $doiNoiDung = $cau->isDirty(['noi_dung', 'kieu_nhap', 'thu_tu']);
         $cau->save();

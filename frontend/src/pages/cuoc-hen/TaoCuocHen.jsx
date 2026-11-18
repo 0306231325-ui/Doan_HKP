@@ -1,6 +1,10 @@
 import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { ArrowLeft, CalendarDays, Clock3, Mail, MapPin, Phone, RefreshCw, UserRound } from 'lucide-react'
+import Button from '../../components/shared/Button'
+import HopThoai from '../../components/shared/HopThoai'
+import api, { prepareCsrf } from '../../services/api'
+import MaBanGiao from './MaBanGiao'
 import ThongTinYeuCau from './ThongTinYeuCau'
 import TienDoYeuCau from './TienDoYeuCau'
 import dinhDangGioHen from './dinhDangGioHen'
@@ -53,8 +57,19 @@ export default function TaoCuocHen() {
           <div className="space-y-4 p-5 sm:p-6"><div className="grid gap-3 sm:grid-cols-2"><div className="flex items-start gap-3 rounded-xl bg-[#f5f8f6] p-4"><Clock3 size={18} className="mt-0.5 shrink-0 text-emerald-700" /><div><p className="text-xs text-[#718276]">Thời gian gặp</p><p className="mt-1 text-sm font-semibold text-[#315a43]">{hen.thoi_gian_hen_gap ? dinhDangGioHen(hen.thoi_gian_hen_gap) : 'Chưa có thời gian'}</p></div></div><div className="flex items-start gap-3 rounded-xl bg-[#f5f8f6] p-4"><MapPin size={18} className="mt-0.5 shrink-0 text-emerald-700" /><div><p className="text-xs text-[#718276]">Địa điểm</p><p className="mt-1 text-sm font-semibold text-[#315a43]">{hen.dia_diem?.ten_dia_diem || 'Chưa có địa điểm'}</p></div></div></div>{(hen.nguoi_giu_xac_nhan_luc || hen.nguoi_nhan_xac_nhan_luc) && !hoanTat && <div className="space-y-1 text-sm text-[#607568]"><p>Người giữ đồ: {hen.nguoi_giu_xac_nhan_luc ? 'Đã xác nhận giao đồ' : 'Chưa xác nhận'}</p><p>Người nhận đồ: {hen.nguoi_nhan_xac_nhan_luc ? 'Đã xác nhận nhận đồ' : 'Chưa xác nhận'}</p></div>}
             {hen.ly_do_huy && <p className="text-sm text-[#607568]">{hen.ly_do_huy}</p>}
             {hen.dungMaBanGiao && !hoanTat && hen.trang_thai !== 'da_huy' && <div className="space-y-2 border-t border-emerald-100 pt-3 text-sm text-[#526c5b]">
-              <p>{hen.laNguoiDeXuat ? 'Đưa mã đã lưu cho người còn lại sau khi giao nhận đồ.' : 'Sau khi giao nhận đồ, nhập mã do người tạo lịch cung cấp.'}</p>
-              {!hen.laNguoiDeXuat && <Link to="/cuoc-hen/nhap-ma" className="inline-block font-semibold text-emerald-800 hover:underline">Nhập mã bàn giao</Link>}
+              {hen.laNguoiDeXuat ? (
+                <>
+                  <p>Đưa mã cho người còn lại sau khi giao nhận đồ.</p>
+                  {(hen.coTheXemMaBanGiao || hen.coTheCapLaiMaBanGiao) && (
+                    <XemMaBanGiao key={hen.id} yeuCauId={yc.id} henId={hen.id} canCapLai={hen.coTheCapLaiMaBanGiao} />
+                  )}
+                </>
+              ) : (
+                <>
+                  <p>Sau khi giao nhận đồ, nhập mã do người tạo lịch cung cấp.</p>
+                  <Link to="/cuoc-hen/nhap-ma" className="inline-block font-semibold text-emerald-800 hover:underline">Nhập mã bàn giao</Link>
+                </>
+              )}
             </div>}
           </div>
         </section>}
@@ -64,6 +79,77 @@ export default function TaoCuocHen() {
       </article>
     </>}
   </div>
+}
+
+function XemMaBanGiao({ yeuCauId, henId, canCapLai }) {
+  const [ketQua, datKetQua] = useState(null)
+  const [dangTai, datDangTai] = useState(false)
+  const [loi, datLoi] = useState('')
+  const [moXacNhan, datMoXacNhan] = useState(false)
+  const [daCapLai, datDaCapLai] = useState(false)
+  const maCu = canCapLai && !daCapLai
+  const duongDan = `/me/yeu-cau/${yeuCauId}/cuoc-hen/${henId}/ma-ban-giao`
+
+  async function layMa(capLai = false) {
+    if (dangTai) return
+    datDangTai(true)
+    datLoi('')
+    try {
+      if (capLai) await prepareCsrf()
+      const { data } = capLai ? await api.post(duongDan) : await api.get(duongDan)
+      datKetQua(data.data)
+      if (capLai) {
+        datDaCapLai(true)
+        datMoXacNhan(false)
+      }
+    } catch (loiTai) {
+      datLoi(loiTai.response?.status === 409 ? loiTai.response.data.message : 'Chưa tải được mã bàn giao. Vui lòng thử lại.')
+    } finally {
+      datDangTai(false)
+    }
+  }
+
+  function xemMa() {
+    datLoi('')
+    if (ketQua) datKetQua(null)
+    else if (maCu) datMoXacNhan(true)
+    else layMa()
+  }
+
+  function dongXacNhan() {
+    if (!dangTai) {
+      datLoi('')
+      datMoXacNhan(false)
+    }
+  }
+
+  return (
+    <div className="space-y-2">
+      {maCu && <p>Mã cũ không xem lại được. Nếu chưa lưu mã, bạn có thể cấp lại cho cuộc hẹn này.</p>}
+      <button type="button" className={`${nut} disabled:opacity-60`} onClick={xemMa} disabled={dangTai}
+        aria-haspopup={maCu ? 'dialog' : undefined} aria-expanded={maCu ? undefined : ketQua !== null}>
+        {maCu ? 'Cấp lại mã bàn giao' : dangTai ? 'Đang tải mã…' : ketQua ? 'Ẩn mã bàn giao' : 'Xem mã bàn giao'}
+      </button>
+      {loi && !moXacNhan && <p role="alert" className="text-rose-700">{loi}</p>}
+      {ketQua && (
+        <>
+          <MaBanGiao ma={ketQua.ma} />
+          <p>Mã hết hạn lúc {dinhDangGioHen(ketQua.hetHanLuc)}.</p>
+        </>
+      )}
+      {moXacNhan && (
+        <HopThoai tieuDe="Cấp lại mã bàn giao?" moTa="Mã cũ sẽ hết hiệu lực. Hãy dùng mã mới để xác nhận bàn giao cho cuộc hẹn này." khiDong={dongXacNhan}>
+          <div className="space-y-4 p-5 sm:p-6">
+            {loi && <p role="alert" className="text-rose-700">{loi}</p>}
+            <div className="flex flex-wrap justify-end gap-3">
+              <button type="button" className={nut} onClick={dongXacNhan} disabled={dangTai}>Hủy</button>
+              <Button onClick={() => layMa(true)} disabled={dangTai}>{dangTai ? 'Đang cấp mã…' : 'Xác nhận cấp lại'}</Button>
+            </div>
+          </div>
+        </HopThoai>
+      )}
+    </div>
+  )
 }
 
 function ThongTinLienHe({ Icon, nhan, giaTri, href }) {

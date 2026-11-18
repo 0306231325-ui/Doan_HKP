@@ -2,6 +2,7 @@ import { ArrowRight } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import ThanhTimKiem from '../components/danh-sach-do/ThanhTimKiem'
 import DanhSachDoThatLac from '../components/danh-sach-do/DanhSachDoThatLac'
+import Hero from '../components/home/Hero'
 import useDanhSachDo from './danh-sach-do/hooks/useDanhSachDo'
 import GioiThieu from './gioi-thieu/GioiThieu'
 
@@ -10,7 +11,7 @@ export default function Home() {
 
   return (
     <div className="space-y-8 sm:space-y-12">
-      <h1 className="sr-only">Trang chủ Lạc Ơi</h1>
+      <Hero />
       <ThanhTimKiem {...danhSach} />
       <DanhSachDoThatLac
         danhSachDo={danhSach.cacDoVat}

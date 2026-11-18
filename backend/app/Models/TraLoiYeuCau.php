@@ -17,7 +17,6 @@ class TraLoiYeuCau extends Model
         'gia_tri_so',
         'gia_tri_lua_chon',
         'ket_qua_doi_chieu',
-        'nhan_xet_admin',
     ];
 
     protected function casts(): array

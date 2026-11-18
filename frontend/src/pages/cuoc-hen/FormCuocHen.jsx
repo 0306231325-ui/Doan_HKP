@@ -106,7 +106,7 @@ export default function FormCuocHen({ cacDiaDiem, khiXemLai, khiHuy, giaTriBanDa
     </fieldset>
     <div className="flex flex-wrap justify-end gap-3 rounded-b-3xl border-t border-[#e1eae4] bg-[#f9fbfa] px-5 py-4 sm:px-7">
       <button type="button" onClick={khiHuy} disabled={dangGui} className="rounded-xl border border-[#ceded3] bg-white px-5 py-2.5 text-sm font-semibold text-[#526c5b] hover:bg-emerald-50 focus-visible:outline-2 focus-visible:outline-emerald-700 disabled:opacity-50">{nhanHuy}</button>
-      <Button type="submit" disabled={dangGui || !khiXemLai || !cacDiaDiem.length}>{dangGui ? 'Đang tạo cuộc hẹn…' : nhanXemLai}</Button>
+      <Button type="submit" aria-haspopup="dialog" disabled={dangGui || !khiXemLai || !cacDiaDiem.length}>{dangGui ? 'Đang tạo cuộc hẹn…' : nhanXemLai}</Button>
     </div>
   </form>
 }

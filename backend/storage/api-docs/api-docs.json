@@ -2820,12 +2820,34 @@
                 }
             }
         },
+        "/api/me/cuoc-hen/cho-nhap-ma": {
+            "get": {
+                "tags": [
+                    "Cuộc hẹn"
+                ],
+                "summary": "Danh sách cuộc hẹn chờ tài khoản hiện tại nhập mã",
+                "responses": {
+                    "200": {
+                        "description": "Trả danh sách lịch còn hạn, gồm id, tieuDe, gioHen và diaDiem"
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Tài khoản đã bị khóa"
+                    },
+                    "429": {
+                        "description": "Đã vượt giới hạn thao tác"
+                    }
+                }
+            }
+        },
         "/api/me/cuoc-hen/xac-nhan-ban-giao": {
             "post": {
                 "tags": [
                     "Cuộc hẹn"
                 ],
-                "summary": "Xác nhận bàn giao bằng mã 6 số",
+                "summary": "Xác nhận bàn giao cho cuộc hẹn đã chọn bằng mã 6 số",
                 "operationId": "2896d2bffd2e8a5b608c4eb23578579e",
                 "parameters": [
                     {
@@ -2843,9 +2865,14 @@
                         "application/json": {
                             "schema": {
                                 "required": [
+                                    "cuocHenId",
                                     "ma"
                                 ],
                                 "properties": {
+                                    "cuocHenId": {
+                                        "type": "integer",
+                                        "minimum": 1
+                                    },
                                     "ma": {
                                         "type": "string",
                                         "pattern": "^[0-9]{6}$",
@@ -2859,7 +2886,7 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Đã xác nhận bàn giao và hoàn tất tin nhặt được. Tin báo mất đang mở cũng hoàn tất khi có cặp đối chiếu duy nhất thuộc người nhận. Trả message, yeuCauId và cuocHenId. Gửi lại cùng mã chỉ trả kết quả cũ."
+                        "description": "Đã xác nhận bàn giao và hoàn tất tin gắn với cuộc hẹn. Tin báo mất được liên kết trực tiếp với tin nhặt được cũng hoàn tất nếu còn mở và thuộc người nhận. Trả message, yeuCauId và cuocHenId. Gửi lại cùng mã chỉ trả kết quả cũ."
                     },
                     "401": {
                         "description": "Chưa đăng nhập"
@@ -2867,11 +2894,14 @@
                     "403": {
                         "description": "Tài khoản đã bị khóa"
                     },
+                    "404": {
+                        "description": "Không tìm thấy cuộc hẹn"
+                    },
                     "409": {
                         "description": "Chưa đến giờ hẹn, hết hạn hoặc lịch không còn hiệu lực"
                     },
                     "422": {
-                        "description": "Mã sai, sai định dạng hoặc không dành cho tài khoản hiện tại"
+                        "description": "Thiếu cuộc hẹn, mã không khớp với lịch đã chọn, sai định dạng hoặc lịch không dành cho tài khoản hiện tại"
                     },
                     "429": {
                         "description": "Đã vượt giới hạn nhập mã"

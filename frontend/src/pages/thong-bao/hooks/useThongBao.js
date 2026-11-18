@@ -19,6 +19,7 @@ export default function useThongBao() {
   const thamChieuBang = useRef(null)
   const dangXuLy = useRef(false)
   const phienHopThu = useRef(null)
+  const taiLaiHopThu = useRef(null)
   const maBang = useId()
   const maTieuDe = useId()
 
@@ -28,6 +29,7 @@ export default function useThongBao() {
     let yeuCauTai
 
     function taiThongBao() {
+      if (phien.signal.aborted) return
       yeuCauTai?.abort()
       yeuCauTai = new AbortController()
       const { signal } = yeuCauTai
@@ -43,12 +45,24 @@ export default function useThongBao() {
         })
     }
 
+    function taiKhiDangXem() {
+      if (document.visibilityState === 'visible') taiThongBao()
+    }
+
+    taiLaiHopThu.current = taiThongBao
     taiThongBao()
-    window.addEventListener('yeu-cau-nhan-do:da-gui', taiThongBao)
+    const lichTai = window.setInterval(taiKhiDangXem, 15_000)
+    window.addEventListener('thong-bao:cap-nhat', taiThongBao)
+    window.addEventListener('focus', taiKhiDangXem)
+    document.addEventListener('visibilitychange', taiKhiDangXem)
     return function huyHopThu() {
       phien.abort()
       yeuCauTai?.abort()
-      window.removeEventListener('yeu-cau-nhan-do:da-gui', taiThongBao)
+      taiLaiHopThu.current = null
+      window.clearInterval(lichTai)
+      window.removeEventListener('thong-bao:cap-nhat', taiThongBao)
+      window.removeEventListener('focus', taiKhiDangXem)
+      document.removeEventListener('visibilitychange', taiKhiDangXem)
     }
   }, [])
 
@@ -86,6 +100,7 @@ export default function useThongBao() {
 
   function doiMoBang() {
     datQuyen(layQuyenThongBao())
+    if (!moBang) taiLaiHopThu.current?.()
     datMoBang((dangMo) => !dangMo)
   }
 
@@ -110,6 +125,7 @@ export default function useThongBao() {
       if (!signal.aborted) {
         capNhatMucHopThu(id, false)
         datLoiHopThu('')
+        taiLaiHopThu.current?.()
       }
     } catch {
       if (!signal.aborted) datLoiHopThu('Chưa đánh dấu được thông báo. Vui lòng thử lại.')
@@ -141,6 +157,7 @@ export default function useThongBao() {
         if (id) capNhatMucHopThu(id, true)
         else datHopThu({ danhSach: [], soChuaDoc: 0 })
         datMucChoXoa(null)
+        taiLaiHopThu.current?.()
       }
     } catch {
       if (!signal.aborted) datLoiXoa('Chưa xóa được thông báo. Vui lòng thử lại.')

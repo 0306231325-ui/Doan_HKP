@@ -5,7 +5,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -29,7 +28,6 @@ class TinDang extends Model
         'dia_diem_chi_tiet',
         'thong_tin_lien_he',
         'email_lien_he',
-        'ma_gui',
         'trang_thai',
         'trang_thai_kiem_duyet',
         'ly_do_an',
@@ -98,11 +96,6 @@ class TinDang extends Model
         return $this->hasMany(TinDang::class, 'tin_bao_mat_lien_quan_id');
     }
 
-    public function tinBaoMatDaThongBao(): BelongsToMany
-    {
-        return $this->belongsToMany(TinDang::class, 'doi_chieu_tin_dang', 'tin_nhat_id', 'tin_mat_id');
-    }
-
     public function loiKhai(): HasMany
     {
         return $this->hasMany(LoiKhaiTinDang::class, 'tin_dang_id');
@@ -111,11 +104,6 @@ class TinDang extends Model
     public function yeuCauNhanDo(): HasMany
     {
         return $this->hasMany(YeuCauNhanDo::class, 'tin_dang_id');
-    }
-
-    public function daGuiYeuCau(int|string $nguoiDungId): bool
-    {
-        return $this->yeuCauDangXuLyId($nguoiDungId) !== null;
     }
 
     public function daDuyetYeuCau(int|string $nguoiDungId): bool

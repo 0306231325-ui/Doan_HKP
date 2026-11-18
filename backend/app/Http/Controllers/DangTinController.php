@@ -57,7 +57,7 @@ class DangTinController extends Controller
             $request->merge(['cauTraLoi' => json_decode($request->input('cauTraLoi'), true)]);
         }
         $mau = $request->validate([
-            'maGui' => ['required', 'uuid'], 'loaiTin' => ['required', 'in:lost,found'],
+            'loaiTin' => ['required', 'in:lost,found'],
             'danhMucId' => ['required', 'integer', 'min:1'],
             ...$this->quyTacNoiDung(),
             'soDienThoai' => ['nullable', 'required_without:email', 'string', 'max:20', 'regex:/^\+?[0-9 ]{9,20}$/'],
@@ -81,13 +81,6 @@ class DangTinController extends Controller
             return DB::transaction(function () use ($request, $mau, $traLoi, &$tepDaLuu) {
                 $danhMuc = DanhMucDoVat::orderBy('id')->lockForUpdate()->get();
                 $cacCau = CauHoi::where('danh_muc_id', $mau['danhMucId'])->where('trang_thai', true)->orderBy('id')->lockForUpdate()->get();
-                $request->user()->newQuery()->whereKey($request->user()->id)->lockForUpdate()->firstOrFail();
-                $cu = TinDang::withTrashed()->where('ma_gui', $mau['maGui'])->first();
-                if ($cu) {
-                    abort_unless($cu->nguoi_dung_id === $request->user()->id && ! $cu->trashed(), 409, 'Lần gửi này đã được sử dụng.');
-
-                    return response()->json(['data' => ['id' => $cu->id], 'message' => 'Tin đã được đăng.']);
-                }
                 abort_unless($danhMuc->firstWhere('id', $mau['danhMucId'])?->trang_thai, 409, 'Danh mục đã ngừng sử dụng. Vui lòng chọn lại.');
                 if (! empty($mau['diaDiemId'])) {
                     abort_unless(DiaDiem::whereKey($mau['diaDiemId'])->where('trang_thai', true)->lockForUpdate()->exists(), 422, 'Địa điểm không còn được sử dụng.');
@@ -108,7 +101,7 @@ class DangTinController extends Controller
                     'loai_tin' => $mau['loaiTin'] === 'found' ? 'nhat_duoc' : 'bao_mat',
                     'slug' => Str::slug($mau['tieuDe']).'-'.Str::uuid(),
                     'thong_tin_lien_he' => $mau['soDienThoai'] ?? null,
-                    'email_lien_he' => $mau['email'] ?? null, 'ma_gui' => $mau['maGui'],
+                    'email_lien_he' => $mau['email'] ?? null,
                     'trang_thai' => 'dang_mo', 'trang_thai_kiem_duyet' => 'hien_thi',
                 ]);
                 $tin->loiKhai()->createMany($loiKhai);

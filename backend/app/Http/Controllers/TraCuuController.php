@@ -75,6 +75,9 @@ class TraCuuController extends Controller
         $laChuTin = $nguoiXem !== null && (string) $banTin->nguoi_dung_id === (string) $nguoiXem->id;
         $coTheLienHe = $banTin->loai_tin === 'bao_mat' || ($nguoiXem?->trang_thai === 'hoat_dong' && ($laChuTin || $banTin->daDuyetYeuCau($nguoiXem->id)));
         $duLieuTin = $duLieu->congKhai($banTin, true);
+        $yeuCauId = $banTin->loai_tin === 'nhat_duoc' && ! $laChuTin && $nguoiXem?->trang_thai === 'hoat_dong'
+            ? $banTin->yeuCauDangXuLyId($nguoiXem->id)
+            : null;
 
         return response()->json(['data' => [
             ...$duLieuTin,
@@ -84,8 +87,8 @@ class TraCuuController extends Controller
                 && $banTin->trang_thai_kiem_duyet === 'hien_thi'
                 && in_array($banTin->trang_thai, ['dang_mo', 'cho_ban_giao'], true),
             ...($coTheLienHe ? ['contactPhone' => $banTin->thong_tin_lien_he, 'contactEmail' => $banTin->email_lien_he] : []),
-            'hasClaim' => $duLieuTin['canClaim'] && ! $laChuTin && $nguoiXem?->trang_thai === 'hoat_dong'
-                && $banTin->daGuiYeuCau($nguoiXem->id),
+            'hasClaim' => $yeuCauId !== null,
+            'yeuCauId' => $yeuCauId,
         ]])->header('Cache-Control', 'private, no-store');
     }
 }

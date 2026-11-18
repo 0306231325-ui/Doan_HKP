@@ -24,9 +24,6 @@ class YeuCauNhanDo extends Model
         'tin_dang_id',
         'nguoi_yeu_cau_id',
         'loi_nhan',
-        'thoi_gian_mat',
-        'dia_diem_mat_id',
-        'dia_diem_mat_chi_tiet',
         'trang_thai',
         'nguoi_xu_ly_id',
         'ghi_chu_admin',
@@ -36,7 +33,6 @@ class YeuCauNhanDo extends Model
     protected function casts(): array
     {
         return [
-            'thoi_gian_mat' => 'datetime',
             'thoi_gian_xu_ly' => 'datetime',
         ];
     }
@@ -49,11 +45,6 @@ class YeuCauNhanDo extends Model
     public function nguoiYeuCau(): BelongsTo
     {
         return $this->belongsTo(NguoiDung::class, 'nguoi_yeu_cau_id');
-    }
-
-    public function diaDiemMat(): BelongsTo
-    {
-        return $this->belongsTo(DiaDiem::class, 'dia_diem_mat_id');
     }
 
     public function nguoiXuLy(): BelongsTo
