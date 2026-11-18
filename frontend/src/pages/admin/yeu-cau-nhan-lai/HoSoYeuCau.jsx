@@ -7,6 +7,7 @@ import { ngay, nut, loiApi, useDuLieu } from './duLieuYeuCau'
 
 import { NhanTrangThai } from './ThanhPhanYeuCau'
 import AnhDoiChieu from './AnhDoiChieu'
+import useThongBaoThaoTac from '../../../components/shared/hooks/useThongBaoThaoTac'
 
 export default function HoSoYeuCau({ id, lanTai, khiCapNhat }) {
   const ketQua = useDuLieu(`/admin/yeu-cau/${id}`, {}, lanTai)
@@ -23,6 +24,7 @@ function giaTri(answer) {
 }
 
 function NoiDungHoSo({ yc, khiCapNhat }) {
+  const hienThongBao = useThongBaoThaoTac()
   const cauTraLoi = yc.tra_loi || []
   const [hanhDong, datHanhDong] = useState(yc.trang_thai === 'da_xac_minh' ? 'tu_choi' : 'da_xac_minh')
   const [ghiChu, datGhiChu] = useState('')
@@ -32,7 +34,8 @@ function NoiDungHoSo({ yc, khiCapNhat }) {
   const khoaGui = useRef(false)
   const tin = yc.tin_dang
   const choDuyet = ['cho_kiem_tra', 'can_bo_sung'].includes(yc.trang_thai)
-  const coTheXuLy = tin && tin.trang_thai !== 'da_hoan_tat' && choDuyet
+  const coLichDangHoatDong = yc.cuoc_hen?.some((hen) => ['cho_xac_nhan', 'da_xac_nhan', 'da_hoan_tat'].includes(hen.trang_thai))
+  const coTheXuLy = tin && tin.trang_thai !== 'da_hoan_tat' && ((choDuyet && tin.trang_thai === 'dang_mo') || (yc.trang_thai === 'da_xac_minh' && !coLichDangHoatDong))
   const choPhepDuyet = choDuyet && tin?.trang_thai === 'dang_mo' && cauTraLoi.length > 0
   const nguoi = yc.nguoi_yeu_cau
   const ngayGui = yc.created_at ? new Date(yc.created_at) : null
@@ -47,7 +50,9 @@ function NoiDungHoSo({ yc, khiCapNhat }) {
     try {
       await prepareCsrf()
       await api.patch(`/admin/yeu-cau/${yc.id}`, { hanhDong, ghiChu, ...(hanhDong === 'da_xac_minh' ? { xacNhanDoiChieu: true } : {}) })
-      datXacNhan(false); khiCapNhat()
+      datXacNhan(false)
+      hienThongBao(hanhDong === 'da_xac_minh' ? 'Duyệt yêu cầu nhận lại đồ thành công.' : choDuyet ? 'Đã từ chối yêu cầu nhận lại đồ.' : 'Đã thu hồi duyệt yêu cầu nhận lại đồ.')
+      khiCapNhat()
     } catch (error) { datLoi(loiApi(error)) }
     finally { khoaGui.current = false; datDangLuu(false) }
   }
@@ -61,7 +66,6 @@ function NoiDungHoSo({ yc, khiCapNhat }) {
       {(yc.loi_nhan || yc.thoi_gian_mat || yc.dia_diem_mat_chi_tiet) && <div><h4 className="mb-2 flex items-center gap-2 font-bold text-[#315a43]"><FileCheck2 size={17} />Thông tin mất đồ</h4>{yc.loi_nhan && <p className="whitespace-pre-wrap break-words text-sm leading-6 text-[#607568]">{yc.loi_nhan}</p>}{yc.thoi_gian_mat && <p className="mt-2 text-xs text-[#718276]">Thời gian mất: {ngay(yc.thoi_gian_mat)}</p>}{yc.dia_diem_mat_chi_tiet && <p className="mt-2 text-xs text-[#718276]">Địa điểm: {yc.dia_diem_mat_chi_tiet}</p>}</div>}
       <div><h4 className="flex items-center gap-2 font-bold text-[#315a43]"><ShieldCheck size={17} />Đối chiếu thông tin</h4><div className="mt-3 space-y-3">{cauTraLoi.map((a, i) => <div key={a.id} className="rounded-xl border border-[#e1eae4] p-4"><p className="mb-3 text-sm font-semibold text-[#315a43]">{i + 1}. {a.loi_khai_tin_dang?.phien_ban_cau_hoi?.du_lieu?.noi_dung || 'Thông tin nhận dạng'}</p><div className="grid gap-3 text-sm sm:grid-cols-2"><div className="rounded-lg bg-[#f3f8f4] p-3"><p className="mb-1 text-xs text-[#718276]">Người giữ đồ khai báo</p><p className="whitespace-pre-wrap break-words text-[#315a43]">{giaTri(a.loi_khai_tin_dang)}</p></div><div className="rounded-lg bg-[#fafaf7] p-3"><p className="mb-1 text-xs text-[#718276]">Người xin nhận trả lời</p><p className="whitespace-pre-wrap break-words text-[#315a43]">{giaTri(a)}</p></div></div></div>)}{!cauTraLoi.length && <p className="text-sm text-[#718276]">Không có câu trả lời để đối chiếu. Không thể duyệt hồ sơ này.</p>}</div></div>
       <AnhDoiChieu yc={yc} />
-      {yc.ghi_chu_admin && yc.trang_thai !== 'da_xac_minh' && <div className="rounded-xl bg-[#f3f8f4] p-4"><h4 className="mb-1 text-sm font-bold text-[#315a43]">Phản hồi đã gửi</h4><p className="whitespace-pre-wrap text-sm text-[#607568]">{yc.ghi_chu_admin}</p></div>}
       {coTheXuLy && <div className="flex flex-wrap gap-3 border-t border-[#e8efea] pt-5">
         {choDuyet && <button type="button" aria-haspopup="dialog" disabled={dangLuu || !choPhepDuyet} title={!choPhepDuyet ? 'Đồ vật phải còn mở và hồ sơ có thông tin đối chiếu.' : undefined} onClick={() => moXacNhan('da_xac_minh')} className={`${nut} !bg-emerald-900 !text-white`}><CheckCheck size={16} />Duyệt</button>}
         <button type="button" aria-haspopup="dialog" disabled={dangLuu} onClick={() => moXacNhan('tu_choi')} className={`${nut} !border-rose-200 !text-rose-700 hover:!bg-rose-50`}>{choDuyet ? 'Từ chối' : 'Thu hồi duyệt'}</button>

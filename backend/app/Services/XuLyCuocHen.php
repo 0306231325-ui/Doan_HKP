@@ -202,7 +202,7 @@ class XuLyCuocHen
         }
 
         $hen->update(['trang_thai' => 'da_huy', 'ly_do_huy' => self::HET_HAN]);
-        $banGiao->update(['ma_het_han_luc' => null]);
+        // Keep the expired code and its expiry together for constraints and expired-code feedback.
 
         return true;
     }

@@ -13,6 +13,54 @@ use Tests\TestCase;
 
 class QuanLyYeuCauTest extends TestCase
 {
+    public function test_tracking_requests_cancels_expired_appointment_with_legacy_code_constraint(): void
+    {
+        $this->yc->update(['trang_thai' => 'da_xac_minh']);
+        $hen = $this->yc->cuocHen()->create(['trang_thai' => 'cho_xac_nhan']);
+        $hen->banGiao()->create(['ma_ban_giao_hash' => 'expired-code', 'ma_het_han_luc' => now()->subMinute()]);
+        DB::statement("CREATE TRIGGER check_handover_code BEFORE UPDATE ON ban_giao
+            WHEN (NEW.ma_ban_giao_hash IS NULL) != (NEW.ma_het_han_luc IS NULL)
+            BEGIN SELECT RAISE(ABORT, 'chk_ban_giao_ma'); END");
+
+        $this->actingAs($this->user)->getJson('/api/me/yeu-cau')->assertOk();
+
+        $this->assertSame('da_huy', $hen->fresh()->trang_thai);
+        $this->assertSame('expired-code', $hen->banGiao()->first()->ma_ban_giao_hash);
+        $this->assertTrue($hen->banGiao()->first()->ma_het_han_luc->isPast());
+        $this->getJson('/api/me/yeu-cau')->assertOk();
+        $this->getJson('/api/me/yeu-cau?loai=lich_hen')->assertOk();
+    }
+
+    public function test_default_group_list_hides_items_without_active_claims(): void
+    {
+        $this->yc->update(['trang_thai' => 'tu_choi']);
+        $this->actingAs($this->admin)->getJson('/api/admin/yeu-cau?nhom=1')->assertOk()->assertJsonPath('data.total', 0);
+        $this->actingAs($this->admin)->getJson('/api/admin/yeu-cau?nhom=1&trangThaiNhom=tu_choi')->assertOk()->assertJsonPath('data.total', 1);
+        $other = NguoiDung::create(['ho_ten' => 'Other', 'email' => 'other@test.vn', 'mat_khau' => 'password', 'vai_tro' => 'nguoi_dung', 'trang_thai' => 'hoat_dong']);
+        $claim = YeuCauNhanDo::create(['tin_dang_id' => $this->yc->tin_dang_id, 'nguoi_yeu_cau_id' => $other->id, 'trang_thai' => 'cho_kiem_tra']);
+        $this->actingAs($this->admin)->getJson('/api/admin/yeu-cau?nhom=1&trangThaiNhom=cho_duyet')->assertOk()->assertJsonPath('data.total', 1);
+        $claim->update(['trang_thai' => 'da_huy']);
+        $this->actingAs($this->admin)->getJson('/api/admin/yeu-cau?nhom=1')->assertOk()->assertJsonPath('data.total', 0);
+        $this->assertDatabaseHas('yeu_cau_nhan_do', ['id' => $this->yc->id]);
+    }
+
+    public function test_revoking_approval_is_blocked_until_appointment_expires(): void
+    {
+        $this->yc->update(['trang_thai' => 'da_xac_minh']);
+        $this->yc->tinDang->update(['trang_thai' => 'cho_ban_giao']);
+        $hen = $this->yc->cuocHen()->create(['trang_thai' => 'cho_xac_nhan']);
+        $hen->banGiao()->create(['ma_ban_giao_hash' => 'old-code', 'ma_het_han_luc' => now()->addDay()]);
+        $this->actingAs($this->admin)->patchJson('/api/admin/yeu-cau/'.$this->yc->id, ['hanhDong' => 'tu_choi', 'ghiChu' => 'Thu hồi do thông tin sai'])->assertConflict();
+        $this->assertSame('da_xac_minh', $this->yc->fresh()->trang_thai);
+        $this->assertSame('cho_xac_nhan', $hen->fresh()->trang_thai);
+        $hen->banGiao()->update(['ma_het_han_luc' => now()->subMinute()]);
+        $this->getJson('/api/admin/yeu-cau/'.$this->yc->id)->assertOk()->assertJsonPath('data.cuoc_hen.0.trang_thai', 'da_huy');
+        $this->actingAs($this->admin)->patchJson('/api/admin/yeu-cau/'.$this->yc->id, ['hanhDong' => 'tu_choi', 'ghiChu' => 'Thu hồi do thông tin sai'])->assertOk();
+        $this->assertSame('da_huy', $hen->fresh()->trang_thai);
+        $this->assertTrue($hen->banGiao()->first()->ma_het_han_luc->isPast());
+        $this->assertSame('dang_mo', $this->yc->tinDang->fresh()->trang_thai);
+    }
+
     private $admin;
 
     private $user;

@@ -67,6 +67,11 @@ class QuanLyYeuCauController extends Controller
             $q->where('tin_dang_id', $filters['tinDangId']);
         }
         if ($request->boolean('nhom')) {
+            // Keep closed claims for history, but hide items with no active claim
+            // from the default work list. The rejection filter remains available.
+            if (empty($filters['trangThaiNhom'])) {
+                $q->whereHas('tinDang.yeuCauNhanDo', fn ($yc) => $yc->whereNotIn('trang_thai', ['tu_choi', 'da_huy']));
+            }
             if (! empty($filters['trangThaiNhom'])) {
                 $q->whereHas('tinDang', function ($tin) use ($filters) {
                     $choDuyet = fn ($yc) => $yc->whereIn('trang_thai', ['cho_kiem_tra', 'can_bo_sung']);
@@ -106,6 +111,7 @@ class QuanLyYeuCauController extends Controller
 
     public function chiTiet(string $id)
     {
+        app(\App\Services\XuLyCuocHen::class)->capNhatLichHetHan([(int) $id]);
         $yc = YeuCauNhanDo::with(['tinDang.nguoiDung', 'tinDang.hinhAnh' => fn ($anh) => $anh->where('pham_vi', 'cong_khai')->orderBy('thu_tu')->orderBy('id'), 'nguoiYeuCau', 'traLoi.loiKhaiTinDang.phienBanCauHoi', 'minhChung' => fn ($anh) => $anh->orderBy('thu_tu')->orderBy('id'), 'lichSu.nguoiThucHien', 'cuocHen.banGiao'])->findOrFail($id);
         $yc->setAttribute('anh_tin_dang', $yc->tinDang?->hinhAnh->map(fn ($anh) => ['id' => $anh->id, 'url' => $anh->duongDanHienThi(), 'mo_ta' => $anh->mo_ta])->values() ?? []);
         $yc->tinDang?->unsetRelation('hinhAnh');
@@ -153,7 +159,8 @@ class QuanLyYeuCauController extends Controller
             abort_if(in_array($old, ['tu_choi', 'da_huy']) || $tin->trang_thai === 'da_hoan_tat', 409, 'Yêu cầu hoặc tin đã kết thúc.');
             abort_unless(in_array($old, ['cho_kiem_tra', 'can_bo_sung']) || ($old === 'da_xac_minh' && $action === 'tu_choi'), 409, 'Yêu cầu đã được duyệt.');
             if ($old === 'da_xac_minh') {
-                $yc->cuocHen()->whereIn('trang_thai', ['cho_xac_nhan', 'da_xac_nhan'])->update(['trang_thai' => 'da_huy', 'ly_do_huy' => trim($data['ghiChu'])]);
+                app(\App\Services\XuLyCuocHen::class)->capNhatLichHetHan([$yc->id]);
+                abort_if($yc->cuocHen()->whereIn('trang_thai', ['cho_xac_nhan', 'da_xac_nhan', 'da_hoan_tat'])->exists(), 409, 'Không thể thu hồi duyệt khi đã có lịch hẹn đang hoạt động hoặc đã bàn giao.');
                 $tin->update(['trang_thai' => 'dang_mo']);
             }
             $answers = $yc->traLoi()->get();

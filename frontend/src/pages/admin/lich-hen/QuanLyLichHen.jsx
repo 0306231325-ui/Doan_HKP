@@ -55,7 +55,7 @@ export default function QuanLyLichHen() {
       <div className="grid gap-4 sm:grid-cols-2"><Nguoi ten="Người giữ đồ" nguoi={chon.nguoi_giu} daXacNhan={chon.nguoi_giu_xac_nhan_luc} /><Nguoi ten="Người nhận đồ" nguoi={chon.nguoi_nhan} daXacNhan={chon.nguoi_nhan_xac_nhan_luc} /></div>
       {chon.ly_do_huy && <p className="whitespace-pre-wrap rounded-xl bg-rose-50 p-4 text-sm text-rose-800">Lý do hủy: {chon.ly_do_huy}</p>}
       {chon.ban_giao?.thoi_gian_ban_giao && <p className="rounded-xl bg-emerald-50 p-4 text-sm text-emerald-900">Bàn giao lúc: {ngayGio(chon.ban_giao.thoi_gian_ban_giao)}</p>}
-      <div className="flex justify-end gap-3 border-t border-[#edf2ee] pt-4">{chon.tin_dang && <Link to={`/admin/tin-dang/${chon.tin_dang.id}`} className={nut}>Xem tin đăng</Link>}<button type="button" className={nut} onClick={() => datChon(null)}>Đóng</button></div>
+      <div className="flex flex-wrap justify-end gap-3 border-t border-[#edf2ee] pt-4">{chon.tin_dang && <Link to={`/admin/tin-dang/${chon.tin_dang.id}`} className={nut}>Xem tin đăng</Link>}<button type="button" className={nut} onClick={() => datChon(null)}>Đóng</button></div>
     </div></HopThoai>}
   </div>
 }
