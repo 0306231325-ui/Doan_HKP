@@ -155,6 +155,7 @@ class DangTinTest extends TestCase
                 $t->unsignedBigInteger($cot);
                 $t->unsignedBigInteger('nguoi_thuc_hien_id');
                 $t->string('hanh_dong');
+                $t->string('trang_thai_cu')->nullable();
                 $t->string('trang_thai_moi');
                 $t->text('noi_dung')->nullable();
                 $t->timestamp('created_at')->nullable();
@@ -531,6 +532,33 @@ class DangTinTest extends TestCase
         $this->assertDatabaseCount('minh_chung_yeu_cau', 3);
         $this->assertDatabaseCount('lich_su_yeu_cau', 1);
         $this->assertCount(3, Storage::disk('minh-chung-yeu-cau')->allFiles());
+    }
+
+    public function test_nguoi_gui_tu_huy_yeu_cau_cho_duyet_va_co_the_gui_lai(): void
+    {
+        $this->postJson('/api/me/yeu-cau/1/huy')->assertUnauthorized();
+        [$tin, $url, $mau] = $this->mauNhanDo();
+        $headers = ['Accept' => 'application/json'];
+        $yeuCauId = $this->post($url, $mau, $headers)->assertCreated()->json('yeuCauId');
+        $urlHuy = '/api/me/yeu-cau/'.$yeuCauId.'/huy';
+
+        $this->assertDatabaseHas('yeu_cau_nhan_do', ['id' => $yeuCauId, 'nguoi_yeu_cau_id' => $this->nguoiNhan->id]);
+        $this->app['auth']->forgetGuards();
+        $this->actingAs($this->chuTin, 'web')->postJson($urlHuy)->assertNotFound();
+        $this->app['auth']->forgetGuards();
+        $this->actingAs($this->nguoiNhan, 'web')->postJson($urlHuy)->assertOk();
+        $this->postJson($urlHuy)->assertConflict();
+        $this->assertDatabaseHas('yeu_cau_nhan_do', ['id' => $yeuCauId, 'trang_thai' => 'da_huy']);
+        $this->assertDatabaseHas('lich_su_yeu_cau', [
+            'yeu_cau_id' => $yeuCauId, 'nguoi_thuc_hien_id' => $this->nguoiNhan->id,
+            'hanh_dong' => 'huy_yeu_cau', 'trang_thai_cu' => 'cho_kiem_tra', 'trang_thai_moi' => 'da_huy',
+        ]);
+        $this->assertDatabaseCount('lich_su_yeu_cau', 2);
+        $this->getJson('/api/tra-cuu/'.$tin)->assertOk()->assertJsonPath('data.yeuCauId', null);
+
+        $yeuCauMoi = $this->post($url, $mau, $headers)->assertCreated()->json('yeuCauId');
+        $this->assertNotSame($yeuCauId, $yeuCauMoi);
+        $this->assertDatabaseHas('yeu_cau_nhan_do', ['id' => $yeuCauMoi, 'trang_thai' => 'cho_kiem_tra']);
     }
 
     public function test_loi_luu_minh_chung_rollback_yeu_cau_va_don_anh(): void

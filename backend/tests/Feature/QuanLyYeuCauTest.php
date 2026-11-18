@@ -101,6 +101,34 @@ class QuanLyYeuCauTest extends TestCase
         $this->getJson('/api/admin/yeu-cau?nhom=1&trangThai=can_bo_sung')->assertOk()->assertJsonPath('data.total', 1)->assertJsonPath('data.data.0.so_yeu_cau', 24);
     }
 
+    public function test_danh_sach_chi_cho_nguoi_gui_huy_yeu_cau_chua_duyet(): void
+    {
+        $this->yc->tinDang->update(['loai_tin' => 'nhat_duoc']);
+        $urlDanhSach = '/api/me/yeu-cau';
+        $this->actingAs($this->user)->getJson($urlDanhSach)->assertOk()
+            ->assertJsonPath('data.data.0.coTheHuyYeuCau', true);
+
+        $this->approve();
+        $this->actingAs($this->user)->getJson($urlDanhSach)->assertOk()
+            ->assertJsonPath('data.data.0.coTheHuyYeuCau', false);
+        $this->postJson($urlDanhSach.'/'.$this->yc->id.'/huy')->assertConflict();
+
+        $nguoiKhac = NguoiDung::create([
+            'ho_ten' => 'Người nhận khác', 'email' => 'nguoi-khac@test.vn', 'mat_khau' => 'password',
+            'vai_tro' => 'nguoi_dung', 'trang_thai' => 'hoat_dong',
+        ]);
+        $tamDung = $this->yc->tinDang->yeuCauNhanDo()->create([
+            'nguoi_yeu_cau_id' => $nguoiKhac->id, 'trang_thai' => 'can_bo_sung',
+        ]);
+        $this->actingAs($nguoiKhac)->getJson($urlDanhSach)->assertOk()
+            ->assertJsonPath('data.data.0.coTheHuyYeuCau', true);
+        $this->postJson($urlDanhSach.'/'.$tamDung->id.'/huy')->assertOk();
+        $this->getJson($urlDanhSach)->assertOk()
+            ->assertJsonPath('data.data.0.trang_thai', 'da_huy')->assertJsonPath('data.data.0.coTheHuyYeuCau', false);
+        $this->assertSame('da_xac_minh', $this->yc->fresh()->trang_thai);
+        $this->assertSame('cho_ban_giao', $this->yc->tinDang->fresh()->trang_thai);
+    }
+
     public function test_review_requires_matching_answers_and_rolls_back_foreign_answers(): void
     {
         $this->actingAs($this->admin);

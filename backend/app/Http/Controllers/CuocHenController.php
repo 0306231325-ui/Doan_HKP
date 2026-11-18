@@ -207,6 +207,7 @@ class CuocHenController extends Controller
             ...$yc->only(['id', 'tin_dang_id', 'trang_thai', 'created_at', 'ghi_chu_admin']), 'laNguoiGiu' => $holder,
             'tin_dang' => $yc->tinDang?->only(['id', 'tieu_de', 'trang_thai', 'loai_tin']),
             'lienHe' => $approved ? ['hoTen' => $contact?->ho_ten, 'soDienThoai' => $laChuTin ? $contact?->so_dien_thoai : ($yc->tinDang?->thong_tin_lien_he ?: $contact?->so_dien_thoai), 'email' => $laChuTin ? $contact?->email : ($yc->tinDang?->email_lien_he ?: $contact?->email)] : null,
+            'coTheHuyYeuCau' => $yc->coTheHuy($userId),
             'coTheDatLich' => $approved && in_array($yc->tinDang?->trang_thai, XuLyCuocHen::TIN_DUOC_DAT_LICH, true)
                 && ! $yc->cuocHen->contains(fn ($h) => in_array($h->trang_thai, XuLyCuocHen::LICH_DANG_HIEU_LUC, true)),
             'cuoc_hen' => $approved ? $yc->cuocHen->sortByDesc('id')->map(function ($h) use ($yc, $userId) {

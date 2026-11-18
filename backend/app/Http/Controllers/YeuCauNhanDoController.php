@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\TinDang;
+use App\Models\YeuCauNhanDo;
 use App\Services\CauTraLoiTinDang;
 use App\Services\DuLieuTinDang;
 use Illuminate\Http\JsonResponse;
@@ -101,6 +102,31 @@ class YeuCauNhanDoController extends Controller
             }
             throw $loi;
         }
+    }
+
+    public function huy(Request $request, string $id): JsonResponse
+    {
+        $nguoiDungId = $request->user()->id;
+        $yeuCauGoc = YeuCauNhanDo::where('nguoi_yeu_cau_id', $nguoiDungId)->findOrFail($id);
+
+        DB::transaction(function () use ($yeuCauGoc, $nguoiDungId) {
+            $tin = TinDang::lockForUpdate()->find($yeuCauGoc->tin_dang_id);
+            $yeuCau = YeuCauNhanDo::lockForUpdate()->findOrFail($yeuCauGoc->id);
+            $yeuCau->setRelation('tinDang', $tin);
+            abort_unless($yeuCau->coTheHuy($nguoiDungId), 409, 'Yêu cầu này hiện không thể hủy.');
+
+            $trangThaiCu = $yeuCau->trang_thai;
+            $yeuCau->update(['trang_thai' => 'da_huy']);
+            $yeuCau->lichSu()->create([
+                'nguoi_thuc_hien_id' => $nguoiDungId,
+                'hanh_dong' => 'huy_yeu_cau',
+                'trang_thai_cu' => $trangThaiCu,
+                'trang_thai_moi' => 'da_huy',
+                'noi_dung' => 'Người gửi đã hủy yêu cầu nhận đồ.',
+            ]);
+        }, 3);
+
+        return response()->json(['message' => 'Đã hủy yêu cầu nhận đồ.'])->header('Cache-Control', 'private, no-store');
     }
 
     public function lienHe(Request $request, string $tin): JsonResponse
