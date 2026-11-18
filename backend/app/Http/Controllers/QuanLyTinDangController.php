@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\HinhAnhTinDang;
 use App\Models\TinDang;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
@@ -95,7 +96,7 @@ class QuanLyTinDangController extends Controller
             'referenceCode' => $tin->maTin(),
             'type' => $tin->loai_tin === 'bao_mat' ? 'lost' : 'found', 'typeName' => $tin->loai_tin === 'bao_mat' ? 'Mất đồ' : 'Nhặt được',
             'date' => $tin->created_at?->format('Y-m-d'), 'category' => $tin->danhMuc?->ten_danh_muc ?? 'Chưa phân loại',
-            'location' => $tin->diaDiem?->ten_dia_diem ?? 'Chưa rõ', 'imageUrl' => $tin->hinhAnh->first()?->duongDanHienThi() ?? '/do-vat-trong.svg',
+            'location' => $tin->diaDiem?->ten_dia_diem ?? 'Chưa rõ', 'imageUrl' => $tin->hinhAnh->first()?->duongDanHienThi() ?? HinhAnhTinDang::URL_ANH_MAC_DINH,
             'images' => $tin->hinhAnh->map(fn ($anh) => $anh->duongDanHienThi())->values(),
             'locationDetail' => $tin->dia_diem_chi_tiet,
             'nguoiDang' => $tin->nguoiDung?->ho_ten ?? 'Tài khoản không còn hoạt động', 'maSinhVien' => $tin->nguoiDung?->ma_so ?? '—',

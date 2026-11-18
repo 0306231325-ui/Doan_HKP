@@ -1,4 +1,4 @@
-import { ArrowLeft, CalendarDays, ChevronRight, ClipboardList, HandHeart, ImageOff, Images, Info, MapPin, UserRound, ZoomIn } from 'lucide-react'
+import { ArrowLeft, CalendarDays, ChevronRight, ClipboardList, HandHeart, Images, Info, MapPin, UserRound, ZoomIn } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import Button from '../../components/shared/Button'
@@ -14,7 +14,7 @@ import { dinhDangNgay } from '../danh-sach-do/hooks/xuLyDanhSachDo'
 export default function ChiTietTinDang() {
   const { tin, dangTai, loi, taiLai, quayLai } = useChiTietTinDang()
   const [anhDangXem, datAnhDangXem] = useState(null)
-  const anh = tin?.images?.length ? tin.images : [tin?.imageUrl].filter((url) => url && url !== '/do-vat-trong.svg')
+  const anh = tin?.images ?? []
   const cotAnh = anh.length >= 3 ? 'sm:grid-cols-2 lg:grid-cols-3' : anh.length === 2 ? 'sm:grid-cols-2' : ''
   const thoiGian = tin ? [dinhDangNgay(tin.date), tin.gioXayRa].filter(Boolean).join(' · ') : ''
   const lopTieuDeMuc = 'mb-4 flex items-center gap-2.5 text-base font-bold text-[#243c30]'
@@ -64,10 +64,7 @@ export default function ChiTietTinDang() {
                 ))}
               </div>
             ) : (
-              <div className="flex min-h-40 flex-col items-center justify-center gap-4 rounded-2xl border border-dashed border-[#cbded1] bg-[#f5faf7] px-5 text-center">
-                <ImageOff className="h-9 w-9 text-[#9bb3a2]" strokeWidth={1.5} aria-hidden="true" />
-                <p className="text-sm font-semibold text-[#526c5b]">Chưa có hình ảnh</p>
-              </div>
+              <img src={tin.imageUrl} alt="Ảnh minh họa thùng giấy" className="aspect-[4/3] max-h-96 w-full rounded-2xl bg-[#f5faf7] object-contain" onError={dungAnhThayThe} />
             )}
           </section>
           <section aria-label="Thông tin cơ bản" className="py-6">

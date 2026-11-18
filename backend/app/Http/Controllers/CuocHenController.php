@@ -132,20 +132,6 @@ class CuocHenController extends Controller
         return response()->json(['data' => $ketQua], 201)->header('Cache-Control', 'private, no-store');
     }
 
-    public function xemMaBanGiao(Request $request, string $id, string $hen): JsonResponse
-    {
-        $yeuCau = $this->thamGia($request, $id);
-        $cuocHen = $yeuCau->cuocHen()->where('nguoi_de_xuat_id', $request->user()->id)->with('banGiao')->findOrFail($hen);
-        $banGiao = $cuocHen->banGiao;
-        abort_unless($yeuCau->trang_thai === 'da_xac_minh' && $yeuCau->tinDang?->trang_thai === 'cho_ban_giao'
-            && $cuocHen->trang_thai === 'cho_xac_nhan' && $banGiao?->maConHan(), 409, 'Mã bàn giao không còn hiệu lực.');
-        $ma = $banGiao->ma_ban_giao_ma_hoa;
-        abort_if($ma === null, 409, 'Mã được tạo trước khi có chức năng xem lại.');
-
-        return response()->json(['data' => ['ma' => $ma, 'hetHanLuc' => $banGiao->ma_het_han_luc->toISOString()]])
-            ->header('Cache-Control', 'private, no-store');
-    }
-
     public function capLaiMaBanGiao(Request $request, string $id, string $hen, XuLyCuocHen $xuLy): JsonResponse
     {
         $yeuCau = $this->thamGia($request, $id);
@@ -170,7 +156,8 @@ class CuocHenController extends Controller
                     ->whereColumn('cuoc_hen.nguoi_de_xuat_id', 'tin.nguoi_dung_id'))
                 ->orWhere(fn ($q) => $q->where('tin.nguoi_dung_id', $nguoiNhapId)
                     ->whereColumn('cuoc_hen.nguoi_de_xuat_id', 'yc.nguoi_yeu_cau_id')))
-            ->whereHas('banGiao', fn ($q) => $q->whereNotNull('ma_ban_giao_hash')->where('ma_het_han_luc', '>', now()))
+            ->where('cuoc_hen.thoi_gian_hen_gap', '>', now()->subHours(CuocHen::SO_GIO_XAC_NHAN))
+            ->whereHas('banGiao', fn ($q) => $q->whereNotNull('ma_ban_giao_hash'))
             ->with('diaDiem:id,ten_dia_diem')
             ->orderBy('cuoc_hen.thoi_gian_hen_gap')->orderBy('cuoc_hen.id')
             ->get(['cuoc_hen.id', 'cuoc_hen.thoi_gian_hen_gap', 'cuoc_hen.dia_diem_id', 'tin.tieu_de']);
@@ -224,16 +211,17 @@ class CuocHenController extends Controller
                 && ! $yc->cuocHen->contains(fn ($h) => in_array($h->trang_thai, XuLyCuocHen::LICH_DANG_HIEU_LUC, true)),
             'cuoc_hen' => $approved ? $yc->cuocHen->sortByDesc('id')->map(function ($h) use ($yc, $userId) {
                 $laNguoiTao = (string) $h->nguoi_de_xuat_id === (string) $userId;
-                $coTheLayMa = $laNguoiTao && $yc->tinDang?->trang_thai === 'cho_ban_giao'
-                    && $h->trang_thai === 'cho_xac_nhan' && $h->banGiao?->maConHan();
-                $coBanMaHoa = $h->banGiao?->getRawOriginal('ma_ban_giao_ma_hoa') !== null;
+                $hanXacNhan = $h->hanXacNhan();
+                $dungMa = $h->banGiao?->ma_ban_giao_hash !== null;
+                $coTheCapLaiMa = $laNguoiTao && $yc->tinDang?->trang_thai === 'cho_ban_giao'
+                    && $h->trang_thai === 'cho_xac_nhan' && $dungMa && $hanXacNhan?->isFuture();
 
                 return [
                     ...$h->only(['id', 'trang_thai', 'thoi_gian_hen_gap', 'nguoi_giu_xac_nhan_luc', 'nguoi_nhan_xac_nhan_luc', 'ly_do_huy']),
                     'laNguoiDeXuat' => $laNguoiTao,
-                    'dungMaBanGiao' => $h->banGiao?->ma_ban_giao_hash !== null,
-                    'coTheXemMaBanGiao' => $coTheLayMa && $coBanMaHoa,
-                    'coTheCapLaiMaBanGiao' => $coTheLayMa && ! $coBanMaHoa,
+                    'dungMaBanGiao' => $dungMa,
+                    'hetHanLuc' => $hanXacNhan?->toISOString(),
+                    'coTheCapLaiMaBanGiao' => $coTheCapLaiMa,
                     'lichCu' => ! in_array((string) $h->nguoi_de_xuat_id, [(string) $yc->tinDang?->nguoi_dung_id, (string) $yc->nguoi_yeu_cau_id]),
                     'dia_diem' => $h->diaDiem?->only(['id', 'ten_dia_diem']), 'ban_giao' => $h->banGiao?->only(['thoi_gian_ban_giao']),
                 ];

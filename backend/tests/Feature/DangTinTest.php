@@ -190,6 +190,7 @@ class DangTinTest extends TestCase
             'tieuDe' => 'Nhặt được tai nghe', 'moTa' => 'Mô tả công khai', 'ngayXayRa' => '2026-01-01',
             'diaDiemChiTiet' => 'Thư viện tầng 2', 'soDienThoai' => '0901234567', 'email' => 'lienhe@gmail.com',
             'cauTraLoi' => array_map(fn ($cau) => ['id' => $cau['id'], 'phienBanId' => $cau['phienBanId'], 'giaTri' => 'SECRET-ANSWER'], $cacCau),
+            'anh' => [UploadedFile::fake()->image('tai-nghe.jpg')],
         ];
     }
 
@@ -251,6 +252,31 @@ class DangTinTest extends TestCase
         $this->assertDatabaseCount('loi_khai_tin_dang', 1);
         $mau['email'] = '';
         $this->postJson('/api/tin-dang', $mau)->assertUnprocessable()->assertJsonValidationErrors(['email', 'soDienThoai']);
+    }
+
+    public function test_tin_nhat_bat_buoc_co_anh_va_tin_mat_dung_anh_mac_dinh(): void
+    {
+        $mau = $this->mau();
+        $anh = $mau['anh'];
+        unset($mau['anh']);
+        $this->postJson('/api/tin-dang', $mau)->assertUnprocessable()->assertJsonValidationErrors('anh');
+        $this->postJson('/api/tin-dang', [...$mau, 'anh' => []])->assertUnprocessable()->assertJsonValidationErrors('anh');
+        $this->assertDatabaseCount('tin_dang', 0);
+
+        $baoMat = $this->postJson('/api/tin-dang', [...$mau, 'loaiTin' => 'lost'])->assertCreated()->json('data.id');
+        $this->assertDatabaseCount('hinh_anh_tin_dang', 0);
+        $urlAnh = '/api/tin-dang/anh/hanghoa01.jpg';
+        $this->getJson('/api/me/tin-dang')->assertOk()->assertJsonPath('data.0.imageUrl', $urlAnh);
+
+        $nhatDuoc = $this->post('/api/tin-dang', [...$mau, 'anh' => $anh], ['Accept' => 'application/json'])->assertCreated()->json('data.id');
+        $this->app['auth']->guard('web')->logout();
+        $this->getJson('/api/tra-cuu?loaiTin=lost')->assertOk()->assertJsonPath('data.0.imageUrl', $urlAnh);
+        $this->getJson('/api/tra-cuu/'.$baoMat)->assertOk()
+            ->assertJsonPath('data.imageUrl', $urlAnh)->assertJsonPath('data.images', []);
+        $this->get($urlAnh)->assertOk()->assertHeader('Content-Type', 'image/jpeg');
+        $this->getJson('/api/tra-cuu/'.$nhatDuoc)->assertOk()
+            ->assertJsonPath('data.imageUrl', '/api/tin-dang/anh/'.sprintf('TIN-%06d-1.jpg', $nhatDuoc))
+            ->assertJsonCount(1, 'data.images');
     }
 
     public function test_chan_ban_cu_thieu_thua_cau_va_danh_muc_an(): void

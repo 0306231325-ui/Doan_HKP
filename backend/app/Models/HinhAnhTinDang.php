@@ -9,6 +9,8 @@ class HinhAnhTinDang extends Model
 {
     public const TEN_ANH_MAU = 'hanghoa01.jpg';
 
+    public const URL_ANH_MAC_DINH = '/api/tin-dang/anh/'.self::TEN_ANH_MAU;
+
     public const MAU_TEN_ANH = '(?:hanghoa01\.jpg|(?:[a-zA-Z0-9]{40}|anhtin[0-9]+(?:_[a-z])?|TIN-[0-9]{6,20}(?:-[a-z0-9-]{1,100})?)\.(jpg|jpeg|png|webp))';
 
     public const UPDATED_AT = null;

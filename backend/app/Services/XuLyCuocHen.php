@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Models\BanGiao;
 use App\Models\CuocHen;
 use App\Models\DiaDiem;
 use App\Models\NguoiDung;
@@ -15,7 +14,9 @@ use Illuminate\Support\Facades\DB;
 
 class XuLyCuocHen
 {
-    private const HET_HAN = 'Mã bàn giao đã hết hạn. Vui lòng đặt lịch mới.';
+    private const HET_HAN = 'Cuộc hẹn đã hết hạn xác nhận. Vui lòng đặt lịch mới.';
+
+    private const LY_DO_HUY_HET_HAN_CU = 'Mã bàn giao đã hết hạn. Vui lòng đặt lịch mới.';
 
     public const TIN_DUOC_DAT_LICH = ['dang_mo', 'cho_ban_giao'];
 
@@ -72,7 +73,7 @@ class XuLyCuocHen
 
                     $bayGio = now();
                     $lichCu = $yeuCau->cuocHen()->whereIn('trang_thai', self::LICH_DANG_HIEU_LUC)->lockForUpdate()->first();
-                    if ($lichCu && ! $this->huyLichHetHan($lichCu, $lichCu->banGiao()->lockForUpdate()->first(), $bayGio)) {
+                    if ($lichCu && ! $this->huyLichHetHan($lichCu, $bayGio)) {
                         return [
                             'message' => 'Yêu cầu đã có cuộc hẹn.',
                             'daCoLich' => true,
@@ -93,11 +94,8 @@ class XuLyCuocHen
                         'dia_diem_id' => $diaDiem->id,
                         'trang_thai' => 'cho_xac_nhan',
                     ]);
-                    $hetHan = $gioHen->addHours(24);
                     $hen->banGiao()->create([
                         'ma_ban_giao_hash' => $this->bamMa($nguoiNhapId, $ma),
-                        'ma_ban_giao_ma_hoa' => $ma,
-                        'ma_het_han_luc' => $hetHan,
                     ]);
                     if ($tin->trang_thai === 'dang_mo') {
                         $tin->update(['trang_thai' => 'cho_ban_giao']);
@@ -105,7 +103,7 @@ class XuLyCuocHen
                     $noiDung = 'Cuộc hẹn đã được đặt. Xem giờ và địa điểm gặp trong chi tiết yêu cầu.';
                     $this->ghiNhan($yeuCau, $hen, $nguoiTaoId, 'tao_cuoc_hen', null, $noiDung, [$nguoiNhapId], 'Có cuộc hẹn bàn giao');
 
-                    return ['ma' => $ma, 'yeuCauId' => $yeuCau->id, 'cuocHenId' => $hen->id, 'gioHen' => $gioHen->toISOString(), 'hetHanLuc' => $hetHan->toISOString(), 'diaDiem' => $diaDiem->ten_dia_diem];
+                    return ['ma' => $ma, 'yeuCauId' => $yeuCau->id, 'cuocHenId' => $hen->id, 'gioHen' => $gioHen->toISOString(), 'hetHanLuc' => $hen->hanXacNhan()->toISOString(), 'diaDiem' => $diaDiem->ten_dia_diem];
                 }, 3);
             } catch (UniqueConstraintViolationException $exception) {
                 if (! str_contains($exception->errorInfo[2] ?? '', 'ma_ban_giao_hash')) {
@@ -129,21 +127,20 @@ class XuLyCuocHen
                     abort_unless(in_array($nguoiTaoId, $haiBen, true), 404);
 
                     $banGiao = $hen->banGiao()->lockForUpdate()->first();
+                    $hanXacNhan = $hen->hanXacNhan();
                     abort_unless($yeuCau->trang_thai === 'da_xac_minh' && $tin->trang_thai === 'cho_ban_giao'
-                        && $hen->trang_thai === 'cho_xac_nhan' && $banGiao?->maConHan(), 409, 'Mã bàn giao không còn hiệu lực.');
+                        && $hen->trang_thai === 'cho_xac_nhan' && $banGiao?->ma_ban_giao_hash !== null
+                        && $hanXacNhan?->isFuture(), 409, 'Cuộc hẹn không còn hiệu lực để cấp lại mã.');
 
-                    $ma = $banGiao->ma_ban_giao_ma_hoa;
-                    if ($ma === null) {
-                        $nguoiNhapId = $haiBen[0] === $nguoiTaoId ? $haiBen[1] : $haiBen[0];
-                        abort_if($nguoiNhapId === $nguoiTaoId, 409, 'Không xác định được tài khoản của người còn lại.');
-                        do {
-                            $ma = sprintf('%06d', random_int(0, 999999));
-                            $maHash = $this->bamMa($nguoiNhapId, $ma);
-                        } while (hash_equals($banGiao->ma_ban_giao_hash, $maHash));
-                        $banGiao->update(['ma_ban_giao_hash' => $maHash, 'ma_ban_giao_ma_hoa' => $ma]);
-                    }
+                    $nguoiNhapId = $haiBen[0] === $nguoiTaoId ? $haiBen[1] : $haiBen[0];
+                    abort_if($nguoiNhapId === $nguoiTaoId, 409, 'Không xác định được tài khoản của người còn lại.');
+                    do {
+                        $ma = sprintf('%06d', random_int(0, 999999));
+                        $maHash = $this->bamMa($nguoiNhapId, $ma);
+                    } while (hash_equals($banGiao->ma_ban_giao_hash, $maHash));
+                    $banGiao->update(['ma_ban_giao_hash' => $maHash]);
 
-                    return ['ma' => $ma, 'hetHanLuc' => $banGiao->ma_het_han_luc->toISOString()];
+                    return ['ma' => $ma, 'hetHanLuc' => $hanXacNhan->toISOString()];
                 }, 3);
             } catch (UniqueConstraintViolationException $exception) {
                 if (! str_contains($exception->errorInfo[2] ?? '', 'ma_ban_giao_hash')) {
@@ -176,13 +173,14 @@ class XuLyCuocHen
                 return $ketQua;
             }
             $bayGio = now();
-            if ($this->huyLichHetHan($hen, $banGiao, $bayGio) || ($hen->trang_thai === 'da_huy' && $hen->ly_do_huy === self::HET_HAN)) {
+            if ($this->huyLichHetHan($hen, $bayGio)
+                || ($hen->trang_thai === 'da_huy' && in_array($hen->ly_do_huy, [self::HET_HAN, self::LY_DO_HUY_HET_HAN_CU], true))) {
                 return ['message' => self::HET_HAN, 'hetHan' => true];
             }
             abort_unless($yeuCau->trang_thai === 'da_xac_minh' && $tin->trang_thai === 'cho_ban_giao'
-                && $hen->trang_thai === 'cho_xac_nhan' && $banGiao->ma_het_han_luc, 409, 'Cuộc hẹn không còn hiệu lực.');
+                && $hen->trang_thai === 'cho_xac_nhan' && $hen->thoi_gian_hen_gap, 409, 'Cuộc hẹn không còn hiệu lực.');
             $kiemTraGioHen = ! app()->isLocal();
-            // $kiemTraGioHen = true; // Bỏ comment dòng này để bật lại kiểm tra giờ hẹn trên local.
+            // $kiemTraGioHen = true; // kiểm tra giờ hẹn trên local.
             abort_if($kiemTraGioHen && $bayGio->lt($hen->thoi_gian_hen_gap), 409, 'Chưa đến giờ hẹn. Vui lòng nhập mã sau khi giao nhận đồ.');
 
             $hen->update([
@@ -192,11 +190,7 @@ class XuLyCuocHen
                 'nguoi_giu_xac_nhan_luc' => $bayGio,
                 'nguoi_nhan_xac_nhan_luc' => $bayGio,
             ]);
-            $banGiao->update([
-                'thoi_gian_ban_giao' => $bayGio,
-                'ma_ban_giao_ma_hoa' => null,
-                'ma_het_han_luc' => null,
-            ]);
+            $banGiao->update(['thoi_gian_ban_giao' => $bayGio]);
             $tin->update(['trang_thai' => 'da_hoan_tat']);
             $this->hoanTatTinBaoMat($tin, $yeuCau);
             YeuCauNhanDo::where('tin_dang_id', $tin->id)->whereIn('trang_thai', ['cho_kiem_tra', 'can_bo_sung'])->update(['trang_thai' => 'da_huy']);
@@ -224,24 +218,23 @@ class XuLyCuocHen
     {
         $bayGio = now();
         $lichHetHan = CuocHen::whereIn('yeu_cau_id', $yeuCauIds)->where('trang_thai', 'cho_xac_nhan')
-            ->whereHas('banGiao', fn ($q) => $q->whereNotNull('ma_ban_giao_hash')->where('ma_het_han_luc', '<=', $bayGio))
+            ->where('thoi_gian_hen_gap', '<=', $bayGio->copy()->subHours(CuocHen::SO_GIO_XAC_NHAN))
             ->pluck('id');
         foreach ($lichHetHan as $id) {
             DB::transaction(function () use ($id, $bayGio) {
                 $hen = CuocHen::lockForUpdate()->findOrFail($id);
-                $this->huyLichHetHan($hen, $hen->banGiao()->lockForUpdate()->first(), $bayGio);
+                $this->huyLichHetHan($hen, $bayGio);
             }, 3);
         }
     }
 
-    private function huyLichHetHan(CuocHen $hen, ?BanGiao $banGiao, CarbonInterface $bayGio): bool
+    private function huyLichHetHan(CuocHen $hen, CarbonInterface $bayGio): bool
     {
-        if ($hen->trang_thai !== 'cho_xac_nhan' || ! $banGiao?->ma_ban_giao_hash || ! $banGiao->ma_het_han_luc?->lte($bayGio)) {
+        if ($hen->trang_thai !== 'cho_xac_nhan' || ! $hen->hanXacNhan()?->lte($bayGio)) {
             return false;
         }
 
         $hen->update(['trang_thai' => 'da_huy', 'ly_do_huy' => self::HET_HAN]);
-        $banGiao->update(['ma_ban_giao_ma_hoa' => null, 'ma_het_han_luc' => null]);
 
         return true;
     }

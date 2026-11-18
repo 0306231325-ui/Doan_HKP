@@ -7,6 +7,7 @@ import XemTruocTin from '../../pages/tin-dang/XemTruocTin'
 
 export default function FormDangTin({ tin }) {
   const { duLieu, cauHoi, cauTraLoi, anh, loiAnh, loi, doiTruong, doiCauTraLoi, chonAnh, xoaAnh, xuLyGuiBieuMau } = tin
+  const batBuocCoAnh = duLieu.loaiTin === 'found'
 
   return (
     <>
@@ -27,7 +28,8 @@ export default function FormDangTin({ tin }) {
           </fieldset>}
 
           <fieldset className="space-y-4 border-t border-[#e4ece7] pt-6">
-            <legend className="px-1 text-lg font-bold text-[#243c30]">Hình ảnh đồ vật</legend>
+            <legend className="px-1 text-lg font-bold text-[#243c30]">Hình ảnh đồ vật {batBuocCoAnh && <span className="text-rose-600">*</span>}</legend>
+            <p className="text-xs leading-5 text-[#607568]">{batBuocCoAnh ? 'Tin nhặt được cần ít nhất 1 ảnh đồ vật.' : 'Ảnh không bắt buộc. Nếu bỏ trống, tin sẽ hiển thị ảnh thùng giấy.'}</p>
             <ChonAnh anh={anh} loiAnh={loiAnh} chonAnh={chonAnh} xoaAnh={xoaAnh} nhan="Chọn hình ảnh đồ vật" maLoi="loi-anh-dang-tin" />
           </fieldset>
 
