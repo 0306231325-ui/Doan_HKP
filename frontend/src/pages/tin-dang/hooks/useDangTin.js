@@ -75,11 +75,15 @@ export default function useDangTin(loaiBanDau, duongDanNoiDung) {
   function xuLyGuiBieuMau(suKien) {
     suKien.preventDefault()
     if (dangXuLy.current) return
-    const thongBao = dangTaiCauHoi ? 'Đang tải câu hỏi. Vui lòng đợi.' : loiTaiCauHoi || kiemTraTinDang(duLieu, danhMuc, cauHoi, cauTraLoi, ngayToiDa)
+    const nutDaBam = suKien.nativeEvent.submitter
+    const laXemTruoc = nutDaBam?.value === 'xem_truoc'
+    const loiNoiDung = dangTaiCauHoi ? 'Đang tải câu hỏi. Vui lòng đợi.' : loiTaiCauHoi || kiemTraTinDang(duLieu, danhMuc, cauHoi, cauTraLoi, ngayToiDa)
+    const loiThieuAnh = !laXemTruoc && duLieu.loaiTin === 'found' && !anh.length ? 'Tin nhặt được cần ít nhất 1 ảnh đồ vật.' : ''
+    const thongBao = loiNoiDung || loiThieuAnh
     datLoi(thongBao)
     if (thongBao) return
-    nutGui.current = suKien.nativeEvent.submitter
-    datBuoc(suKien.nativeEvent.submitter?.value === 'xem_truoc' ? 'xem_truoc' : 'xac_nhan')
+    nutGui.current = nutDaBam
+    datBuoc(laXemTruoc ? 'xem_truoc' : 'xac_nhan')
   }
 
   function dongXemTruoc() {

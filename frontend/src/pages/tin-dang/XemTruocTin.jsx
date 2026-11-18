@@ -10,12 +10,14 @@ export default function XemTruocTin({ duLieu, danhMuc, anh, dongXemTruoc, moXacN
       <article className="space-y-5 px-5 py-6 sm:px-6">
         <h3 className="break-words text-xl font-bold text-[#243c30]">{duLieu.tieuDe}</h3>
         <span className={`inline-flex rounded-full px-3 py-1 text-xs font-bold ${duLieu.loaiTin === 'found' ? 'bg-emerald-50 text-emerald-800' : 'bg-rose-50 text-rose-700'}`}>{duLieu.loaiTin === 'found' ? 'Nhặt được' : 'Báo mất'}</span>
-        {anh.length > 0 && (
+        {anh.length > 0 ? (
           <div className={`grid gap-3 ${cotAnh}`}>
             {anh.map((muc) => (
               <img key={muc.id} src={muc.url} alt={muc.tep.name} className="aspect-[4/3] max-h-64 w-full rounded-xl bg-[#f5faf7] object-contain" />
             ))}
           </div>
+        ) : duLieu.loaiTin === 'lost' && (
+          <img src="/api/tin-dang/anh/hanghoa01.jpg" alt="Ảnh minh họa thùng giấy" className="aspect-[4/3] max-h-64 w-full rounded-xl bg-[#f5faf7] object-contain" />
         )}
         <dl className="grid grid-cols-1 gap-3 text-sm text-[#607568]">
           <div><dt className="font-semibold text-[#243c30]">Danh mục</dt><dd>{tenDanhMuc}</dd></div>

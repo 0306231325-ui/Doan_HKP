@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -9,6 +10,8 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class CuocHen extends Model
 {
+    public const SO_GIO_XAC_NHAN = 8;
+
     protected $table = 'cuoc_hen';
 
     protected $fillable = [
@@ -33,6 +36,11 @@ class CuocHen extends Model
             'nguoi_giu_xac_nhan_luc' => 'datetime',
             'nguoi_nhan_xac_nhan_luc' => 'datetime',
         ];
+    }
+
+    public function hanXacNhan(): ?CarbonInterface
+    {
+        return $this->thoi_gian_hen_gap?->copy()->addHours(self::SO_GIO_XAC_NHAN);
     }
 
     public function yeuCauNhanDo(): BelongsTo

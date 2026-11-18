@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\HinhAnhTinDang;
 use App\Models\ThongBao;
 use App\Models\TinDang;
 use App\Models\YeuCauNhanDo;
@@ -93,7 +94,7 @@ class QuanLyYeuCauController extends Controller
                 ->with(['nguoiYeuCau', 'cuocHen' => fn ($h) => $h->whereIn('trang_thai', ['cho_xac_nhan', 'da_xac_nhan', 'da_hoan_tat'])->latest('id')])->get()->keyBy('tin_dang_id');
             $rows->through(function ($nhom) use ($daDuyet) {
                 $yc = $daDuyet->get($nhom->tin_dang_id);
-                $nhom->setAttribute('anh_bia', $nhom->tinDang?->hinhAnh->first()?->duongDanHienThi() ?? '/do-vat-trong.svg');
+                $nhom->setAttribute('anh_bia', $nhom->tinDang?->hinhAnh->first()?->duongDanHienThi() ?? HinhAnhTinDang::URL_ANH_MAC_DINH);
                 $nhom->setAttribute('nguoi_nhan', $yc?->nguoiYeuCau?->ho_ten);
                 $nhom->setAttribute('lich_hen', $yc?->cuocHen->first()?->only(['id', 'thoi_gian_hen_gap', 'trang_thai']));
                 $nhom->tinDang?->unsetRelation('hinhAnh');

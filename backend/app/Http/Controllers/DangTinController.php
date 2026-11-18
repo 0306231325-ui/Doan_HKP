@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use LogicException;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Throwable;
 
@@ -67,12 +68,13 @@ class DangTinController extends Controller
             'cauTraLoi.*.id' => ['required', 'integer', 'distinct', 'min:1'],
             'cauTraLoi.*.phienBanId' => ['required', 'integer', 'min:1'],
             'cauTraLoi.*.giaTri' => ['present', 'nullable'],
-            'anh' => ['nullable', 'array', 'max:3'],
+            'anh' => ['required_if:loaiTin,found', 'nullable', 'array', 'max:3'],
             'anh.*' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120', 'dimensions:max_width=8192,max_height=8192'],
         ], [
             'required' => 'Vui lòng điền :attribute.', 'required_without' => 'Nhập ít nhất số điện thoại hoặc email liên hệ.',
             'ngayXayRa.before_or_equal' => 'Ngày xảy ra không được ở tương lai.',
             'soDienThoai.regex' => 'Số điện thoại không hợp lệ.', 'email.email' => 'Email không đúng định dạng.',
+            'anh.required_if' => 'Tin nhặt được cần ít nhất 1 ảnh đồ vật.',
             'anh.max' => 'Mỗi tin tối đa 3 ảnh.', 'anh.*.max' => 'Mỗi ảnh tối đa 5 MB.',
             'anh.*.image' => 'Tệp tải lên phải là hình ảnh.', 'anh.*.mimes' => 'Chỉ nhận ảnh JPG, PNG hoặc WebP.',
         ], ['tieuDe' => 'tiêu đề', 'diaDiemChiTiet' => 'vị trí cụ thể', 'ngayXayRa' => 'ngày xảy ra', 'danhMucId' => 'danh mục']);
@@ -208,8 +210,15 @@ class DangTinController extends Controller
         ];
     }
 
-    public function anh(Request $request, string $tenAnh): StreamedResponse
+    public function anh(Request $request, string $tenAnh): BinaryFileResponse|StreamedResponse
     {
+        if ($tenAnh === HinhAnhTinDang::TEN_ANH_MAU) {
+            $tep = public_path('tin/'.HinhAnhTinDang::TEN_ANH_MAU);
+            abort_unless(is_file($tep), 404);
+
+            return response()->file($tep, ['Content-Type' => 'image/jpeg', 'X-Content-Type-Options' => 'nosniff']);
+        }
+
         $anh = HinhAnhTinDang::whereIn('duong_dan', [
             '/api/tin-dang/anh/'.$tenAnh,
             '/tin/tin-mat/'.$tenAnh,
@@ -219,9 +228,7 @@ class DangTinController extends Controller
             ->whereHas('tinDang', fn ($q) => $q->xemDuoc($request->user('web')))
             ->with('tinDang:id,loai_tin')
             ->firstOrFail();
-        $duongDan = $tenAnh === HinhAnhTinDang::TEN_ANH_MAU
-            ? 'tin/'.$tenAnh
-            : $anh->tinDang->thuMucAnh().'/'.$tenAnh;
+        $duongDan = $anh->tinDang->thuMucAnh().'/'.$tenAnh;
         foreach ([
             ['anh-tin-dang', $duongDan],
             ['anh-tin-dang', 'tin/anh-cu/'.$tenAnh],

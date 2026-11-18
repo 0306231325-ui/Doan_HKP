@@ -155,6 +155,7 @@ class DangTinTest extends TestCase
                 $t->unsignedBigInteger($cot);
                 $t->unsignedBigInteger('nguoi_thuc_hien_id');
                 $t->string('hanh_dong');
+                $t->string('trang_thai_cu')->nullable();
                 $t->string('trang_thai_moi');
                 $t->text('noi_dung')->nullable();
                 $t->timestamp('created_at')->nullable();
@@ -190,6 +191,7 @@ class DangTinTest extends TestCase
             'tieuDe' => 'Nhặt được tai nghe', 'moTa' => 'Mô tả công khai', 'ngayXayRa' => '2026-01-01',
             'diaDiemChiTiet' => 'Thư viện tầng 2', 'soDienThoai' => '0901234567', 'email' => 'lienhe@gmail.com',
             'cauTraLoi' => array_map(fn ($cau) => ['id' => $cau['id'], 'phienBanId' => $cau['phienBanId'], 'giaTri' => 'SECRET-ANSWER'], $cacCau),
+            'anh' => [UploadedFile::fake()->image('tai-nghe.jpg')],
         ];
     }
 
@@ -251,6 +253,31 @@ class DangTinTest extends TestCase
         $this->assertDatabaseCount('loi_khai_tin_dang', 1);
         $mau['email'] = '';
         $this->postJson('/api/tin-dang', $mau)->assertUnprocessable()->assertJsonValidationErrors(['email', 'soDienThoai']);
+    }
+
+    public function test_tin_nhat_bat_buoc_co_anh_va_tin_mat_dung_anh_mac_dinh(): void
+    {
+        $mau = $this->mau();
+        $anh = $mau['anh'];
+        unset($mau['anh']);
+        $this->postJson('/api/tin-dang', $mau)->assertUnprocessable()->assertJsonValidationErrors('anh');
+        $this->postJson('/api/tin-dang', [...$mau, 'anh' => []])->assertUnprocessable()->assertJsonValidationErrors('anh');
+        $this->assertDatabaseCount('tin_dang', 0);
+
+        $baoMat = $this->postJson('/api/tin-dang', [...$mau, 'loaiTin' => 'lost'])->assertCreated()->json('data.id');
+        $this->assertDatabaseCount('hinh_anh_tin_dang', 0);
+        $urlAnh = '/api/tin-dang/anh/hanghoa01.jpg';
+        $this->getJson('/api/me/tin-dang')->assertOk()->assertJsonPath('data.0.imageUrl', $urlAnh);
+
+        $nhatDuoc = $this->post('/api/tin-dang', [...$mau, 'anh' => $anh], ['Accept' => 'application/json'])->assertCreated()->json('data.id');
+        $this->app['auth']->guard('web')->logout();
+        $this->getJson('/api/tra-cuu?loaiTin=lost')->assertOk()->assertJsonPath('data.0.imageUrl', $urlAnh);
+        $this->getJson('/api/tra-cuu/'.$baoMat)->assertOk()
+            ->assertJsonPath('data.imageUrl', $urlAnh)->assertJsonPath('data.images', []);
+        $this->get($urlAnh)->assertOk()->assertHeader('Content-Type', 'image/jpeg');
+        $this->getJson('/api/tra-cuu/'.$nhatDuoc)->assertOk()
+            ->assertJsonPath('data.imageUrl', '/api/tin-dang/anh/'.sprintf('TIN-%06d-1.jpg', $nhatDuoc))
+            ->assertJsonCount(1, 'data.images');
     }
 
     public function test_chan_ban_cu_thieu_thua_cau_va_danh_muc_an(): void
@@ -505,6 +532,33 @@ class DangTinTest extends TestCase
         $this->assertDatabaseCount('minh_chung_yeu_cau', 3);
         $this->assertDatabaseCount('lich_su_yeu_cau', 1);
         $this->assertCount(3, Storage::disk('minh-chung-yeu-cau')->allFiles());
+    }
+
+    public function test_nguoi_gui_tu_huy_yeu_cau_cho_duyet_va_co_the_gui_lai(): void
+    {
+        $this->postJson('/api/me/yeu-cau/1/huy')->assertUnauthorized();
+        [$tin, $url, $mau] = $this->mauNhanDo();
+        $headers = ['Accept' => 'application/json'];
+        $yeuCauId = $this->post($url, $mau, $headers)->assertCreated()->json('yeuCauId');
+        $urlHuy = '/api/me/yeu-cau/'.$yeuCauId.'/huy';
+
+        $this->assertDatabaseHas('yeu_cau_nhan_do', ['id' => $yeuCauId, 'nguoi_yeu_cau_id' => $this->nguoiNhan->id]);
+        $this->app['auth']->forgetGuards();
+        $this->actingAs($this->chuTin, 'web')->postJson($urlHuy)->assertNotFound();
+        $this->app['auth']->forgetGuards();
+        $this->actingAs($this->nguoiNhan, 'web')->postJson($urlHuy)->assertOk();
+        $this->postJson($urlHuy)->assertConflict();
+        $this->assertDatabaseHas('yeu_cau_nhan_do', ['id' => $yeuCauId, 'trang_thai' => 'da_huy']);
+        $this->assertDatabaseHas('lich_su_yeu_cau', [
+            'yeu_cau_id' => $yeuCauId, 'nguoi_thuc_hien_id' => $this->nguoiNhan->id,
+            'hanh_dong' => 'huy_yeu_cau', 'trang_thai_cu' => 'cho_kiem_tra', 'trang_thai_moi' => 'da_huy',
+        ]);
+        $this->assertDatabaseCount('lich_su_yeu_cau', 2);
+        $this->getJson('/api/tra-cuu/'.$tin)->assertOk()->assertJsonPath('data.yeuCauId', null);
+
+        $yeuCauMoi = $this->post($url, $mau, $headers)->assertCreated()->json('yeuCauId');
+        $this->assertNotSame($yeuCauId, $yeuCauMoi);
+        $this->assertDatabaseHas('yeu_cau_nhan_do', ['id' => $yeuCauMoi, 'trang_thai' => 'cho_kiem_tra']);
     }
 
     public function test_loi_luu_minh_chung_rollback_yeu_cau_va_don_anh(): void

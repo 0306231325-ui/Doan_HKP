@@ -37,6 +37,14 @@ class YeuCauNhanDo extends Model
         ];
     }
 
+    public function coTheHuy(int|string $nguoiDungId): bool
+    {
+        return (string) $this->nguoi_yeu_cau_id === (string) $nguoiDungId
+            && in_array($this->trang_thai, ['cho_kiem_tra', 'can_bo_sung'], true)
+            && $this->tinDang?->loai_tin === 'nhat_duoc'
+            && in_array($this->tinDang->trang_thai, ['dang_mo', 'cho_ban_giao'], true);
+    }
+
     public function tinDang(): BelongsTo
     {
         return $this->belongsTo(TinDang::class, 'tin_dang_id');

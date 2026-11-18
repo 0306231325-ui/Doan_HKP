@@ -21,7 +21,7 @@ import { daXacNhanBanGiao } from './xuLyTienDoYeuCau'
 
 const CAC_BUOC_DIEN_LICH = [
   ['Điền thông tin lịch gặp.', 'Ở Bước 2 / 2, chọn ngày, giờ Việt Nam và địa điểm đã thống nhất. Bấm Xem lại cuộc hẹn để kiểm tra thông tin, rồi bấm Xác nhận tạo lịch.'],
-  ['Xem mã bàn giao.', 'Bạn có thể xem lại mã 6 số trong mục Theo dõi yêu cầu → Lịch hẹn. Sau khi giao nhận đồ, đưa mã cho người còn lại để xác nhận.'],
+  ['Sao chép mã bàn giao.', 'Sao chép mã 6 số ngay khi tạo lịch để đưa cho người còn lại sau khi giao nhận đồ. Nếu chưa lưu mã, vào Theo dõi yêu cầu → Lịch hẹn để cấp mã mới.'],
 ]
 
 const HUONG_DAN_TAO_LICH = {
@@ -243,7 +243,8 @@ function ThongTinLichHen({ yeuCau, tinId, tin, dangTaiNguon, loiNguon, taiLaiNgu
         : daHuy ? <p role="status" className="rounded-xl bg-amber-50 p-4 text-sm text-amber-800">{hen.ly_do_huy || 'Cuộc hẹn đã bị hủy.'}</p>
           : <>
             <MaBanGiao ma={lichDaTao.ma} />
-            <p className="text-sm leading-6 text-[#526c5b]">Bạn có thể xem lại mã trong chi tiết cuộc hẹn. Đưa mã cho người còn lại sau khi giao nhận đồ. Mã dùng từ giờ hẹn đến {dinhDangGioHen(lichDaTao.hetHanLuc)}.</p>
+            <p className="text-sm leading-6 text-[#526c5b]">Hạn xác nhận cuộc hẹn lúc {dinhDangGioHen(lichDaTao.hetHanLuc)}.</p>
+            <p className="text-sm leading-6 text-[#526c5b]">Sao chép mã trước khi rời trang. Nếu chưa lưu mã, hãy cấp mã mới trong chi tiết cuộc hẹn.</p>
           </>}
       <Link to={`/chi-tiet-yeu-cau?id=${lichDaTao.yeuCauId}&tab=lich-hen`} className="font-semibold text-emerald-800 hover:underline">Xem chi tiết cuộc hẹn</Link>
     </section>
