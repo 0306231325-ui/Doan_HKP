@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { chonAnhDangTin, kiemTraTinDang, layLoiGui, taoDuLieuGui } from './xuLyDangTin.js'
 
 const danhMuc = [{ id: '2' }]
-const cauHoi = [{ id: '8', phienBanId: '12', danhMucId: '2', dangHoatDong: true, nhanDangTin: 'Dấu hiệu?', kieuNhap: 'van_ban' }]
+const cauHoi = [{ id: '8', phienBanId: '12', danhMucId: '2', dangHoatDong: true, nhanDangTin: 'Dấu hiệu?' }]
 const mau = { danhMucId: '2', loaiTin: 'found', tieuDe: 'Tai nghe', ngayXayRa: '2026-11-01', diaDiemId: '', diaDiemChiTiet: 'Thư viện', soDienThoai: '', email: 'nguoi@gmail.com' }
 
 test('Che lỗi máy chủ và giữ thông báo nhập liệu', () => {

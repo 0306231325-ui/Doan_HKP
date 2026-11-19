@@ -8,11 +8,10 @@ function cauThu(ghiDe = {}) {
   return { ...taoBieuMau('1'), id: '1', phienBan: 1, nhanDangTin: 'Đặc điểm đồ vật?', ...ghiDe }
 }
 
-test('Form có kiểu Văn bản mặc định, không có cấu hình loại tin hoặc lựa chọn', () => {
+test('Form không còn cấu hình kiểu trả lời, loại tin hoặc lựa chọn', () => {
   const mau = taoBieuMau('1')
-  for (const ten of ['luaChon', 'nhanNhanLai', 'apDung']) assert.equal(Object.hasOwn(mau, ten), false)
+  for (const ten of ['kieuNhap', 'luaChon', 'nhanNhanLai', 'apDung']) assert.equal(Object.hasOwn(mau, ten), false)
   assert.equal(mau.danhMucId, '1')
-  assert.equal(mau.kieuNhap, 'van_ban')
   assert.deepEqual(kiemTraCauHoi({ ...mau, nhanDangTin: 'Đồ vật?' }, [], danhMuc), {})
 })
 
@@ -27,8 +26,6 @@ test('Chặn câu trùng không dấu trong cùng danh mục kể cả câu ẩn
 
 test('Kiểm tra nội dung, thứ tự và danh mục hoạt động', () => {
   assert.ok(kiemTraCauHoi(cauThu({ nhanDangTin: ' ' }), [], danhMuc).nhanDangTin)
-  assert.ok(kiemTraCauHoi(cauThu({ kieuNhap: 'chon_mot' }), [], danhMuc).kieuNhap)
-  assert.deepEqual(kiemTraCauHoi(cauThu({ kieuNhap: 'so' }), [], danhMuc), {})
   assert.ok(kiemTraCauHoi(cauThu({ thuTu: 0 }), [], danhMuc).thuTu)
   assert.ok(kiemTraCauHoi(cauThu({ danhMucId: '999' }), [], danhMuc).danhMucId)
   assert.ok(kiemTraCauHoi(cauThu({ danhMucId: '2' }), [], danhMuc).danhMucId)

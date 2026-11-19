@@ -14,17 +14,8 @@ class TraLoiYeuCau extends Model
         'tin_dang_id',
         'loi_khai_tin_dang_id',
         'gia_tri_text',
-        'gia_tri_so',
-        'gia_tri_lua_chon',
         'ket_qua_doi_chieu',
     ];
-
-    protected function casts(): array
-    {
-        return [
-            'gia_tri_so' => 'decimal:4',
-        ];
-    }
 
     public function yeuCauNhanDo(): BelongsTo
     {

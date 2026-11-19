@@ -83,11 +83,8 @@ class ModelsTest extends TestCase
         $ban = $ban->newFromBuilder($ban->getAttributes());
         $this->assertSame(3, $ban->phien_ban);
         $this->assertSame(['noi_dung' => 'Đặc điểm?'], $ban->du_lieu);
-        $this->assertSame('12345678901234.5678', (new LoiKhaiTinDang([
-            'gia_tri_so' => '12345678901234.5678',
-        ]))->gia_tri_so);
-        $this->assertSame('12.3400', (new TraLoiYeuCau(['gia_tri_so' => '12.34']))->gia_tri_so);
-        $this->assertNull((new LoiKhaiTinDang)->gia_tri_so);
+        $this->assertSame('0012.3400', (new LoiKhaiTinDang(['gia_tri_text' => '0012.3400']))->gia_tri_text);
+        $this->assertSame('Màu đen', (new TraLoiYeuCau(['gia_tri_text' => 'Màu đen']))->gia_tri_text);
         $this->assertInstanceOf(CarbonInterface::class, (new CuocHen([
             'thoi_gian_hen_gap' => '2026-10-23 15:00:00',
         ]))->thoi_gian_hen_gap);

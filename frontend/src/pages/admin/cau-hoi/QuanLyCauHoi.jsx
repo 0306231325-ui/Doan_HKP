@@ -23,8 +23,8 @@ export default function QuanLyCauHoi() {
           tieuDe="Hướng dẫn thiết lập câu hỏi nhận diện"
           cacBuoc={[
             ['Kiểm tra số câu hỏi.', `Mỗi danh mục có tối đa ${cauHoi.gioiHanMoiDanhMuc} câu, tính cả câu đã ẩn. Khi đủ, bạn vẫn có thể sửa câu đã có.`],
-            ['Hỏi chi tiết có thể đối chiếu.', 'Ví dụ “Vết trầy nằm ở vị trí nào và có hình dạng gì?” Chọn kiểu Số khi câu trả lời là một con số, như số chìa trong một chùm.'],
-            ['Xem thử form.', 'Kiểm tra nội dung và kiểu ô trả lời mà người dùng sẽ thấy.'],
+            ['Hỏi chi tiết có thể đối chiếu.', 'Ví dụ “Vết trầy nằm ở vị trí nào và có hình dạng gì?” Người dùng nhập câu trả lời bằng văn bản và có thể ghi kèm con số nếu cần.'],
+            ['Xem thử form.', 'Kiểm tra nội dung câu hỏi và ô trả lời mà người dùng sẽ thấy.'],
           ]}
         />
       )}

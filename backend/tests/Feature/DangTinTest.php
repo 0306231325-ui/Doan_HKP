@@ -59,7 +59,6 @@ class DangTinTest extends TestCase
             $t->id();
             $t->foreignId('danh_muc_id')->nullable()->constrained('danh_muc_do_vat');
             $t->string('noi_dung');
-            $t->string('kieu_nhap')->default('van_ban');
             $t->integer('thu_tu')->default(1);
             $t->boolean('trang_thai')->default(true);
             $t->timestamps();
@@ -96,8 +95,6 @@ class DangTinTest extends TestCase
             $t->foreignId('cau_hoi_id')->constrained('cau_hoi');
             $t->foreignId('cau_hoi_phien_ban_id')->constrained('lich_su_cau_hoi');
             $t->text('gia_tri_text')->nullable();
-            $t->decimal('gia_tri_so', 18, 4)->nullable();
-            $t->string('gia_tri_lua_chon')->nullable();
             $t->timestamps();
         });
         Schema::create('hinh_anh_tin_dang', function (Blueprint $t) {
@@ -128,7 +125,6 @@ class DangTinTest extends TestCase
             $t->foreignId('yeu_cau_id')->constrained('yeu_cau_nhan_do');
             $t->foreignId('loi_khai_tin_dang_id')->constrained('loi_khai_tin_dang');
             $t->text('gia_tri_text')->nullable();
-            $t->decimal('gia_tri_so', 18, 4)->nullable();
             $t->timestamps();
         });
         Schema::create('minh_chung_yeu_cau', function (Blueprint $t) {
@@ -174,9 +170,9 @@ class DangTinTest extends TestCase
         return NguoiDung::create(['ho_ten' => 'Người thử', 'email' => Str::uuid().'@example.test', 'mat_khau' => 'khong-doi-mat-khau', 'vai_tro' => $vaiTro, 'trang_thai' => 'hoat_dong']);
     }
 
-    private function cauHoi(?int $id, string $nhan, string $kieu = 'van_ban'): CauHoi
+    private function cauHoi(?int $id, string $nhan): CauHoi
     {
-        $cau = CauHoi::create(['danh_muc_id' => $id, 'noi_dung' => $nhan, 'kieu_nhap' => $kieu, 'thu_tu' => 1, 'trang_thai' => true]);
+        $cau = CauHoi::create(['danh_muc_id' => $id, 'noi_dung' => $nhan, 'thu_tu' => 1, 'trang_thai' => true]);
         $cau->lichSu()->create(['phien_ban' => 1, 'du_lieu' => $cau->attributesToArray()]);
 
         return $cau;
@@ -298,27 +294,25 @@ class DangTinTest extends TestCase
         $this->assertDatabaseCount('tin_dang', 1);
     }
 
-    public function test_so_giu_chinh_xac_chan_tran_va_lam_tron(): void
+    public function test_cau_tra_loi_chi_luu_van_ban_giu_nguyen_chu_va_so(): void
     {
         $dichVu = new CauTraLoiTinDang;
-        $cau = ['danhMucId' => '1', 'nhanDangTin' => 'Số?', 'kieuNhap' => 'so'];
-        foreach (['12345678901234.5678' => '12345678901234.5678', '1e3' => '1000', '-.0001' => '-0.0001', '0' => '0'] as $vao => $ra) {
-            $this->assertSame($ra, $dichVu->giaTri($cau, $vao, 'dapAn')['gia_tri_so']);
+        $cau = ['nhanDangTin' => 'Đặc điểm?'];
+        foreach (['000123', '12.3400', '-5', '1e3', 'Màu đen, có 2 chìa khóa'] as $vao) {
+            $this->assertSame(['gia_tri_text' => $vao], $dichVu->giaTri($cau, ' '.$vao.' ', 'dapAn'));
         }
-        foreach (['100000000000000', '0.00001', '1e999', 'NaN', '0x10', [], ''] as $vao) {
+        foreach ([[], '', '   ', str_repeat('a', 2001)] as $vao) {
             try {
                 $dichVu->giaTri($cau, $vao, 'dapAn');
-                $this->fail('Phải từ chối số sai.');
+                $this->fail('Phải từ chối câu trả lời trống hoặc không hợp lệ.');
             } catch (ValidationException $e) {
                 $this->assertArrayHasKey('dapAn', $e->errors());
             }
         }
-        $this->rieng->update(['kieu_nhap' => 'so']);
-        $this->rieng->lichSu()->create(['phien_ban' => 2, 'du_lieu' => $this->rieng->attributesToArray()]);
         $mau = $this->mau();
-        $mau['cauTraLoi'][0]['giaTri'] = '0';
+        $mau['cauTraLoi'][0]['giaTri'] = '000123';
         $this->postJson('/api/tin-dang', $mau)->assertCreated();
-        $this->assertDatabaseHas('loi_khai_tin_dang', ['cau_hoi_id' => $this->rieng->id, 'gia_tri_so' => 0, 'gia_tri_text' => null]);
+        $this->assertDatabaseHas('loi_khai_tin_dang', ['cau_hoi_id' => $this->rieng->id, 'gia_tri_text' => '000123']);
     }
 
     public function test_nhieu_anh_luu_that_va_chi_chu_tin_duoc_doc_anh_tin_da_an(): void
@@ -430,7 +424,7 @@ class DangTinTest extends TestCase
             'cau_hoi_id' => $cu->id, 'cau_hoi_phien_ban_id' => $cu->lichSu()->firstOrFail()->id, 'gia_tri_text' => 'Đáp án cũ',
         ]);
         $this->getJson('/api/tra-cuu/'.$id)->assertOk()->assertJsonMissingPath('data.publicAnswers')->assertDontSee('Đáp án cũ');
-        $this->rieng->update(['noi_dung' => 'Đổi câu sau khi đăng?', 'kieu_nhap' => 'so', 'danh_muc_id' => null, 'trang_thai' => false]);
+        $this->rieng->update(['noi_dung' => 'Đổi câu sau khi đăng?', 'danh_muc_id' => null, 'trang_thai' => false]);
         $this->rieng->lichSu()->create(['phien_ban' => 3, 'du_lieu' => $this->rieng->attributesToArray()]);
         $this->cauHoi($this->danhMuc->id, 'Câu thêm sau?');
         $this->app['auth']->forgetGuards();
@@ -438,7 +432,7 @@ class DangTinTest extends TestCase
         $this->getJson('/api/tin-dang/'.$id.'/lien-he')->assertForbidden();
         $form = $this->getJson('/api/tin-dang/'.$id.'/nhan-lai')->assertOk()->assertJsonCount(2, 'data')
             ->assertJsonPath('data.0.nhanDangTin', 'Hãng nào?')
-            ->assertJsonPath('data.1.nhanDangTin', 'Dấu hiệu bí mật?')->assertJsonPath('data.1.kieuNhap', 'van_ban');
+            ->assertJsonPath('data.1.nhanDangTin', 'Dấu hiệu bí mật?')->assertJsonMissingPath('data.1.kieuNhap');
         $this->assertStringNotContainsString('SECRET-ANSWER', $form->getContent());
         $mau = ['xacNhan' => true, 'cauTraLoi' => [
             ['id' => $form->json('data.0.id'), 'giaTri' => 'Sony'],

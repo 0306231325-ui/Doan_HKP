@@ -158,26 +158,11 @@ class XuLyCuocHen
             ]);
             $banGiao->update(['thoi_gian_ban_giao' => $bayGio]);
             $tin->update(['trang_thai' => 'da_hoan_tat']);
-            $this->hoanTatTinBaoMat($tin, $yeuCau);
             YeuCauNhanDo::where('tin_dang_id', $tin->id)->whereIn('trang_thai', ['cho_kiem_tra', 'can_bo_sung'])->update(['trang_thai' => 'da_huy']);
             $this->ghiNhan($yeuCau, $hen, $nguoiNhapId, 'xac_nhan_ban_giao', 'cho_xac_nhan', $ketQua['message'], $haiBen, 'Bàn giao đồ thành công');
 
             return $ketQua;
         }, 3);
-    }
-
-    private function hoanTatTinBaoMat(TinDang $tin, YeuCauNhanDo $yeuCau): void
-    {
-        if ($tin->tin_bao_mat_lien_quan_id === null) {
-            return;
-        }
-
-        $tinBaoMat = $tin->tinBaoMatLienQuan()->where('loai_tin', 'bao_mat')
-            ->where('nguoi_dung_id', $yeuCau->nguoi_yeu_cau_id)->lockForUpdate()->first();
-
-        if ($tinBaoMat?->trang_thai === 'dang_mo') {
-            $tinBaoMat->update(['trang_thai' => 'da_hoan_tat']);
-        }
     }
 
     public function capNhatLichHetHan(array $yeuCauIds): void

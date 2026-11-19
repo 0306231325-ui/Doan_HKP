@@ -53,7 +53,7 @@ class CauHoiController extends Controller
                     'danhMucId' => 'Mỗi danh mục chỉ được có tối đa '.CauHoi::GIOI_HAN_MOI_DANH_MUC.' câu hỏi, kể cả câu đã ẩn.',
                 ]);
             }
-            $this->kiemTraTrung($mau, $danhSach->reject(fn ($cau) => $cau->id === $cu?->id)->map(fn ($cau) => ['nhanDangTin' => $cau->noi_dung, 'kieuNhap' => $cau->kieu_nhap, 'danhMucId' => $cau->danh_muc_id]));
+            $this->kiemTraTrung($mau, $danhSach->reject(fn ($cau) => $cau->id === $cu?->id)->map(fn ($cau) => ['nhanDangTin' => $cau->noi_dung, 'danhMucId' => $cau->danh_muc_id]));
             $cot = $this->cacCot($mau);
             if ($cu && collect($cot)->every(fn ($giaTri, $tenCot) => $giaTri == $cu->$tenCot)) {
                 return response()->json(['data' => $this->duLieu($cu), 'daThayDoi' => false]);
@@ -136,7 +136,6 @@ class CauHoiController extends Controller
         $quyTac = [
             'danhMucId' => ['required', 'integer', 'min:1'],
             'nhanDangTin' => ['required', 'string', 'max:250'],
-            'kieuNhap' => ['required', 'in:van_ban,so'],
             'thuTu' => ['required', 'integer', 'min:1', 'max:999'],
             'dangHoatDong' => ['required', 'boolean'],
         ];
@@ -157,7 +156,7 @@ class CauHoiController extends Controller
 
     private function cacCot(array $mau): array
     {
-        return ['danh_muc_id' => $mau['danhMucId'], 'noi_dung' => $mau['nhanDangTin'], 'kieu_nhap' => $mau['kieuNhap'], 'thu_tu' => (int) $mau['thuTu']];
+        return ['danh_muc_id' => $mau['danhMucId'], 'noi_dung' => $mau['nhanDangTin'], 'thu_tu' => (int) $mau['thuTu']];
     }
 
     private function duLieu(CauHoi $cau): array
@@ -166,14 +165,14 @@ class CauHoiController extends Controller
         $lichSu = $cau->lichSu->map(fn ($ban) => [
             'id' => (string) $ban->id, 'phienBan' => $ban->phien_ban,
             'danhMucId' => $ban->du_lieu['danh_muc_id'] === null ? null : (string) $ban->du_lieu['danh_muc_id'],
-            'nhanDangTin' => $ban->du_lieu['noi_dung'], 'kieuNhap' => $ban->du_lieu['kieu_nhap'] ?? 'van_ban',
+            'nhanDangTin' => $ban->du_lieu['noi_dung'],
             'thuTu' => (int) $ban->du_lieu['thu_tu'], 'dangHoatDong' => (bool) $ban->du_lieu['trang_thai'],
         ]);
 
         return [
             'id' => (string) $cau->id, 'phienBan' => (int) $cau->lichSu->max('phien_ban'),
             'danhMucId' => (string) $cau->danh_muc_id,
-            'nhanDangTin' => $cau->noi_dung, 'kieuNhap' => $cau->kieu_nhap,
+            'nhanDangTin' => $cau->noi_dung,
             'thuTu' => $cau->thu_tu, 'dangHoatDong' => $cau->trang_thai, 'lichSu' => $lichSu,
             'coCauTraLoi' => (bool) ($cau->loi_khai_tin_dang_exists ?? $cau->loiKhaiTinDang()->exists()),
         ];

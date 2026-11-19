@@ -1,4 +1,3 @@
-import { cacKieuNhap } from '../../../components/shared/quyTacCauHoi.js'
 import { useEffect, useRef } from 'react'
 import HopThoai from '../../../components/shared/HopThoai'
 
@@ -19,13 +18,6 @@ export default function FormCauHoi({ bieuMau, danhMuc, loi, loiLuu, dongBieuMau,
             <label htmlFor="nhan-dang-tin" className="mb-2 block text-sm font-semibold text-[#243c30]">Câu hỏi khi đăng tin <span className="text-red-600">*</span></label>
             <input ref={oNoiDung} id="nhan-dang-tin" name="nhanDangTin" value={bieuMau.nhanDangTin} onChange={doiBieuMau} maxLength={250} required aria-invalid={Boolean(loi.nhanDangTin)} aria-describedby={loi.nhanDangTin ? 'loi-nhan-dang-tin' : undefined} placeholder="Ví dụ: Thiết bị thuộc hãng nào?" className={lopNhap} />
             {loi.nhanDangTin && <p id="loi-nhan-dang-tin" role="alert" className="mt-1 text-xs text-red-700">{loi.nhanDangTin}</p>}
-          </div>
-          <div>
-            <label htmlFor="kieu-nhap-cau-hoi" className="mb-2 block text-sm font-semibold text-[#243c30]">Kiểu trả lời</label>
-            <select id="kieu-nhap-cau-hoi" name="kieuNhap" value={bieuMau.kieuNhap} onChange={doiBieuMau} aria-invalid={Boolean(loi.kieuNhap)} aria-describedby={loi.kieuNhap ? 'loi-kieu-nhap' : undefined} className={lopNhap}>
-              {Object.entries(cacKieuNhap).map(([giaTri, nhan]) => <option key={giaTri} value={giaTri}>{nhan}</option>)}
-            </select>
-            {loi.kieuNhap && <p id="loi-kieu-nhap" role="alert" className="mt-1 text-xs text-red-700">{loi.kieuNhap}</p>}
           </div>
           {loi.thuTu && <p role="alert" className="text-xs text-red-700">{loi.thuTu}</p>}
           {loiLuu && <p role="alert" className="rounded-xl bg-red-50 px-3 py-2 text-sm leading-6 text-red-700">{loiLuu}</p>}

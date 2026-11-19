@@ -35,7 +35,6 @@ class QuanLyCauHoiTest extends TestCase
             $table->id();
             $table->foreignId('danh_muc_id')->nullable()->constrained('danh_muc_do_vat');
             $table->string('noi_dung');
-            $table->enum('kieu_nhap', ['van_ban', 'so'])->default('van_ban');
             $table->boolean('trang_thai');
             $table->integer('thu_tu');
             $table->timestamps();
@@ -64,7 +63,7 @@ class QuanLyCauHoiTest extends TestCase
     private function mau(?int $danhMucId = null): array
     {
 
-        return ['danhMucId' => $danhMucId, 'nhanDangTin' => 'Đồ vật có màu gì?', 'kieuNhap' => 'van_ban', 'thuTu' => 1, 'dangHoatDong' => true];
+        return ['danhMucId' => $danhMucId, 'nhanDangTin' => 'Đồ vật có màu gì?', 'thuTu' => 1, 'dangHoatDong' => true];
     }
 
     public function test_bao_ve_doc_va_ghi_bang_quyen_quan_tri(): void
@@ -102,21 +101,16 @@ class QuanLyCauHoiTest extends TestCase
         $this->actingAs($this->taiKhoan());
         $danhMuc = DanhMucDoVat::create(['ten_danh_muc' => 'Điện tử']);
         $cu = $this->postJson('/api/admin/cau-hoi', $this->mau($danhMuc->id))->assertCreated()->json('data');
-        $snapshotCu = DB::table('lich_su_cau_hoi')->where('id', $cu['lichSu'][0]['id'])->value('du_lieu');
-        $snapshotCu = json_decode($snapshotCu, true);
-        unset($snapshotCu['kieu_nhap']);
-        DB::table('lich_su_cau_hoi')->where('id', $cu['lichSu'][0]['id'])->update(['du_lieu' => json_encode($snapshotCu)]);
         DB::table('loi_khai_tin_dang')->insert(['cau_hoi_id' => $cu['id'], 'cau_hoi_phien_ban_id' => $cu['lichSu'][0]['id'], 'gia_tri_text' => 'Đen']);
         $mau = $this->mau($danhMuc->id);
         $mau['nhanDangTin'] = 'Thiết bị có màu gì?';
         $mau['phienBan'] = 1;
-        $mau['kieuNhap'] = 'so';
         $moi = $this->putJson('/api/admin/cau-hoi/'.$cu['id'], $mau)->assertOk()->assertJsonPath('data.phienBan', 2)->assertJsonMissingPath('data.maCauHoi')->json('data');
         $this->assertSame($cu['id'], $moi['id']);
         $this->assertSame($cu['nhanDangTin'], $moi['lichSu'][0]['nhanDangTin']);
-        $this->assertSame('so', $moi['kieuNhap']);
-        $this->assertSame('van_ban', $moi['lichSu'][0]['kieuNhap']);
-        $this->assertSame('so', $moi['lichSu'][1]['kieuNhap']);
+        $this->assertArrayNotHasKey('kieuNhap', $moi);
+        $this->assertArrayNotHasKey('kieuNhap', $moi['lichSu'][0]);
+        $this->assertArrayNotHasKey('kieuNhap', $moi['lichSu'][1]);
         $this->assertDatabaseHas('cau_hoi', ['id' => $cu['id'], 'noi_dung' => $mau['nhanDangTin'], 'danh_muc_id' => $danhMuc->id]);
         $this->assertDatabaseHas('loi_khai_tin_dang', ['cau_hoi_id' => $cu['id'], 'cau_hoi_phien_ban_id' => $cu['lichSu'][0]['id'], 'gia_tri_text' => 'Đen']);
         $this->getJson('/api/admin/cau-hoi')->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.coCauTraLoi', true);
@@ -180,7 +174,7 @@ class QuanLyCauHoiTest extends TestCase
         $this->assertSame(5, $day->cauHoi()->count());
     }
 
-    public function test_cau_rieng_luu_kieu_nhap_khong_nhan_cau_hinh_cu(): void
+    public function test_cau_rieng_chi_co_van_ban_khong_con_cau_hinh_kieu_nhap(): void
     {
         $this->actingAs($this->taiKhoan());
         $muc = DanhMucDoVat::create(['ten_danh_muc' => 'Điện tử']);
@@ -188,7 +182,6 @@ class QuanLyCauHoiTest extends TestCase
         $mau['apDung']['mat']['batBuoc'] = true;
         $mau['apDung']['nhat'] = ['suDung' => true, 'batBuoc' => false, 'congKhai' => false, 'dungXacMinh' => true, 'batBuocNhanLai' => true];
         $mau['nhanNhanLai'] = 'Đồ của bạn có màu gì?';
-        $mau['kieuNhap'] = 'so';
         $mau['luaChon'] = [['id' => 'den', 'nhan' => 'Đen'], ['id' => 'trang', 'nhan' => 'Trắng']];
         $cau = $this->postJson('/api/admin/cau-hoi', $mau)->assertCreated()->json('data');
         $this->assertArrayNotHasKey('apDung', $cau);
@@ -199,15 +192,16 @@ class QuanLyCauHoiTest extends TestCase
         foreach (['lua_chon', 'nhan_nhan_lai', 'phien_ban', 'cau_hinh_ap_dung', 'loai_tin', 'bat_buoc', 'cong_khai', 'dung_xac_minh'] as $cot) {
             $this->assertFalse(Schema::hasColumn('cau_hoi', $cot));
         }
-        $this->assertDatabaseHas('cau_hoi', ['id' => $cau['id'], 'kieu_nhap' => 'so']);
-        $this->assertSame('so', $cau['lichSu'][0]['kieuNhap']);
+        $this->assertFalse(Schema::hasColumn('cau_hoi', 'kieu_nhap'));
+        $this->assertArrayNotHasKey('kieuNhap', $cau);
+        $this->assertArrayNotHasKey('kieu_nhap', $cau['lichSu'][0]);
     }
 
     public function test_validate_noi_dung_va_khong_ghi_do_dang_khi_du_lieu_sai(): void
     {
         $this->actingAs($this->taiKhoan());
         $muc = DanhMucDoVat::create(['ten_danh_muc' => 'Điện tử']);
-        foreach ([['kieuNhap', 'chon_mot'], ['kieuNhap', 'doan_van'], ['kieuNhap', ''], ['nhanDangTin', ' '], ['thuTu', 0], ['nhanDangTin', str_repeat('a', 251)]] as [$ten, $giaTri]) {
+        foreach ([['nhanDangTin', ' '], ['thuTu', 0], ['nhanDangTin', str_repeat('a', 251)]] as [$ten, $giaTri]) {
             $mau = $this->mau($muc->id);
             $mau[$ten] = $giaTri;
             $this->postJson('/api/admin/cau-hoi', $mau)->assertUnprocessable()->assertJsonValidationErrors($ten);

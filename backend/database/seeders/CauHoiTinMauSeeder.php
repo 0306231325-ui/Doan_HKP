@@ -104,8 +104,6 @@ class CauHoiTinMauSeeder extends Seeder
                     $tin->loiKhai()->updateOrCreate(['cau_hoi_id' => $ban->cau_hoi_id], [
                         'cau_hoi_phien_ban_id' => $ban->id,
                         'gia_tri_text' => $giaTri['gia_tri_text'] ?? null,
-                        'gia_tri_so' => $giaTri['gia_tri_so'] ?? null,
-                        'gia_tri_lua_chon' => null,
                     ]);
                 }
             }
@@ -116,9 +114,9 @@ class CauHoiTinMauSeeder extends Seeder
     {
         $cau->fill([
             'danh_muc_id' => $muc->id, 'noi_dung' => $noiDung,
-            'kieu_nhap' => 'van_ban', 'thu_tu' => $thuTu, 'trang_thai' => true,
+            'thu_tu' => $thuTu, 'trang_thai' => true,
         ]);
-        $doiNoiDung = $cau->isDirty(['noi_dung', 'kieu_nhap', 'thu_tu']);
+        $doiNoiDung = $cau->isDirty(['noi_dung', 'thu_tu']);
         $cau->save();
         $ban = $cau->lichSu()->reorder('phien_ban', 'desc')->first();
 

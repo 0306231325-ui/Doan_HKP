@@ -152,13 +152,6 @@ class KiemTraCuocHen(unittest.TestCase):
         with self.assertRaises(sqlite3.IntegrityError):
             self.db.execute("UPDATE ban_giao SET phuong_thuc_ban_giao = 'ma_xac_nhan', nguoi_xac_nhan_ban_giao_id = 999, thoi_gian_ban_giao = '2026-10-20 09:00:00' WHERE cuoc_hen_id = ?", (maHen,))
 
-    def test_loiKhaiBatBuocDungMotGiaTriVaKhongNhanChuoiTrong(self):
-        for text, so, chon in [(None, None, None), ('  ', None, None), (None, None, ''), ('Mo ta', 1, None)]:
-            with self.assertRaises(sqlite3.IntegrityError):
-                self.db.execute('INSERT INTO loi_khai_tin_dang (tin_dang_id, cau_hoi_id, gia_tri_text, gia_tri_so, gia_tri_lua_chon) VALUES (100, 1, ?, ?, ?)', (text, so, chon))
-        self.db.execute('INSERT INTO loi_khai_tin_dang (tin_dang_id, cau_hoi_id, gia_tri_so) VALUES (100, 9, 0)')
-        self.assertEqual(self.db.execute('SELECT gia_tri_so FROM loi_khai_tin_dang').fetchone()[0], 0)
-
     def test_thongBaoVaLichSuKhongTroCuocHenCuaYeuCauKhac(self):
         maHen = self.taoCuocHen()
         with self.assertRaises(sqlite3.IntegrityError):

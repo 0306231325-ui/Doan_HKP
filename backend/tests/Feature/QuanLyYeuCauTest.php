@@ -378,7 +378,7 @@ class QuanLyYeuCauTest extends TestCase
         $this->assertSame(2, $hen->thongBao()->where('loai_thong_bao', 'xac_nhan_ban_giao')->count());
         $this->assertSame(1, $hen->lichSuYeuCau()->where('hanh_dong', 'xac_nhan_ban_giao')->count());
         $this->assertDatabaseHas('tin_dang', ['id' => $this->yc->tin_dang_id, 'trang_thai' => 'da_hoan_tat', 'tin_bao_mat_lien_quan_id' => $tinMat->id]);
-        $this->assertSame('da_hoan_tat', $tinMat->fresh()->trang_thai);
+        $this->assertSame('dang_mo', $tinMat->fresh()->trang_thai);
         $this->assertSame('dang_mo', $tinKhac->fresh()->trang_thai);
         $this->assertSame('dang_mo', $tinNguoiNgoai->fresh()->trang_thai);
         foreach ([$this->user, $this->admin] as $taiKhoan) {

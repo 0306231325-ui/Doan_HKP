@@ -17,10 +17,7 @@ export default function HoSoYeuCau({ id, lanTai, khiCapNhat }) {
 }
 
 function giaTri(answer) {
-  const { gia_tri_text: vanBan, gia_tri_so: so, gia_tri_lua_chon: luaChon } = answer ?? {}
-  const soHienThi = so?.toString().replace(/(\.\d*?)0+$/, '$1').replace(/\.$/, '')
-  const value = vanBan ?? soHienThi ?? luaChon
-  return value === null || value === undefined || value === '' ? 'Chưa có thông tin' : typeof value === 'object' ? JSON.stringify(value) : String(value)
+  return answer?.gia_tri_text || 'Chưa có thông tin'
 }
 
 function NoiDungHoSo({ yc, khiCapNhat }) {

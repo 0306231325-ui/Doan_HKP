@@ -10,9 +10,7 @@ export default function TruongCauHoi({ cauHoi, giaTri, khiThayDoi }) {
 
   return (
     <div>
-      {cauHoi.kieuNhap === 'so'
-        ? <FormField {...props} type="number" step="any" inputMode="decimal" placeholder="Nhập số…" />
-        : <FormField {...props} as="textarea" rows={3} maxLength={2000} placeholder="Nhập câu trả lời…" />}
+      <FormField {...props} as="textarea" rows={3} maxLength={2000} placeholder="Nhập câu trả lời tại đây" />
     </div>
   )
 }

@@ -15,16 +15,7 @@ class LoiKhaiTinDang extends Model
         'cau_hoi_id',
         'cau_hoi_phien_ban_id',
         'gia_tri_text',
-        'gia_tri_so',
-        'gia_tri_lua_chon',
     ];
-
-    protected function casts(): array
-    {
-        return [
-            'gia_tri_so' => 'decimal:4',
-        ];
-    }
 
     public function tinDang(): BelongsTo
     {

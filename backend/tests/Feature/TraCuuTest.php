@@ -119,7 +119,6 @@ class TraCuuTest extends TestCase
             $table->id();
             $table->foreignId('danh_muc_id')->constrained('danh_muc_do_vat');
             $table->string('noi_dung');
-            $table->string('kieu_nhap');
             $table->unsignedInteger('thu_tu');
             $table->boolean('trang_thai');
             $table->timestamps();
@@ -137,8 +136,6 @@ class TraCuuTest extends TestCase
             $table->foreignId('cau_hoi_id')->constrained('cau_hoi');
             $table->foreignId('cau_hoi_phien_ban_id')->constrained('lich_su_cau_hoi');
             $table->text('gia_tri_text')->nullable();
-            $table->decimal('gia_tri_so', 18, 4)->nullable();
-            $table->string('gia_tri_lua_chon')->nullable();
             $table->timestamps();
         });
         Schema::create('yeu_cau_nhan_do', function (Blueprint $table) {
@@ -291,11 +288,11 @@ class TraCuuTest extends TestCase
         $tinDaXoa = $this->taoTin(['slug' => 'mau-tra-cuu-the-can-cuoc', 'danh_muc_id' => $mucGiay->id]);
         $tinDaXoa->delete();
         $nhanCu = 'Nắp trượt của máy tính có dấu hiệu nhận biết gì?';
-        $cauCu = $muc->cauHoi()->create(['noi_dung' => $nhanCu, 'kieu_nhap' => 'van_ban', 'thu_tu' => 1, 'trang_thai' => false]);
+        $cauCu = $muc->cauHoi()->create(['noi_dung' => $nhanCu, 'thu_tu' => 1, 'trang_thai' => false]);
         $banCu = $cauCu->lichSu()->create(['phien_ban' => 1, 'du_lieu' => $cauCu->attributesToArray()]);
         $tinThuong->loiKhai()->create(['cau_hoi_id' => $cauCu->id, 'cau_hoi_phien_ban_id' => $banCu->id, 'gia_tri_text' => 'Có vết xước']);
         $loiKhaiMau = $tinMau->loiKhai()->create(['cau_hoi_id' => $cauCu->id, 'cau_hoi_phien_ban_id' => $banCu->id, 'gia_tri_text' => 'Nắp có vết xước chéo ở góc dưới.']);
-        $cauVi = $mucVi->cauHoi()->create(['noi_dung' => 'Lớp lót bên trong ví màu gì?', 'kieu_nhap' => 'van_ban', 'thu_tu' => 1, 'trang_thai' => false]);
+        $cauVi = $mucVi->cauHoi()->create(['noi_dung' => 'Lớp lót bên trong ví màu gì?', 'thu_tu' => 1, 'trang_thai' => false]);
         $banVi = $cauVi->lichSu()->create(['phien_ban' => 1, 'du_lieu' => $cauVi->attributesToArray()]);
         $tinCoYeuCau->loiKhai()->create(['cau_hoi_id' => $cauVi->id, 'cau_hoi_phien_ban_id' => $banVi->id, 'gia_tri_text' => 'Màu nâu.']);
         $tinCoYeuCau->yeuCauNhanDo()->create(['nguoi_yeu_cau_id' => $this->nguoiDung->id]);
@@ -309,9 +306,8 @@ class TraCuuTest extends TestCase
         $this->assertSame(2, $cacLoiKhai[0]->phienBanCauHoi->phien_ban);
         $this->assertSame('Đồ dùng có vết trầy, nứt hoặc sứt ở đâu? Mô tả hình dạng của vết nếu có.', $cacLoiKhai[0]->phienBanCauHoi->du_lieu['noi_dung']);
         $this->assertSame('Có một vết xước chéo ở góc dưới của nắp.', $cacLoiKhai[0]->gia_tri_text);
-        $this->assertSame('van_ban', $cacLoiKhai[1]->phienBanCauHoi->du_lieu['kieu_nhap']);
+        $this->assertArrayNotHasKey('kieu_nhap', $cacLoiKhai[1]->phienBanCauHoi->du_lieu);
         $this->assertSame('Tem tròn màu trắng ở góc trên bên phải mặt lưng.', $cacLoiKhai[1]->gia_tri_text);
-        $this->assertNull($cacLoiKhai[1]->gia_tri_so);
         $this->assertTrue($cacLoiKhai[0]->cauHoi->trang_thai);
         $this->assertSame($nhanCu, $banCu->fresh()->du_lieu['noi_dung']);
         $this->assertSame([$banCu->id], $tinThuong->loiKhai()->pluck('cau_hoi_phien_ban_id')->all());
@@ -328,10 +324,10 @@ class TraCuuTest extends TestCase
     {
         $muc = DanhMucDoVat::create(['ten_danh_muc' => 'Đồ điện tử', 'trang_thai' => true]);
         for ($thuTu = 1; $thuTu <= 4; $thuTu++) {
-            $muc->cauHoi()->create(['noi_dung' => 'Câu tự đặt '.$thuTu, 'kieu_nhap' => 'van_ban', 'thu_tu' => $thuTu, 'trang_thai' => false]);
+            $muc->cauHoi()->create(['noi_dung' => 'Câu tự đặt '.$thuTu, 'thu_tu' => $thuTu, 'trang_thai' => false]);
         }
         $cauMau = $muc->cauHoi()->create([
-            'noi_dung' => 'Có bao nhiêu thiết bị giống như mô tả?', 'kieu_nhap' => 'so', 'thu_tu' => 2, 'trang_thai' => true,
+            'noi_dung' => 'Có bao nhiêu thiết bị giống như mô tả?', 'thu_tu' => 2, 'trang_thai' => true,
         ]);
         $cauMau->lichSu()->create(['phien_ban' => 1, 'du_lieu' => $cauMau->attributesToArray()]);
 
@@ -341,7 +337,7 @@ class TraCuuTest extends TestCase
         $this->assertSame(5, $muc->cauHoi()->count());
         $this->assertSame(4, $muc->cauHoi()->where('trang_thai', false)->count());
         $this->assertSame('Nếu biết, ghi 4 ký tự cuối của số sê-ri hoặc mã tài sản in trên thiết bị.', $cauMau->fresh()->noi_dung);
-        $this->assertSame('van_ban', $cauMau->fresh()->kieu_nhap);
+        $this->assertArrayNotHasKey('kieu_nhap', $cauMau->fresh()->getAttributes());
         $this->assertSame(2, $cauMau->lichSu()->count());
     }
 }

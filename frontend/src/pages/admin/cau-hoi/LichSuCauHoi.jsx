@@ -1,4 +1,3 @@
-import { cacKieuNhap } from '../../../components/shared/quyTacCauHoi.js'
 import { ChevronDown } from 'lucide-react'
 import { layNhanPhamVi } from './hooks/xuLyCauHoi.js'
 
@@ -11,7 +10,7 @@ export default function LichSuCauHoi({ lichSu, danhMuc }) {
           <p className="text-xs font-semibold text-emerald-800">Bản {muc.phienBan}{viTri === 0 ? ' · Mới nhất' : ''}</p>
           <h3 className="mt-2 break-words text-sm font-semibold leading-6 text-[#243c30]">{muc.nhanDangTin}</h3>
           <p className="mt-1 text-xs text-[#607568]">{layNhanPhamVi(muc, danhMuc)}</p>
-          <p className="mt-1 text-xs leading-6 text-[#718276]">{cacKieuNhap[muc.kieuNhap] || 'Kiểu cũ'} · Thứ tự {muc.thuTu}</p>
+          <p className="mt-1 text-xs leading-6 text-[#718276]">Thứ tự {muc.thuTu}</p>
         </li>)}
       </ol>
     </details>

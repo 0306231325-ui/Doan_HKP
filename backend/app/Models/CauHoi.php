@@ -15,7 +15,6 @@ class CauHoi extends Model
     protected $fillable = [
         'danh_muc_id',
         'noi_dung',
-        'kieu_nhap',
         'thu_tu',
         'trang_thai',
     ];
