@@ -13,6 +13,10 @@ use Illuminate\Support\Facades\DB;
 
 class XuLyCuocHen
 {
+    public const SO_LAN_HEN_TOI_DA = 2;
+
+    public const HET_LUOT_HEN = 'Yêu cầu đã bị hủy do cả 2 cuộc hẹn đều bị hủy. Tin đăng đã được mở lại.';
+
     private const HET_HAN = 'Cuộc hẹn đã hết hạn xác nhận. Vui lòng đặt lịch mới.';
 
     private const LY_DO_HUY_HET_HAN_CU = 'Mã bàn giao đã hết hạn. Vui lòng đặt lịch mới.';
@@ -37,6 +41,9 @@ class XuLyCuocHen
             $yeuCau = $tin->yeuCauNhanDo()->firstOrCreate([
                 'nguoi_yeu_cau_id' => $nguoiGiuId,
             ], ['trang_thai' => 'da_xac_minh', 'nguoi_xu_ly_id' => $nguoiGiuId, 'thoi_gian_xu_ly' => now()]);
+            if ($yeuCau->cuocHen()->count() >= self::SO_LAN_HEN_TOI_DA) {
+                return ['message' => 'Yêu cầu đã dùng đủ 2 lần tạo cuộc hẹn.', 'hetLuotHen' => true];
+            }
             if ($yeuCau->trang_thai !== 'da_xac_minh') {
                 $yeuCau->update(['trang_thai' => 'da_xac_minh', 'nguoi_xu_ly_id' => $nguoiGiuId, 'thoi_gian_xu_ly' => now()]);
             }
@@ -77,6 +84,12 @@ class XuLyCuocHen
                     'yeuCauId' => $yeuCau->id,
                     'cuocHenId' => $lichCu->id,
                 ];
+            }
+
+            if ($yeuCau->cuocHen()->count() >= self::SO_LAN_HEN_TOI_DA) {
+                $this->huyYeuCauHetLuotHen($yeuCau->id);
+
+                return ['message' => 'Yêu cầu đã dùng đủ 2 lần tạo cuộc hẹn.', 'hetLuotHen' => true];
             }
 
             abort_if($gioHen->lt($bayGio->copy()->startOfMinute()), 422, 'Vui lòng chọn giờ hẹn từ thời điểm hiện tại trở đi.');
@@ -175,10 +188,46 @@ class XuLyCuocHen
             ->pluck('id');
         foreach ($lichHetHan as $id) {
             DB::transaction(function () use ($id, $bayGio) {
+                $goc = CuocHen::findOrFail($id);
+                $yeuCau = YeuCauNhanDo::findOrFail($goc->yeu_cau_id);
+                TinDang::withTrashed()->lockForUpdate()->findOrFail($yeuCau->tin_dang_id);
+                YeuCauNhanDo::lockForUpdate()->findOrFail($yeuCau->id);
                 $hen = CuocHen::lockForUpdate()->findOrFail($id);
                 $this->huyLichHetHan($hen, $bayGio);
             }, 3);
         }
+        foreach ($yeuCauIds as $id) {
+            $this->huyYeuCauHetLuotHen((int) $id);
+        }
+    }
+
+    public function huyYeuCauHetLuotHen(int $yeuCauId): void
+    {
+        DB::transaction(function () use ($yeuCauId) {
+            $goc = YeuCauNhanDo::find($yeuCauId);
+            if (! $goc) {
+                return;
+            }
+            $tin = TinDang::withTrashed()->lockForUpdate()->findOrFail($goc->tin_dang_id);
+            $yc = YeuCauNhanDo::lockForUpdate()->findOrFail($yeuCauId);
+            if ($yc->trang_thai !== 'da_xac_minh') {
+                return;
+            }
+            $lich = $yc->cuocHen()->lockForUpdate()->get();
+            if ($lich->count() < self::SO_LAN_HEN_TOI_DA || $lich->contains(fn ($h) => $h->trang_thai !== 'da_huy')) {
+                return;
+            }
+
+            $yc->update(['trang_thai' => 'da_huy', 'ghi_chu_admin' => self::HET_LUOT_HEN, 'thoi_gian_xu_ly' => now()]);
+            if ($tin->trang_thai === 'cho_ban_giao' && ! $tin->yeuCauNhanDo()->whereKeyNot($yc->id)
+                ->whereHas('cuocHen', fn ($q) => $q->whereIn('trang_thai', self::LICH_DANG_HIEU_LUC))->exists()) {
+                $tin->update(['trang_thai' => 'dang_mo']);
+            }
+            $yc->lichSu()->create(['hanh_dong' => 'huy_yeu_cau_het_luot_hen', 'trang_thai_cu' => 'da_xac_minh', 'trang_thai_moi' => 'da_huy', 'noi_dung' => self::HET_LUOT_HEN]);
+            foreach (array_unique([$yc->nguoi_yeu_cau_id, $tin->nguoi_dung_id]) as $id) {
+                $yc->thongBao()->create(['nguoi_dung_id' => $id, 'tin_dang_id' => $tin->id, 'loai_thong_bao' => 'huy_yeu_cau_het_luot_hen', 'tieu_de' => 'Yêu cầu nhận đồ đã bị hủy', 'noi_dung' => self::HET_LUOT_HEN]);
+            }
+        }, 3);
     }
 
     private function huyLichHetHan(CuocHen $hen, CarbonInterface $bayGio): bool

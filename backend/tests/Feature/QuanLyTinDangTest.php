@@ -32,6 +32,15 @@ class QuanLyTinDangTest extends TestCase
             $t->timestamps(); $t->softDeletes();
         });
         Schema::create('hinh_anh_tin_dang', function (Blueprint $t) { $t->id(); $t->unsignedBigInteger('tin_dang_id'); $t->string('duong_dan'); $t->string('pham_vi'); $t->integer('thu_tu'); });
+        Schema::create('yeu_cau_nhan_do', function (Blueprint $t) {
+            $t->id();
+            $t->unsignedBigInteger('tin_dang_id');
+        });
+        Schema::create('cuoc_hen', function (Blueprint $t) {
+            $t->id();
+            $t->unsignedBigInteger('yeu_cau_id');
+            $t->string('trang_thai');
+        });
         Schema::create('bao_cao_tin_dang', function (Blueprint $t) {
             $t->id(); foreach (['tin_dang_id', 'nguoi_bao_cao_id', 'nguoi_xu_ly_id'] as $c) $t->unsignedBigInteger($c)->nullable();
             foreach (['ly_do', 'mo_ta', 'trang_thai', 'ghi_chu_admin'] as $c) $t->string($c)->nullable();

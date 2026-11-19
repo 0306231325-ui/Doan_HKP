@@ -19,8 +19,8 @@ use App\Models\HinhAnhTinDang;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/tra-cuu/bo-loc', [TraCuuController::class, 'boLoc']);
-Route::get('/tra-cuu', [TraCuuController::class, 'danhSach'])->middleware('throttle:120,1');
-Route::get('/tra-cuu/{tin}', [TraCuuController::class, 'chiTiet'])->whereNumber('tin')->middleware('throttle:120,1');
+Route::get('/tra-cuu', [TraCuuController::class, 'danhSach'])->middleware('throttle:120,1,tra-cuu');
+Route::get('/tra-cuu/{tin}', [TraCuuController::class, 'chiTiet'])->whereNumber('tin')->middleware('throttle:120,1,tra-cuu');
 Route::get('/tin-dang/anh/{tenAnh}', [DangTinController::class, 'anh'])->where('tenAnh', HinhAnhTinDang::MAU_TEN_ANH);
 
 Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:5,1');
@@ -50,7 +50,7 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
     Route::get('/tin-dang/{tin}/giu-do', [GiuDoController::class, 'danhSach'])->whereNumber('tin')->middleware('throttle:60,1');
     Route::post('/tin-dang/{tin}/giu-do', [GiuDoController::class, 'guiThongBao'])->whereNumber('tin')->middleware('throttle:10,1');
     Route::get('/me', [AuthController::class, 'me']);
-    Route::get('/thong-bao', [ThongBaoController::class, 'danhSach'])->middleware('throttle:120,1');
+    Route::get('/thong-bao', [ThongBaoController::class, 'danhSach'])->middleware('throttle:120,1,thong-bao');
     Route::patch('/thong-bao/da-doc', [ThongBaoController::class, 'danhDauTatCaDaDoc'])->middleware('throttle:30,1');
     Route::patch('/thong-bao/{id}/da-doc', [ThongBaoController::class, 'danhDauDaDoc'])->whereNumber('id')->middleware('throttle:30,1');
     Route::delete('/thong-bao', [ThongBaoController::class, 'xoaTatCa'])->middleware('throttle:30,1');

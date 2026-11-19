@@ -101,6 +101,7 @@ export default function ChiTietTinDang() {
 
         <section className="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-5 sm:px-5">
           <h2 className={lopTieuDeMuc}><HandHeart className="h-5 w-5 text-emerald-700" aria-hidden="true" />Thao tác với tin đăng</h2>
+          {!tin.laChuTin && !tin.coTheLienHe && tin.tamNgungNhanYeuCau && <div className="mb-4 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900"><Info className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" /><div><p className="font-semibold">Tạm ngừng nhận yêu cầu nhận lại đồ</p><p className="mt-1 leading-6">Đồ vật đã có người được duyệt và đang chờ bàn giao. Bạn có thể gửi yêu cầu khi đồ vật được mở lại.</p></div></div>}
           <div className="flex flex-wrap gap-3">
             {tin.laChuTin ? (
               <>

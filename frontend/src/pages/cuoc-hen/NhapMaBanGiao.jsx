@@ -16,7 +16,7 @@ const HUONG_DAN_NHAP_MA = {
     ['Nhập mã.', 'Ở bước 2, nhập đủ 6 số, kể cả số 0 ở đầu.'],
     ['Xác nhận bàn giao.', 'Bấm Tiếp tục, kiểm tra mã rồi bấm Xác nhận bàn giao để ghi nhận hoàn tất cho cả hai bên.'],
   ],
-  ghiChu: 'Cuộc hẹn có hạn xác nhận đến 8 giờ sau giờ hẹn. Nếu hết hạn, hai bên có thể đặt lại lịch.',
+  ghiChu: 'Hạn xác nhận là 8 giờ sau giờ hẹn. Mỗi yêu cầu được tạo tối đa 2 cuộc hẹn; nếu cả hai đều bị hủy, yêu cầu sẽ bị hủy và tin được mở lại.',
 }
 
 const kieuNutPhu = 'rounded-xl border border-[#ceded3] px-4 py-2.5 text-sm font-semibold text-[#526c5b] hover:bg-emerald-50 focus-visible:outline-2 focus-visible:outline-emerald-700 disabled:opacity-50'

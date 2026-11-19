@@ -94,6 +94,7 @@ class QuanLyTinDangController extends Controller
         return [
             'id' => $tin->id, 'title' => $tin->tieu_de, 'fullName' => $tin->tieu_de, 'description' => $tin->mo_ta,
             'referenceCode' => $tin->maTin(),
+            'coLichDangHoatDong' => $tin->yeuCauNhanDo()->whereHas('cuocHen', fn ($q) => $q->whereIn('trang_thai', ['cho_xac_nhan', 'da_xac_nhan']))->exists(),
             'type' => $tin->loai_tin === 'bao_mat' ? 'lost' : 'found', 'typeName' => $tin->loai_tin === 'bao_mat' ? 'Mất đồ' : 'Nhặt được',
             'date' => $tin->created_at?->format('Y-m-d'), 'category' => $tin->danhMuc?->ten_danh_muc ?? 'Chưa phân loại',
             'location' => $tin->diaDiem?->ten_dia_diem ?? 'Chưa rõ', 'imageUrl' => $tin->hinhAnh->first()?->duongDanHienThi() ?? HinhAnhTinDang::URL_ANH_MAC_DINH,

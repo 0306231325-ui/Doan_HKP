@@ -14,6 +14,15 @@ class CuocHen extends Model
 
     protected $table = 'cuoc_hen';
 
+    protected static function booted(): void
+    {
+        static::updated(function (self $hen) {
+            if ($hen->wasChanged('trang_thai') && $hen->trang_thai === 'da_huy') {
+                app(\App\Services\XuLyCuocHen::class)->huyYeuCauHetLuotHen((int) $hen->yeu_cau_id);
+            }
+        });
+    }
+
     protected $fillable = [
         'yeu_cau_id',
         'nguoi_giu_do_id',
