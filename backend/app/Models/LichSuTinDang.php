@@ -18,6 +18,7 @@ class LichSuTinDang extends Model
         'trang_thai_cu',
         'trang_thai_moi',
         'noi_dung',
+        'ly_do_xoa',
         'du_lieu_cu',
         'du_lieu_moi',
     ];

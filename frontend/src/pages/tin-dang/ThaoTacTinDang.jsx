@@ -14,7 +14,7 @@ const noiDungXacNhan = {
 }
 
 export default function ThaoTacTinDang({ tin, taiLai, hienNutTrucTiep = false, quayLaiKhiXoa }) {
-  const { laChuTin, thaoTac, choXacNhan, banSua, loi, dangGui, moThaoTac, dongThaoTac, doiTruong, yeuCauLuu, xacNhanThaoTac } = useThaoTacTinDang(tin, taiLai, quayLaiKhiXoa)
+  const { laChuTin, thaoTac, choXacNhan, banSua, loi, lyDoXoa, datLyDoXoa, dangGui, moThaoTac, dongThaoTac, doiTruong, yeuCauLuu, xacNhanThaoTac } = useThaoTacTinDang(tin, taiLai, quayLaiKhiXoa)
   const [ngayToiDa] = useState(() => layNgayVietNam(new Date()))
   const nutQuayLai = useRef(null)
   const nutHuy = useRef(null)
@@ -23,7 +23,7 @@ export default function ThaoTacTinDang({ tin, taiLai, hienNutTrucTiep = false, q
   const xacNhan = noiDungXacNhan[choXacNhan]
   const laBoThayDoi = choXacNhan === 'huy'
   const cacThaoTac = laChuTin ? [
-    { id: 'sua', nhan: 'Sửa tin', khiChon: () => moThaoTac('sua') },
+    ...(!tin.daHoanTat ? [{ id: 'sua', nhan: 'Sửa tin', khiChon: () => moThaoTac('sua') }] : []),
     { id: 'xoa', nhan: 'Xóa tin', khiChon: () => moThaoTac('xoa'), nguyHiem: true },
   ] : [mucToCao]
   const lopNutHuy = 'rounded-xl border border-[#ceded3] px-4 py-2.5 text-sm font-semibold text-[#315a43] hover:bg-emerald-50 disabled:opacity-50'
@@ -43,17 +43,17 @@ export default function ThaoTacTinDang({ tin, taiLai, hienNutTrucTiep = false, q
     <>
       {hienNutTrucTiep ? laChuTin && (
         <>
-          <Button className="inline-flex items-center gap-2" aria-haspopup="dialog" onClick={() => moThaoTac('sua')}>
+          {tin.daHoanTat ? <p role="status" className="w-full text-sm font-semibold text-emerald-900">Tin đăng đã hoàn thành.</p> : <Button className="inline-flex items-center gap-2" aria-haspopup="dialog" onClick={() => moThaoTac('sua')}>
             <Pencil className="h-4 w-4" aria-hidden="true" />
             Chỉnh sửa
-          </Button>
+          </Button>}
           <button type="button" aria-haspopup="dialog" onClick={() => moThaoTac('xoa')} className="inline-flex min-h-[46px] items-center gap-2 rounded-[14px] border border-rose-200 bg-white px-4 py-2.5 text-sm font-bold text-rose-700 hover:bg-rose-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-700">
             <Trash2 className="h-4 w-4" aria-hidden="true" />
             Xóa tin
           </button>
         </>
       ) : <MenuThaoTac nhan={`Thao tác với tin ${tin.title}`} cacThaoTac={cacThaoTac} />}
-      {laChuTin && thaoTac === 'sua' && (
+      {laChuTin && !tin.daHoanTat && thaoTac === 'sua' && (
         <HopThoai rong={!xacNhan} tieuDe={xacNhan?.tieuDe ?? 'Sửa tin'} moTa={xacNhan?.moTa} khiDong={dongThaoTac}>
           {xacNhan ? <div className="space-y-4 p-5 sm:p-6" aria-busy={dangGui}>
             {loi && !laBoThayDoi && <p role="alert" className="text-sm text-rose-700">{loi}</p>}
@@ -77,13 +77,17 @@ export default function ThaoTacTinDang({ tin, taiLai, hienNutTrucTiep = false, q
       )}
       {laChuTin && thaoTac === 'xoa' && (
         <HopThoai tieuDe="Xóa tin này?" moTa={`Tin “${tin.title}” sẽ được gỡ khỏi danh sách công khai.`} khiDong={dongThaoTac}>
-          <div className="space-y-4 p-5 sm:p-6">
+          <form onSubmit={(suKien) => { suKien.preventDefault(); xacNhanThaoTac() }} className="space-y-4 p-5 sm:p-6">
+            <label className="block text-sm font-semibold text-[#315a43]">
+              Lý do xóa tin <span className="text-rose-700">*</span>
+              <textarea value={lyDoXoa} onChange={(suKien) => datLyDoXoa(suKien.target.value)} required maxLength={1000} rows={3} disabled={dangGui} placeholder="Nhập lý do bạn muốn xóa tin này" className="mt-2 w-full rounded-xl border border-[#ceded3] p-3 font-normal focus:outline-2 focus:outline-emerald-700" />
+            </label>
             {loi && <p role="alert" className="text-sm text-rose-700">{loi}</p>}
             <div className="flex flex-wrap justify-end gap-3">
               <button type="button" className={lopNutHuy} onClick={dongThaoTac} disabled={dangGui}>Hủy</button>
-              <button type="button" className={lopNutNguyHiem} onClick={xacNhanThaoTac} disabled={dangGui}>{dangGui ? 'Đang xóa…' : 'Xóa tin'}</button>
+              <button type="submit" className={lopNutNguyHiem} disabled={dangGui || !lyDoXoa.trim()}>{dangGui ? 'Đang xóa…' : 'Xóa tin'}</button>
             </div>
-          </div>
+          </form>
         </HopThoai>
       )}
     </>

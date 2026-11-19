@@ -89,6 +89,7 @@ class DuLieuTinDang
             'gioXayRa' => $tin->gioXayRa(),
             'imageUrl' => $tin->hinhAnh->first()?->duongDanHienThi() ?? HinhAnhTinDang::URL_ANH_MAC_DINH,
             'statusBadge' => $trangThai[$tin->trang_thai] ?? 'Đang mở', 'canClaim' => $laNhatDuoc && $tin->trang_thai === 'dang_mo',
+            'daHoanTat' => $tin->trang_thai === 'da_hoan_tat',
             'tamNgungNhanYeuCau' => $laNhatDuoc && $tin->trang_thai === 'cho_ban_giao',
             'statusType' => $tin->trang_thai === 'dang_mo' ? ($laNhatDuoc ? 'safe' : 'urgent') : 'secure',
             'contactPerson' => $tin->nguoiDung?->ho_ten ?? 'Người đăng',

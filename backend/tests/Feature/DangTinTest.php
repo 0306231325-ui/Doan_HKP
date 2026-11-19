@@ -161,6 +161,7 @@ class DangTinTest extends TestCase
                 $t->timestamp('created_at')->nullable();
             });
         }
+        (require database_path('migrations/2026_11_19_170000_add_ly_do_xoa_to_lich_su_tin_dang_table.php'))->up();
         $this->chuTin = $this->taiKhoan();
         $this->nguoiNhan = $this->taiKhoan();
         $this->danhMuc = DanhMucDoVat::create(['ten_danh_muc' => 'Điện tử', 'trang_thai' => true]);
@@ -614,11 +615,33 @@ class DangTinTest extends TestCase
         $this->patchJson($url, [...$mau, 'gioXayRa' => ''])->assertOk();
         $this->getJson('/api/tra-cuu/'.$id)->assertOk()->assertJsonPath('data.title', $mau['tieuDe'])
             ->assertJsonPath('data.type', 'found')->assertJsonPath('data.gioXayRa', null);
-        $this->deleteJson($url)->assertOk();
+        $this->deleteJson($url)->assertUnprocessable()->assertJsonValidationErrors('lyDoXoa');
+        $this->deleteJson($url, ['lyDoXoa' => '   '])->assertUnprocessable();
+        $this->deleteJson($url, ['lyDoXoa' => str_repeat('a', 1001)])->assertUnprocessable();
+        $this->assertNotSoftDeleted('tin_dang', ['id' => $id]);
+        $this->assertDatabaseMissing('lich_su_tin_dang', ['tin_dang_id' => $id, 'hanh_dong' => 'xoa_tin']);
+        $this->deleteJson($url, ['lyDoXoa' => 'Đăng trùng bài'])->assertOk();
+        $this->assertDatabaseHas('lich_su_tin_dang', ['tin_dang_id' => $id, 'hanh_dong' => 'xoa_tin', 'ly_do_xoa' => 'Đăng trùng bài', 'nguoi_thuc_hien_id' => $this->chuTin->id]);
         $this->assertSoftDeleted('tin_dang', ['id' => $id]);
         $this->assertDatabaseCount('loi_khai_tin_dang', 1);
         $this->getJson('/api/tra-cuu')->assertJsonPath('meta.tongTin', 0);
         $this->getJson('/api/tra-cuu/'.$id)->assertNotFound();
+    }
+
+    public function test_tin_hoan_tat_khong_duoc_sua_nhung_van_duoc_xoa(): void
+    {
+        $mau = $this->mau();
+        $id = $this->postJson('/api/tin-dang', $mau)->assertCreated()->json('data.id');
+        \App\Models\TinDang::findOrFail($id)->update(['trang_thai' => 'da_hoan_tat']);
+        $url = '/api/tin-dang/'.$id;
+
+        $this->getJson('/api/tra-cuu/'.$id)->assertOk()->assertJsonPath('data.daHoanTat', true);
+        $this->getJson($url.'/chinh-sua')->assertConflict();
+        $this->patchJson($url, [...$mau, 'tieuDe' => 'Nội dung mới'])->assertConflict();
+        $this->assertDatabaseHas('tin_dang', ['id' => $id, 'tieu_de' => $mau['tieuDe'], 'trang_thai' => 'da_hoan_tat']);
+        $this->deleteJson($url, ['lyDoXoa' => 'Đã hoàn tất nhận đồ'])->assertOk();
+        $this->assertDatabaseHas('lich_su_tin_dang', ['tin_dang_id' => $id, 'hanh_dong' => 'xoa_tin', 'ly_do_xoa' => 'Đã hoàn tất nhận đồ']);
+        $this->assertSoftDeleted('tin_dang', ['id' => $id]);
     }
 
     public function test_quyen_va_du_lieu_sai(): void

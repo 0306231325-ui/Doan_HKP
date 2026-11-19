@@ -129,6 +129,7 @@ class DangTinController extends Controller
     public function duLieuSua(Request $request, string $tin): JsonResponse
     {
         $banTin = $this->timTinCuaToi($request, $tin);
+        abort_if($banTin->trang_thai === 'da_hoan_tat', 409, 'Tin đăng đã hoàn thành, không thể chỉnh sửa.');
 
         return response()->json(['data' => [
             'loaiTin' => $banTin->loai_tin === 'nhat_duoc' ? 'found' : 'lost',
@@ -146,6 +147,7 @@ class DangTinController extends Controller
     {
         return DB::transaction(function () use ($request, $tin) {
             $banTin = $this->timTinCuaToi($request, $tin, true);
+            abort_if($banTin->trang_thai === 'da_hoan_tat', 409, 'Tin đăng đã hoàn thành, không thể chỉnh sửa.');
             $mau = $request->validate($this->quyTacNoiDung(), [
                 'ngayXayRa.before_or_equal' => 'Ngày xảy ra không được ở tương lai.',
             ], ['tieuDe' => 'tiêu đề', 'diaDiemChiTiet' => 'vị trí cụ thể', 'ngayXayRa' => 'ngày xảy ra']);
@@ -167,7 +169,11 @@ class DangTinController extends Controller
     {
         return DB::transaction(function () use ($request, $tin) {
             $banTin = $this->timTinCuaToi($request, $tin, true);
-            $banTin->lichSu()->create(['nguoi_thuc_hien_id' => $request->user()->id, 'hanh_dong' => 'xoa_tin', 'trang_thai_moi' => 'da_xoa', 'noi_dung' => 'Chủ tin đã xóa tin đăng.']);
+            $mau = $request->validate(['lyDoXoa' => ['required', 'string', 'max:1000']], [
+                'lyDoXoa.required' => 'Vui lòng nhập lý do xóa tin.',
+                'lyDoXoa.max' => 'Lý do xóa không được vượt quá 1000 ký tự.',
+            ]);
+            $banTin->lichSu()->create(['nguoi_thuc_hien_id' => $request->user()->id, 'hanh_dong' => 'xoa_tin', 'trang_thai_moi' => 'da_xoa', 'noi_dung' => 'Chủ tin đã xóa tin đăng.', 'ly_do_xoa' => $mau['lyDoXoa']]);
             $banTin->delete();
 
             return response()->json(['message' => 'Đã xóa tin đăng.']);

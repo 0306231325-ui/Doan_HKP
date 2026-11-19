@@ -11,6 +11,7 @@ export default function useThaoTacTinDang(tin, taiLai, quayLaiKhiXoa) {
   const [choXacNhan, datChoXacNhan] = useState('')
   const [banSua, datBanSua] = useState(null)
   const [loi, datLoi] = useState('')
+  const [lyDoXoa, datLyDoXoa] = useState('')
   const [dangGui, datDangGui] = useState(false)
   const khoaGui = useRef(false)
   const hienThongBao = useThongBaoThaoTac()
@@ -41,6 +42,7 @@ export default function useThaoTacTinDang(tin, taiLai, quayLaiKhiXoa) {
   function moThaoTac(loai) {
     if (!laChuTin || khoaGui.current) return
     datBanSua(null)
+    datLyDoXoa('')
     datLoi('')
     datChoXacNhan('')
     datThaoTac(loai)
@@ -80,12 +82,16 @@ export default function useThaoTacTinDang(tin, taiLai, quayLaiKhiXoa) {
       return
     }
     if (thaoTac === 'sua' && (choXacNhan !== 'luu' || !banSua)) return
+    if (thaoTac === 'xoa' && !lyDoXoa.trim()) {
+      datLoi('Vui lòng nhập lý do xóa tin.')
+      return
+    }
     khoaGui.current = true
     datDangGui(true)
     datLoi('')
     try {
       await prepareCsrf()
-      const { data } = thaoTac === 'xoa' ? await api.delete(duongDan) : await api.patch(duongDan, banSua.duLieu)
+      const { data } = thaoTac === 'xoa' ? await api.delete(duongDan, { data: { lyDoXoa: lyDoXoa.trim() } }) : await api.patch(duongDan, banSua.duLieu)
       datThaoTac('')
       datChoXacNhan('')
       const noiDen = thaoTac === 'xoa' ? quayLaiKhiXoa : undefined
@@ -100,5 +106,5 @@ export default function useThaoTacTinDang(tin, taiLai, quayLaiKhiXoa) {
     }
   }
 
-  return { laChuTin, thaoTac, choXacNhan, banSua, loi, dangGui, moThaoTac, dongThaoTac, doiTruong, yeuCauLuu, xacNhanThaoTac }
+  return { laChuTin, thaoTac, choXacNhan, banSua, loi, lyDoXoa, datLyDoXoa, dangGui, moThaoTac, dongThaoTac, doiTruong, yeuCauLuu, xacNhanThaoTac }
 }

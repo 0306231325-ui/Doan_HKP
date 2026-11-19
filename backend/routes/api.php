@@ -15,6 +15,7 @@ use App\Http\Controllers\ThongTinCaNhanController;
 use App\Http\Controllers\TraCuuController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\YeuCauNhanDoController;
+use App\Http\Controllers\TinLienQuanController;
 use App\Models\HinhAnhTinDang;
 use Illuminate\Support\Facades\Route;
 
@@ -37,6 +38,8 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
     Route::post('/me/cuoc-hen', [CuocHenController::class, 'taoLich'])->middleware('throttle:12,1,lap-lich-hen');
     Route::post('/tin-dang/{tin}/lich-tra-do', [CuocHenController::class, 'taoLichTraDo'])->whereNumber('tin')->middleware('throttle:12,1,lap-lich-hen');
     Route::get('/me/cuoc-hen/cho-nhap-ma', [CuocHenController::class, 'lichChoNhapMa'])->middleware('throttle:60,1,lich-cho-nhap-ma');
+    Route::get('/me/cuoc-hen/{hen}/tin-lien-quan', [TinLienQuanController::class, 'danhSach'])->whereNumber('hen');
+    Route::post('/me/cuoc-hen/{hen}/tin-lien-quan', [TinLienQuanController::class, 'capNhat'])->whereNumber('hen')->middleware('throttle:30,1');
     Route::post('/me/cuoc-hen/xac-nhan-ban-giao', [CuocHenController::class, 'xacNhanBanGiao'])->middleware('throttle:5,1,ma-ban-giao');
     Route::post('/tin-dang/{tin}/bao-cao', [BaoCaoTinDangController::class, 'store'])->whereNumber('tin')->middleware('throttle:5,1');
     Route::get('/dang-tin/cau-hoi', [DangTinController::class, 'bieuMau'])->middleware('throttle:120,1');

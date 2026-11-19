@@ -10,6 +10,7 @@ import TienDoYeuCau from './TienDoYeuCau'
 import dinhDangGioHen from './dinhDangGioHen'
 import useChiTietYeuCau from './hooks/useChiTietYeuCau'
 import { nhanTrangThaiLichHen } from './xuLyTienDoYeuCau'
+import CapNhatTinLienQuan from './CapNhatTinLienQuan'
 
 const nut = 'inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[#d6e4db] bg-white px-4 py-2.5 text-sm font-semibold text-emerald-900 transition-colors hover:bg-emerald-50 focus-visible:outline-2 focus-visible:outline-emerald-700'
 const card = 'overflow-hidden rounded-2xl border border-[#d6e4db] bg-white'
@@ -78,6 +79,7 @@ export default function TaoCuocHen() {
 
       </> : !tamDung && ['cho_kiem_tra', 'can_bo_sung'].includes(yc.trang_thai) && <p className="border-t border-[#edf2ee] p-5 text-sm leading-6 text-[#607568] sm:p-6">Bạn sẽ xem được thông tin liên hệ sau khi yêu cầu được duyệt.</p>}
       </article>
+      {hen?.trang_thai === 'da_hoan_tat' && <CapNhatTinLienQuan key={hen.id} henId={hen.id} />}
     </>}
   </div>
 }

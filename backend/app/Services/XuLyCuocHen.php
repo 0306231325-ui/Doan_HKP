@@ -146,7 +146,7 @@ class XuLyCuocHen
             abort_unless($yeuCau->trang_thai === 'da_xac_minh' && $tin->trang_thai === 'cho_ban_giao'
                 && $hen->trang_thai === 'cho_xac_nhan' && $hen->thoi_gian_hen_gap, 409, 'Cuộc hẹn không còn hiệu lực.');
             $kiemTraGioHen = ! app()->isLocal();
-            // $kiemTraGioHen = true; // kiểm tra giờ hẹn .
+            // $kiemTraGioHen = true; // kiểm tra giờ hẹn o day
             abort_if($kiemTraGioHen && $bayGio->lt($hen->thoi_gian_hen_gap), 409, 'Chưa đến giờ hẹn. Vui lòng nhập mã sau khi giao nhận đồ.');
 
             $hen->update([
