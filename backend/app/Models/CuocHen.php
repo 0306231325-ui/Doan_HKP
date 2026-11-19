@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -9,7 +10,18 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class CuocHen extends Model
 {
+    public const SO_GIO_XAC_NHAN = 8;
+
     protected $table = 'cuoc_hen';
+
+    protected static function booted(): void
+    {
+        static::updated(function (self $hen) {
+            if ($hen->wasChanged('trang_thai') && $hen->trang_thai === 'da_huy') {
+                app(\App\Services\XuLyCuocHen::class)->huyYeuCauHetLuotHen((int) $hen->yeu_cau_id);
+            }
+        });
+    }
 
     protected $fillable = [
         'yeu_cau_id',
@@ -21,6 +33,8 @@ class CuocHen extends Model
         'dia_diem_id',
         'trang_thai',
         'ly_do_huy',
+        'nguoi_giu_xac_nhan_luc',
+        'nguoi_nhan_xac_nhan_luc',
     ];
 
     protected function casts(): array
@@ -28,7 +42,14 @@ class CuocHen extends Model
         return [
             'thoi_gian_xac_nhan' => 'datetime',
             'thoi_gian_hen_gap' => 'datetime',
+            'nguoi_giu_xac_nhan_luc' => 'datetime',
+            'nguoi_nhan_xac_nhan_luc' => 'datetime',
         ];
+    }
+
+    public function hanXacNhan(): ?CarbonInterface
+    {
+        return $this->thoi_gian_hen_gap?->copy()->addHours(self::SO_GIO_XAC_NHAN);
     }
 
     public function yeuCauNhanDo(): BelongsTo

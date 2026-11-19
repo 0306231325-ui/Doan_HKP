@@ -1,0 +1,793 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Models\NguoiDung;
+use App\Models\TinDang;
+use App\Models\YeuCauNhanDo;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
+use Tests\TestCase;
+
+class QuanLyYeuCauTest extends TestCase
+{
+    public function test_tracking_requests_cancels_expired_appointment_without_legacy_code_columns(): void
+    {
+        $this->yc->update(['trang_thai' => 'da_xac_minh']);
+        $hen = $this->yc->cuocHen()->create(['trang_thai' => 'cho_xac_nhan', 'thoi_gian_hen_gap' => now()->subHours(9)]);
+        $hen->banGiao()->create(['ma_ban_giao' => '004281']);
+
+        $this->actingAs($this->user)->getJson('/api/me/yeu-cau')->assertOk();
+
+        $this->assertSame('da_huy', $hen->fresh()->trang_thai);
+        $this->assertSame('004281', $hen->banGiao()->first()->ma_ban_giao);
+        $this->assertFalse(Schema::hasColumn('ban_giao', 'ma_het_han_luc'));
+        $this->assertFalse(Schema::hasColumn('ban_giao', 'ma_ban_giao_ma_hoa'));
+        $this->getJson('/api/me/yeu-cau')->assertOk();
+        $this->getJson('/api/me/yeu-cau?loai=lich_hen')->assertOk();
+    }
+
+    public function test_default_group_list_hides_items_without_active_claims(): void
+    {
+        $this->yc->update(['trang_thai' => 'tu_choi']);
+        $this->actingAs($this->admin)->getJson('/api/admin/yeu-cau?nhom=1')->assertOk()->assertJsonPath('data.total', 0);
+        $this->actingAs($this->admin)->getJson('/api/admin/yeu-cau?nhom=1&trangThaiNhom=tu_choi')->assertOk()->assertJsonPath('data.total', 1);
+        $other = NguoiDung::create(['ho_ten' => 'Other', 'email' => 'other@test.vn', 'mat_khau' => 'password', 'vai_tro' => 'nguoi_dung', 'trang_thai' => 'hoat_dong']);
+        $claim = YeuCauNhanDo::create(['tin_dang_id' => $this->yc->tin_dang_id, 'nguoi_yeu_cau_id' => $other->id, 'trang_thai' => 'cho_kiem_tra']);
+        $this->actingAs($this->admin)->getJson('/api/admin/yeu-cau?nhom=1&trangThaiNhom=cho_duyet')->assertOk()->assertJsonPath('data.total', 1);
+        $claim->update(['trang_thai' => 'da_huy']);
+        $this->actingAs($this->admin)->getJson('/api/admin/yeu-cau?nhom=1')->assertOk()->assertJsonPath('data.total', 0);
+        $this->assertDatabaseHas('yeu_cau_nhan_do', ['id' => $this->yc->id]);
+    }
+
+    public function test_revoking_approval_is_blocked_until_appointment_expires(): void
+    {
+        $this->yc->update(['trang_thai' => 'da_xac_minh']);
+        $this->yc->tinDang->update(['trang_thai' => 'cho_ban_giao']);
+        $hen = $this->yc->cuocHen()->create(['trang_thai' => 'cho_xac_nhan', 'thoi_gian_hen_gap' => now()->addHour()]);
+        $hen->banGiao()->create(['ma_ban_giao' => '004282']);
+        $this->actingAs($this->admin)->patchJson('/api/admin/yeu-cau/'.$this->yc->id, ['hanhDong' => 'tu_choi', 'ghiChu' => 'Thu hồi do thông tin sai'])->assertConflict();
+        $this->assertSame('da_xac_minh', $this->yc->fresh()->trang_thai);
+        $this->assertSame('cho_xac_nhan', $hen->fresh()->trang_thai);
+        $hen->update(['thoi_gian_hen_gap' => now()->subHours(9)]);
+        $this->getJson('/api/admin/yeu-cau/'.$this->yc->id)->assertOk()->assertJsonPath('data.cuoc_hen.0.trang_thai', 'da_huy');
+        $this->actingAs($this->admin)->patchJson('/api/admin/yeu-cau/'.$this->yc->id, ['hanhDong' => 'tu_choi', 'ghiChu' => 'Thu hồi do thông tin sai'])->assertOk();
+        $this->assertSame('da_huy', $hen->fresh()->trang_thai);
+        $this->assertTrue($hen->fresh()->hanXacNhan()->isPast());
+        $this->assertSame('dang_mo', $this->yc->tinDang->fresh()->trang_thai);
+    }
+
+    private $admin;
+
+    private $user;
+
+    private $yc;
+
+    private $answer;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        config(['database.default' => 'sqlite', 'database.connections.sqlite.database' => ':memory:']);
+        DB::purge('sqlite');
+        $tables = [
+            'nguoi_dung' => ['ho_ten', 'email', 'mat_khau', 'vai_tro', 'trang_thai', 'so_dien_thoai'],
+            'tin_dang' => ['nguoi_dung_id', 'danh_muc_id', 'dia_diem_id', 'loai_tin', 'mo_ta', 'thoi_gian_xay_ra', 'co_gio_xay_ra', 'dia_diem_chi_tiet', 'tieu_de', 'trang_thai', 'trang_thai_kiem_duyet', 'thong_tin_lien_he', 'email_lien_he', 'tin_bao_mat_lien_quan_id'],
+            'danh_muc_do_vat' => ['ten_danh_muc', 'trang_thai', 'thu_tu'],
+            'hinh_anh_tin_dang' => ['tin_dang_id', 'duong_dan', 'pham_vi', 'thu_tu'],
+            'yeu_cau_nhan_do' => ['tin_dang_id', 'nguoi_yeu_cau_id', 'trang_thai', 'loi_nhan', 'ghi_chu_admin', 'nguoi_xu_ly_id', 'thoi_gian_xu_ly'],
+            'tra_loi_yeu_cau' => ['yeu_cau_id', 'ket_qua_doi_chieu', 'loi_khai_tin_dang_id'],
+            'loi_khai_tin_dang' => ['cau_hoi_phien_ban_id'],
+            'lich_su_cau_hoi' => ['du_lieu'],
+            'minh_chung_yeu_cau' => ['yeu_cau_id', 'duong_dan'],
+            'lich_su_yeu_cau' => ['yeu_cau_id', 'cuoc_hen_id', 'nguoi_thuc_hien_id', 'hanh_dong', 'trang_thai_cu', 'trang_thai_moi', 'noi_dung'],
+            'thong_bao' => ['nguoi_dung_id', 'tin_dang_id', 'yeu_cau_id', 'cuoc_hen_id', 'loai_thong_bao', 'tieu_de', 'noi_dung', 'thoi_gian_doc'],
+            'dia_diem' => ['ten_dia_diem', 'trang_thai'],
+            'cuoc_hen' => ['yeu_cau_id', 'nguoi_giu_do_id', 'nguoi_de_xuat_id', 'nguoi_xac_nhan_id', 'thoi_gian_xac_nhan', 'thoi_gian_hen_gap', 'dia_diem_id', 'trang_thai', 'ly_do_huy', 'nguoi_giu_xac_nhan_luc', 'nguoi_nhan_xac_nhan_luc'],
+            'ban_giao' => ['cuoc_hen_id', 'thoi_gian_ban_giao', 'ma_ban_giao_hash', 'ma_het_han_luc'],
+        ];
+        foreach ($tables as $name => $columns) {
+            Schema::create($name, function (Blueprint $t) use ($name, $columns) {
+                $t->id();
+                foreach ($columns as $c) {
+                    $t->text($c)->nullable();
+                }
+                if ($name === 'ban_giao') {
+                    $t->unique('ma_ban_giao_hash');
+                }
+                if ($name !== 'ban_giao') {
+                    $t->timestamps();
+                }
+                if (in_array($name, ['nguoi_dung', 'tin_dang'])) {
+                    $t->softDeletes();
+                }
+            });
+        }
+        (require database_path('migrations/2026_11_16_000002_add_encrypted_handover_code.php'))->up();
+        (require database_path('migrations/2026_11_17_000001_drop_encrypted_handover_code.php'))->up();
+        (require database_path('migrations/2026_11_18_000001_drop_handover_code_expiration.php'))->up();
+        (require database_path('migrations/2026_11_19_000001_store_plain_handover_code.php'))->up();
+        $this->admin = NguoiDung::create(['ho_ten' => 'Admin', 'email' => 'admin@test.vn', 'mat_khau' => 'password', 'vai_tro' => 'quan_tri', 'trang_thai' => 'hoat_dong']);
+        $this->user = NguoiDung::create(['ho_ten' => 'User', 'email' => 'user@test.vn', 'mat_khau' => 'password', 'vai_tro' => 'nguoi_dung', 'trang_thai' => 'hoat_dong']);
+        $tin = TinDang::create(['nguoi_dung_id' => $this->admin->id, 'tieu_de' => 'Ví', 'trang_thai' => 'dang_mo']);
+        $this->yc = YeuCauNhanDo::create(['tin_dang_id' => $tin->id, 'nguoi_yeu_cau_id' => $this->user->id, 'trang_thai' => 'cho_kiem_tra']);
+        $this->answer = $this->yc->traLoi()->create(['ket_qua_doi_chieu' => 'chua_danh_gia']);
+        DB::table('dia_diem')->insert(['ten_dia_diem' => 'Văn phòng', 'trang_thai' => 1]);
+    }
+
+    private function action($action, array $extra = [])
+    {
+        return $this->patchJson('/api/admin/yeu-cau/'.$this->yc->id, ['hanhDong' => $action, 'ghiChu' => 'Đã đối chiếu', ...$extra]);
+    }
+
+    public function test_admin_access_and_owner_scope(): void
+    {
+        $this->getJson('/api/admin/yeu-cau')->assertUnauthorized();
+        $this->actingAs($this->user)->getJson('/api/admin/yeu-cau')->assertForbidden();
+        $this->getJson('/api/me/yeu-cau')->assertOk()->assertJsonPath('data.total', 1)->assertJsonMissingPath('data.data.0.tra_loi');
+        $this->actingAs($this->admin)->getJson('/api/me/yeu-cau')->assertOk()->assertJsonPath('data.total', 0);
+        $this->getJson('/api/admin/yeu-cau')->assertOk()->assertJsonPath('data.total', 1);
+    }
+
+    public function test_group_counts_and_item_filter(): void
+    {
+        for ($i = 0; $i < 24; $i++) {
+            YeuCauNhanDo::create(['tin_dang_id' => $this->yc->tin_dang_id, 'nguoi_yeu_cau_id' => $this->user->id, 'trang_thai' => 'can_bo_sung']);
+        }
+        $other = TinDang::create(['nguoi_dung_id' => $this->admin->id, 'tieu_de' => 'Phone', 'trang_thai' => 'dang_mo']);
+        YeuCauNhanDo::create(['tin_dang_id' => $other->id, 'nguoi_yeu_cau_id' => $this->user->id, 'trang_thai' => 'cho_kiem_tra']);
+        $this->actingAs($this->admin);
+        $groups = $this->getJson('/api/admin/yeu-cau?nhom=1')->assertOk()->assertJsonPath('data.total', 2)->json('data.data');
+        $group = collect($groups)->firstWhere('tin_dang_id', $this->yc->tin_dang_id);
+        $this->assertEquals(25, $group['so_yeu_cau']);
+        $this->assertEquals(1, $group['cho_kiem_tra']);
+        $this->assertEquals(24, $group['can_bo_sung']);
+        $this->getJson('/api/admin/yeu-cau?tinDangId='.$this->yc->tin_dang_id)->assertOk()->assertJsonPath('data.total', 25)->assertJsonCount(20, 'data.data');
+        $this->getJson('/api/admin/yeu-cau?nhom=1&trangThai=can_bo_sung')->assertOk()->assertJsonPath('data.total', 1)->assertJsonPath('data.data.0.so_yeu_cau', 24);
+    }
+
+    public function test_danh_sach_chi_cho_nguoi_gui_huy_yeu_cau_chua_duyet(): void
+    {
+        $this->yc->tinDang->update(['loai_tin' => 'nhat_duoc']);
+        $urlDanhSach = '/api/me/yeu-cau';
+        $this->actingAs($this->user)->getJson($urlDanhSach)->assertOk()
+            ->assertJsonPath('data.data.0.coTheHuyYeuCau', true);
+
+        $this->approve();
+        $this->actingAs($this->user)->getJson($urlDanhSach)->assertOk()
+            ->assertJsonPath('data.data.0.coTheHuyYeuCau', false);
+        $this->postJson($urlDanhSach.'/'.$this->yc->id.'/huy')->assertConflict();
+
+        $nguoiKhac = NguoiDung::create([
+            'ho_ten' => 'Người nhận khác', 'email' => 'nguoi-khac@test.vn', 'mat_khau' => 'password',
+            'vai_tro' => 'nguoi_dung', 'trang_thai' => 'hoat_dong',
+        ]);
+        $tamDung = $this->yc->tinDang->yeuCauNhanDo()->create([
+            'nguoi_yeu_cau_id' => $nguoiKhac->id, 'trang_thai' => 'can_bo_sung',
+        ]);
+        $this->actingAs($nguoiKhac)->getJson($urlDanhSach)->assertOk()
+            ->assertJsonPath('data.data.0.coTheHuyYeuCau', true);
+        $this->postJson($urlDanhSach.'/'.$tamDung->id.'/huy')->assertOk();
+        $this->getJson($urlDanhSach)->assertOk()
+            ->assertJsonPath('data.data.0.trang_thai', 'da_huy')->assertJsonPath('data.data.0.coTheHuyYeuCau', false);
+        $this->assertSame('da_xac_minh', $this->yc->fresh()->trang_thai);
+        $this->assertSame('cho_ban_giao', $this->yc->tinDang->fresh()->trang_thai);
+    }
+
+    public function test_review_requires_matching_answers_and_rolls_back_foreign_answers(): void
+    {
+        $this->actingAs($this->admin);
+        $this->action('da_xac_minh')->assertUnprocessable();
+        $this->action('da_xac_minh', ['doiChieu' => [$this->answer->id => 'khop', 999 => 'khop']])->assertUnprocessable();
+        $this->assertSame('chua_danh_gia', $this->answer->fresh()->ket_qua_doi_chieu);
+        $this->action('da_xac_minh', ['doiChieu' => [$this->answer->id => 'khop']])->assertOk();
+        $this->assertSame('cho_ban_giao', $this->yc->tinDang->fresh()->trang_thai);
+        $other = YeuCauNhanDo::create(['tin_dang_id' => $this->yc->tin_dang_id, 'nguoi_yeu_cau_id' => $this->admin->id, 'trang_thai' => 'cho_kiem_tra']);
+        $other->traLoi()->create(['ket_qua_doi_chieu' => 'khop']);
+        $this->patchJson('/api/admin/yeu-cau/'.$other->id, ['hanhDong' => 'da_xac_minh', 'ghiChu' => 'Khớp'])->assertConflict();
+    }
+
+    public function test_supplement_action_is_no_longer_available(): void
+    {
+        $this->actingAs($this->admin);
+        $this->action('can_bo_sung')->assertUnprocessable();
+        $this->assertSame('cho_kiem_tra', $this->yc->fresh()->trang_thai);
+        $this->postJson('/api/me/yeu-cau/'.$this->yc->id.'/bo-sung', ['noiDung' => 'demo'])->assertNotFound();
+    }
+
+    public function test_retired_supplement_claims_return_to_review_without_losing_answers(): void
+    {
+        $this->yc->update(['trang_thai' => 'can_bo_sung', 'ghi_chu_admin' => 'Old feedback']);
+        $migration = require database_path('migrations/2026_11_09_000001_retire_claim_supplement_step.php');
+        $migration->up();
+        $this->assertSame('cho_kiem_tra', $this->yc->fresh()->trang_thai);
+        $this->assertNull($this->yc->fresh()->ghi_chu_admin);
+        $this->assertDatabaseHas('tra_loi_yeu_cau', ['id' => $this->answer->id]);
+        $this->assertDatabaseHas('lich_su_yeu_cau', ['yeu_cau_id' => $this->yc->id, 'hanh_dong' => 'chuyen_cho_duyet']);
+        $migration->up();
+        $this->assertSame(1, $this->yc->lichSu()->where('hanh_dong', 'chuyen_cho_duyet')->count());
+    }
+
+    public function test_evidence_route_requires_admin_and_correct_claim(): void
+    {
+        Storage::fake('minh-chung-yeu-cau');
+        Storage::disk('minh-chung-yeu-cau')->put('1/proof.png', base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aOAAAAABJRU5ErkJggg=='));
+        $photo = $this->yc->minhChung()->create(['duong_dan' => 'minh-chung-yeu-cau/1/proof.png']);
+        $url = '/api/admin/yeu-cau/'.$this->yc->id.'/anh/'.$photo->id;
+        $this->actingAs($this->user)->getJson($url)->assertForbidden();
+        $this->actingAs($this->admin)->get($url)->assertOk()->assertHeader('X-Content-Type-Options', 'nosniff');
+        $this->get('/api/admin/yeu-cau/999/anh/'.$photo->id)->assertNotFound();
+    }
+
+    public function test_approval_needs_no_reason_and_records_a_default_message(): void
+    {
+        $this->actingAs($this->admin)->patchJson('/api/admin/yeu-cau/'.$this->yc->id, [
+            'hanhDong' => 'da_xac_minh', 'doiChieu' => [$this->answer->id => 'khop'],
+        ])->assertOk()->assertJsonPath('data.trang_thai', 'da_xac_minh');
+        $this->assertSame('Yêu cầu nhận lại đồ đã được duyệt.', $this->yc->fresh()->ghi_chu_admin);
+        $this->assertDatabaseHas('thong_bao', ['nguoi_dung_id' => $this->user->id, 'noi_dung' => 'Yêu cầu nhận lại đồ đã được duyệt.']);
+    }
+
+    public function test_rejection_requires_nonblank_reason_and_preserves_it(): void
+    {
+        $this->actingAs($this->admin);
+        foreach ([null, '', '   '] as $reason) {
+            $this->action('tu_choi', ['ghiChu' => $reason])->assertUnprocessable();
+            $this->assertSame('cho_kiem_tra', $this->yc->fresh()->trang_thai);
+        }
+        $this->action('tu_choi', ['ghiChu' => '  Đặc điểm không khớp với đồ vật.  '])->assertOk();
+        $this->assertSame('Đặc điểm không khớp với đồ vật.', $this->yc->fresh()->ghi_chu_admin);
+        $this->assertSame('tu_choi', $this->yc->fresh()->trang_thai);
+    }
+
+    public function test_legacy_appointment_actions_are_disabled_and_approved_contact_is_readable(): void
+    {
+        $this->admin->update(['so_dien_thoai' => 'SECRET_PHONE']);
+        $this->actingAs($this->user)->getJson('/api/me/yeu-cau/'.$this->yc->id)->assertOk()->assertJsonPath('data.lienHe', null)->assertDontSee('SECRET_PHONE');
+        $this->approve();
+        $this->actingAs($this->user)->getJson('/api/me/yeu-cau/'.$this->yc->id)->assertOk()->assertJsonPath('data.lienHe.soDienThoai', 'SECRET_PHONE');
+        foreach (['de_xuat', 'xac_nhan', 'tu_choi', 'hoan_tat'] as $action) {
+            $this->postJson('/api/me/yeu-cau/'.$this->yc->id.'/cuoc-hen', ['hanhDong' => $action])->assertNotFound();
+        }
+        $this->assertDatabaseCount('cuoc_hen', 0);
+        $this->assertDatabaseCount('ban_giao', 0);
+        $this->assertSame('cho_ban_giao', $this->yc->tinDang->fresh()->trang_thai);
+        $this->actingAs($this->admin)->getJson('/api/me/yeu-cau')->assertOk()->assertJsonPath('data.total', 1);
+    }
+
+    public function test_admin_still_displays_historical_progress_and_global_statistics(): void
+    {
+        $this->approve();
+        $hen = $this->yc->cuocHen()->create(['nguoi_giu_do_id' => $this->admin->id, 'nguoi_de_xuat_id' => $this->user->id, 'dia_diem_id' => 1, 'thoi_gian_hen_gap' => now()->addDay(), 'trang_thai' => 'cho_xac_nhan']);
+        $this->getJson('/api/admin/yeu-cau?trangThai=cho_xac_nhan_lich')->assertOk()->assertJsonPath('data.data.0.tien_do', 'cho_xac_nhan_lich');
+        $hen->update(['trang_thai' => 'da_xac_nhan']);
+        $this->getJson('/api/admin/yeu-cau?trangThai=da_thong_nhat_lich')->assertOk()->assertJsonPath('data.total', 1);
+        $hen->update(['nguoi_nhan_xac_nhan_luc' => now()]);
+        $this->getJson('/api/admin/yeu-cau?trangThai=cho_xac_nhan_giao_nhan')->assertOk()->assertJsonPath('data.total', 1)->assertJsonPath('thongKe.dangGiaoNhan', 1);
+        $hen->update(['trang_thai' => 'da_hoan_tat', 'nguoi_giu_xac_nhan_luc' => now()]);
+        for ($i = 0; $i < 22; $i++) {
+            YeuCauNhanDo::create(['tin_dang_id' => $this->yc->tin_dang_id, 'nguoi_yeu_cau_id' => $this->user->id, 'trang_thai' => 'cho_kiem_tra']);
+        }
+        $this->getJson('/api/admin/yeu-cau?trangThai=da_hoan_tat')->assertOk()->assertJsonPath('data.total', 1)->assertJsonPath('data.data.0.tien_do', 'da_hoan_tat')->assertJsonPath('thongKe.tong', 23)->assertJsonPath('thongKe.hoanTat', 1)->assertJsonPath('thongKe.choKiemTra', 22);
+        $this->getJson('/api/admin/yeu-cau?tuKhoa=YC-0001')->assertOk()->assertJsonPath('data.total', 1);
+    }
+
+    public function test_main_status_groups_include_all_their_detailed_states(): void
+    {
+        foreach (['can_bo_sung', 'tu_choi', 'da_huy'] as $status) {
+            YeuCauNhanDo::create(['tin_dang_id' => $this->yc->tin_dang_id, 'nguoi_yeu_cau_id' => $this->user->id, 'trang_thai' => $status]);
+        }
+        $this->actingAs($this->admin)->getJson('/api/admin/yeu-cau?trangThai=nhom_cho_kiem_tra')->assertOk()->assertJsonPath('data.total', 2);
+        $this->getJson('/api/admin/yeu-cau?trangThai=nhom_tu_choi')->assertOk()->assertJsonPath('data.total', 2);
+        $this->approve();
+        $this->getJson('/api/admin/yeu-cau?trangThai=da_xac_minh')->assertOk()->assertJsonPath('data.total', 1);
+        $this->getJson('/api/admin/yeu-cau?trangThai=dang_giao_nhan')->assertOk()->assertJsonPath('data.total', 0)->assertJsonPath('thongKe.dangGiaoNhan', 0);
+        $hen = $this->yc->cuocHen()->create(['nguoi_giu_do_id' => $this->admin->id, 'nguoi_de_xuat_id' => $this->user->id, 'dia_diem_id' => 1, 'thoi_gian_hen_gap' => now()->addDay(), 'trang_thai' => 'cho_xac_nhan']);
+        foreach (['cho_xac_nhan', 'da_xac_nhan'] as $status) {
+            $hen->update(['trang_thai' => $status]);
+            $this->getJson('/api/admin/yeu-cau?trangThai=dang_giao_nhan')->assertOk()->assertJsonPath('data.total', 1)->assertJsonPath('thongKe.dangGiaoNhan', 1);
+        }
+        $hen->update(['nguoi_nhan_xac_nhan_luc' => now()]);
+        $this->getJson('/api/admin/yeu-cau?trangThai=dang_giao_nhan')->assertOk()->assertJsonPath('data.total', 1)->assertJsonPath('data.data.0.tien_do', 'cho_xac_nhan_giao_nhan');
+        $hen->update(['trang_thai' => 'da_hoan_tat']);
+        $this->getJson('/api/admin/yeu-cau?trangThai=dang_giao_nhan')->assertOk()->assertJsonPath('data.total', 0);
+        $this->getJson('/api/admin/yeu-cau?trangThai=da_hoan_tat')->assertOk()->assertJsonPath('data.total', 1);
+    }
+
+    public function test_approved_participants_can_schedule_and_only_the_other_account_can_confirm_at_the_meeting_time(): void
+    {
+        $this->travelTo(now()->startOfMinute());
+        $body = $this->lichHen();
+        $this->postJson('/api/me/cuoc-hen', $body)->assertUnauthorized();
+        $this->actingAs($this->user)->postJson('/api/me/cuoc-hen', $body)->assertConflict();
+        $this->assertDatabaseCount('cuoc_hen', 0);
+        $this->getJson('/api/me/yeu-cau')->assertOk()->assertJsonPath('data.data.0.coTheDatLich', false);
+        $this->getJson('/api/me/yeu-cau?loai=lich_hen')->assertOk()->assertJsonPath('data.total', 0);
+        $this->approve();
+        $this->actingAs($this->user)->getJson('/api/me/yeu-cau')->assertOk()->assertJsonPath('data.data.0.coTheDatLich', true);
+        $this->getJson('/api/me/yeu-cau?loai=lich_hen')->assertOk()->assertJsonPath('data.total', 0);
+        $nguoiNgoai = NguoiDung::create(['ho_ten' => 'Khách', 'email' => 'khach@test.vn', 'mat_khau' => 'password', 'vai_tro' => 'nguoi_dung', 'trang_thai' => 'hoat_dong']);
+        $tinMat = TinDang::create(['nguoi_dung_id' => $this->user->id, 'loai_tin' => 'bao_mat', 'trang_thai' => 'dang_mo']);
+        $tinKhac = TinDang::create(['nguoi_dung_id' => $this->user->id, 'loai_tin' => 'bao_mat', 'trang_thai' => 'dang_mo']);
+        $tinNguoiNgoai = TinDang::create(['nguoi_dung_id' => $nguoiNgoai->id, 'loai_tin' => 'bao_mat', 'trang_thai' => 'dang_mo']);
+        $this->yc->tinDang->update(['loai_tin' => 'nhat_duoc']);
+        (require database_path('migrations/2026_11_10_000003_create_doi_chieu_tin_dang.php'))->up();
+        DB::table('doi_chieu_tin_dang')->insert([
+            ['tin_nhat_id' => $this->yc->tin_dang_id, 'tin_mat_id' => $tinMat->id],
+            ['tin_nhat_id' => $this->yc->tin_dang_id, 'tin_mat_id' => $tinNguoiNgoai->id],
+        ]);
+        (require database_path('migrations/2026_11_16_000003_drop_doi_chieu_tin_dang.php'))->up();
+        $this->assertFalse(Schema::hasTable('doi_chieu_tin_dang'));
+        $this->assertDatabaseHas('tin_dang', ['id' => $this->yc->tin_dang_id, 'tin_bao_mat_lien_quan_id' => $tinMat->id]);
+        $this->actingAs($nguoiNgoai)->postJson('/api/me/cuoc-hen', $body)->assertNotFound();
+        $this->actingAs($this->user)->postJson('/api/me/cuoc-hen', [...$body, 'diaDiemId' => 999])->assertUnprocessable();
+        $this->postJson('/api/me/cuoc-hen', $this->lichHen(-1))->assertUnprocessable();
+        $ketQua = $this->postJson('/api/me/cuoc-hen', $body)->assertCreated()->assertHeader('Cache-Control', 'no-store, private')->json('data');
+        $ma = $ketQua['ma'];
+        $this->assertMatchesRegularExpression('/^[0-9]{6}$/', $ma);
+        $hen = $this->yc->cuocHen()->findOrFail($ketQua['cuocHenId']);
+        $this->assertSame($ma, $hen->banGiao->ma_ban_giao);
+        $this->assertFalse(Schema::hasColumn('ban_giao', 'ma_ban_giao_ma_hoa'));
+        $this->assertArrayNotHasKey('ma_ban_giao', $hen->banGiao->toArray());
+        $this->assertTrue($hen->thoi_gian_hen_gap->eq(now()->addHour()));
+        $this->assertFalse(Schema::hasColumn('ban_giao', 'ma_het_han_luc'));
+        $this->assertSame($hen->thoi_gian_hen_gap->copy()->addHours(8)->toISOString(), $ketQua['hetHanLuc']);
+        $this->assertDatabaseHas('thong_bao', ['nguoi_dung_id' => $this->admin->id, 'cuoc_hen_id' => $hen->id, 'loai_thong_bao' => 'tao_cuoc_hen']);
+        $this->getJson('/api/me/yeu-cau/'.$this->yc->id)->assertOk()->assertJsonPath('data.coTheDatLich', false)
+            ->assertJsonPath('data.cuoc_hen.0.dungMaBanGiao', true)
+            ->assertJsonPath('data.cuoc_hen.0.coTheXemMaBanGiao', true)
+            ->assertJsonPath('data.cuoc_hen.0.hetHanLuc', $ketQua['hetHanLuc'])
+            ->assertJsonMissingPath('data.cuoc_hen.0.ma')
+            ->assertJsonMissingPath('data.cuoc_hen.0.ban_giao.ma_ban_giao');
+        $this->getJson('/api/me/yeu-cau?loai=lich_hen')->assertOk()
+            ->assertJsonPath('data.total', 1)->assertJsonPath('data.data.0.cuoc_hen.0.id', $hen->id)
+            ->assertJsonMissingPath('data.data.0.cuoc_hen.0.ma');
+        $urlMa = "/api/me/yeu-cau/{$this->yc->id}/cuoc-hen/{$hen->id}/ma-ban-giao";
+        $this->getJson($urlMa)->assertOk()->assertJsonPath('data.ma', $ma);
+        $url = '/api/me/cuoc-hen/xac-nhan-ban-giao';
+        $duLieuXacNhan = ['cuocHenId' => $hen->id, 'ma' => $ma];
+        $this->postJson($url, $duLieuXacNhan)->assertUnprocessable();
+        $this->actingAs($nguoiNgoai)->getJson($urlMa)->assertNotFound();
+        $this->actingAs($nguoiNgoai)->postJson($url, $duLieuXacNhan)->assertUnprocessable();
+        $this->actingAs($this->admin);
+        $this->actingAs($this->admin)->postJson('/api/me/cuoc-hen', $this->lichHen(2))->assertConflict()
+            ->assertJsonPath('daCoLich', true)
+            ->assertJsonPath('yeuCauId', $this->yc->id)
+            ->assertJsonPath('cuocHenId', $hen->id)
+            ->assertJsonMissingPath('ma')->assertJsonMissingPath('data.ma');
+        $this->assertDatabaseCount('cuoc_hen', 1);
+        $this->assertSame(1, $hen->thongBao()->where('loai_thong_bao', 'tao_cuoc_hen')->count());
+        $this->getJson('/api/thong-bao')->assertOk()
+            ->assertJsonPath('data.0.tieuDe', 'Có cuộc hẹn bàn giao')
+            ->assertJsonPath('data.0.duongDan', '/chi-tiet-yeu-cau?id='.$this->yc->id.'&tab=lich-hen&cuocHen='.$hen->id);
+        $this->getJson('/api/admin/yeu-cau?trangThai=cho_xac_nhan_giao_nhan')->assertOk()->assertJsonPath('data.total', 1);
+        $this->postJson($url, $duLieuXacNhan)->assertConflict();
+        $this->travelTo($hen->thoi_gian_hen_gap);
+        $this->postJson($url, $duLieuXacNhan)->assertOk()->assertJsonPath('yeuCauId', $this->yc->id);
+        $this->postJson($url, $duLieuXacNhan)->assertOk();
+        $hen->refresh();
+        $this->assertSame('da_hoan_tat', $hen->trang_thai);
+        $this->assertSame('da_hoan_tat', $this->yc->tinDang->fresh()->trang_thai);
+        $this->assertTrue($hen->nguoi_giu_xac_nhan_luc->eq($hen->nguoi_nhan_xac_nhan_luc));
+        $this->assertSame($ma, $hen->banGiao->ma_ban_giao);
+        $this->assertSame((int) $this->admin->id, (int) $hen->nguoi_xac_nhan_id);
+        $this->assertTrue($hen->banGiao->thoi_gian_ban_giao->eq($hen->thoi_gian_xac_nhan));
+        $this->assertSame(2, $hen->thongBao()->where('loai_thong_bao', 'xac_nhan_ban_giao')->count());
+        $this->assertSame(1, $hen->lichSuYeuCau()->where('hanh_dong', 'xac_nhan_ban_giao')->count());
+        $this->assertDatabaseHas('tin_dang', ['id' => $this->yc->tin_dang_id, 'trang_thai' => 'da_hoan_tat', 'tin_bao_mat_lien_quan_id' => $tinMat->id]);
+        $this->assertSame('da_hoan_tat', $tinMat->fresh()->trang_thai);
+        $this->assertSame('dang_mo', $tinKhac->fresh()->trang_thai);
+        $this->assertSame('dang_mo', $tinNguoiNgoai->fresh()->trang_thai);
+        foreach ([$this->user, $this->admin] as $taiKhoan) {
+            $this->actingAs($taiKhoan)->getJson('/api/me/yeu-cau/'.$this->yc->id)->assertOk()
+                ->assertJsonPath('data.cuoc_hen.0.id', $hen->id)
+                ->assertJsonPath('data.cuoc_hen.0.trang_thai', 'da_hoan_tat');
+            $this->getJson('/api/thong-bao')->assertOk()
+                ->assertJsonPath('data.0.tieuDe', 'Bàn giao đồ thành công')
+                ->assertJsonPath('data.0.noiDung', 'Hai bên đã xác nhận bàn giao thành công.')
+                ->assertJsonPath('data.0.duongDan', '/chi-tiet-yeu-cau?id='.$this->yc->id.'&tab=lich-hen&cuocHen='.$hen->id);
+        }
+        $this->actingAs($this->user)->getJson($urlMa)->assertConflict()->assertJsonMissingPath('data.ma');
+        $this->actingAs($this->admin);
+        $lichQuanTri = '/api/admin/lich-hen?'.http_build_query([
+            'trangThai' => 'da_hoan_tat', 'ngay' => substr($body['thoiGianHen'], 0, 10), 'tuKhoa' => 'Ví',
+        ]);
+        $this->getJson($lichQuanTri)->assertOk()->assertJsonPath('data.total', 1)
+            ->assertJsonPath('data.data.0.id', $hen->id)
+            ->assertJsonPath('data.data.0.nguoi_nhan.ho_ten', $this->user->ho_ten)
+            ->assertJsonMissingPath('data.data.0.ban_giao.ma_ban_giao');
+        $this->getJson('/api/admin/yeu-cau?nhom=1&trangThaiNhom=hoan_tat')->assertOk()
+            ->assertJsonPath('data.total', 1)->assertJsonPath('data.data.0.lich_hen.id', $hen->id);
+        $this->getJson('/api/admin/yeu-cau?nhom=1&trangThaiNhom=cho_duyet')->assertOk()->assertJsonPath('data.total', 0);
+        $this->actingAs($this->user)->getJson($lichQuanTri)->assertForbidden();
+    }
+
+    public function test_ma_chi_duoc_doi_chieu_voi_cuoc_hen_da_chon(): void
+    {
+        $this->travelTo(now()->startOfMinute());
+        $this->approve();
+        $tin = TinDang::create([
+            'nguoi_dung_id' => $this->admin->id, 'tieu_de' => 'Chìa khóa', 'loai_tin' => 'nhat_duoc',
+            'trang_thai' => 'dang_mo', 'trang_thai_kiem_duyet' => 'hien_thi',
+        ]);
+        $yeuCauHai = $tin->yeuCauNhanDo()->create(['nguoi_yeu_cau_id' => $this->user->id, 'trang_thai' => 'da_xac_minh']);
+        $this->actingAs($this->admin);
+        $lichMot = $this->postJson('/api/me/cuoc-hen', $this->lichHen())->assertCreated()->json('data');
+        $lichHai = $this->postJson('/api/me/cuoc-hen', [...$this->lichHen(2), 'yeuCauId' => $yeuCauHai->id])->assertCreated()->json('data');
+
+        $urlDanhSach = '/api/me/cuoc-hen/cho-nhap-ma';
+        $this->getJson($urlDanhSach)->assertOk()->assertJsonCount(0, 'data');
+        $this->actingAs($this->user)->getJson($urlDanhSach)->assertOk()->assertJsonCount(2, 'data')
+            ->assertJsonPath('data.0.id', $lichMot['cuocHenId'])->assertJsonPath('data.0.diaDiem', 'Văn phòng')
+            ->assertJsonPath('data.1.id', $lichHai['cuocHenId'])->assertJsonPath('data.1.tieuDe', 'Chìa khóa')
+            ->assertJsonMissingPath('data.0.ma')->assertJsonMissingPath('data.0.ma_ban_giao');
+
+        $this->travel(2)->hours();
+        $urlXacNhan = '/api/me/cuoc-hen/xac-nhan-ban-giao';
+        $this->postJson($urlXacNhan, ['ma' => $lichMot['ma']])->assertUnprocessable()->assertJsonValidationErrors('cuocHenId');
+        $this->postJson($urlXacNhan, ['cuocHenId' => $lichHai['cuocHenId'], 'ma' => $lichMot['ma']])->assertUnprocessable();
+        $this->assertDatabaseCount('cuoc_hen', 2);
+        $this->assertDatabaseMissing('cuoc_hen', ['trang_thai' => 'da_hoan_tat']);
+        $this->postJson($urlXacNhan, ['cuocHenId' => $lichMot['cuocHenId'], 'ma' => $lichMot['ma']])->assertOk()
+            ->assertJsonPath('cuocHenId', $lichMot['cuocHenId']);
+        $this->getJson($urlDanhSach)->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.id', $lichHai['cuocHenId']);
+    }
+
+    public function test_expired_appointment_is_cancelled_on_use_or_read_and_either_side_can_rebook(): void
+    {
+        $this->travelTo(now()->startOfMinute());
+        $this->approve();
+        $lich = $this->actingAs($this->admin)->postJson('/api/me/cuoc-hen', $this->lichHen())->assertCreated()->json('data');
+        $urlMa = "/api/me/yeu-cau/{$this->yc->id}/cuoc-hen/{$lich['cuocHenId']}/ma-ban-giao";
+        $hen = $this->yc->cuocHen()->findOrFail($lich['cuocHenId']);
+        $hanXacNhan = $hen->thoi_gian_hen_gap->copy()->addHours(8);
+        $urlDanhSach = '/api/me/cuoc-hen/cho-nhap-ma';
+        $this->travelTo($hanXacNhan->copy()->subSecond());
+        $this->actingAs($this->user)->getJson($urlDanhSach)->assertOk()->assertJsonPath('data.0.id', $hen->id);
+        $this->travelTo($hanXacNhan);
+        $this->getJson($urlDanhSach)->assertOk()->assertJsonCount(0, 'data');
+        $this->actingAs($this->admin)->getJson($urlMa)->assertConflict()->assertJsonMissingPath('data.ma');
+        $url = '/api/me/cuoc-hen/xac-nhan-ban-giao';
+        $this->actingAs($this->user)->postJson($url, ['cuocHenId' => $lich['cuocHenId'], 'ma' => $lich['ma']])
+            ->assertConflict()->assertJsonPath('hetHan', true)
+            ->assertJsonPath('message', 'Cuộc hẹn đã hết hạn xác nhận. Vui lòng đặt lịch mới.');
+        $this->assertDatabaseHas('cuoc_hen', ['id' => $hen->id, 'trang_thai' => 'da_huy']);
+        $this->assertDatabaseHas('ban_giao', ['cuoc_hen_id' => $hen->id, 'thoi_gian_ban_giao' => null]);
+        $this->getJson('/api/me/yeu-cau/'.$this->yc->id)->assertOk()->assertJsonPath('data.coTheDatLich', true);
+        $lichMoi = $this->postJson('/api/me/cuoc-hen', $this->lichHen())->assertCreated()->json('data');
+        $this->travel(9)->hours();
+        $this->getJson('/api/me/yeu-cau')->assertOk()->assertJsonPath('data.data.0.coTheDatLich', false)
+            ->assertJsonPath('data.data.0.trang_thai', 'da_huy')->assertJsonPath('data.data.0.tin_dang.trang_thai', 'dang_mo');
+        $this->assertDatabaseHas('cuoc_hen', ['id' => $lichMoi['cuocHenId'], 'trang_thai' => 'da_huy']);
+        $this->actingAs($this->admin)->postJson($url, ['cuocHenId' => $lichMoi['cuocHenId'], 'ma' => $lichMoi['ma']])
+            ->assertConflict()->assertJsonPath('hetHan', true);
+        $this->assertSame('dang_mo', $this->yc->tinDang->fresh()->trang_thai);
+    }
+
+    public function test_two_cancelled_appointments_cancel_only_their_claim_and_block_third_booking(): void
+    {
+        $this->approve();
+        $other = YeuCauNhanDo::create(['tin_dang_id' => $this->yc->tin_dang_id, 'nguoi_yeu_cau_id' => $this->admin->id, 'trang_thai' => 'cho_kiem_tra']);
+        $first = $this->actingAs($this->user)->postJson('/api/me/cuoc-hen', $this->lichHen())->assertCreated()->json('data');
+        $this->yc->cuocHen()->findOrFail($first['cuocHenId'])->update(['trang_thai' => 'da_huy']);
+        $this->assertSame('da_xac_minh', $this->yc->fresh()->trang_thai);
+        $second = $this->actingAs($this->admin)->postJson('/api/me/cuoc-hen', $this->lichHen())->assertCreated()->json('data');
+        $hen = $this->yc->cuocHen()->findOrFail($second['cuocHenId']);
+        $hen->update(['trang_thai' => 'da_huy']);
+        $this->assertSame('da_huy', $this->yc->fresh()->trang_thai);
+        $this->assertSame('dang_mo', $this->yc->tinDang->fresh()->trang_thai);
+        $this->assertSame('cho_kiem_tra', $other->fresh()->trang_thai);
+        $this->actingAs($this->user)->postJson('/api/me/cuoc-hen', $this->lichHen())->assertConflict();
+        $this->assertSame(2, $this->yc->cuocHen()->count());
+        $this->getJson('/api/me/yeu-cau/'.$this->yc->id)->assertOk()->assertJsonPath('data.coTheDatLich', false)
+            ->assertJsonPath('data.ghi_chu_admin', \App\Services\XuLyCuocHen::HET_LUOT_HEN);
+        $this->getJson('/api/me/yeu-cau')->assertOk();
+        $this->assertSame(1, $this->yc->lichSu()->where('hanh_dong', 'huy_yeu_cau_het_luot_hen')->count());
+        $this->assertSame(2, $this->yc->thongBao()->where('loai_thong_bao', 'huy_yeu_cau_het_luot_hen')->count());
+    }
+
+    public function test_third_booking_attempt_commits_second_expiry_and_cancellation(): void
+    {
+        $this->approve();
+        $this->actingAs($this->user)->postJson('/api/me/cuoc-hen', $this->lichHen())->assertCreated();
+        $this->yc->cuocHen()->first()->update(['trang_thai' => 'da_huy']);
+        $this->postJson('/api/me/cuoc-hen', $this->lichHen())->assertCreated();
+        $this->travel(10)->hours();
+        $this->postJson('/api/me/cuoc-hen', $this->lichHen())->assertConflict()->assertJsonPath('hetLuotHen', true);
+        $this->assertSame('da_huy', $this->yc->fresh()->trang_thai);
+        $this->assertSame('dang_mo', $this->yc->tinDang->fresh()->trang_thai);
+        $this->assertSame(2, $this->yc->cuocHen()->where('trang_thai', 'da_huy')->count());
+    }
+
+    public function test_second_appointment_can_complete_without_cancelling_claim(): void
+    {
+        $this->approve();
+        $this->actingAs($this->user)->postJson('/api/me/cuoc-hen', $this->lichHen())->assertCreated();
+        $this->yc->cuocHen()->first()->update(['trang_thai' => 'da_huy']);
+        $second = $this->postJson('/api/me/cuoc-hen', $this->lichHen())->assertCreated()->json('data');
+        $this->travel(2)->hours();
+        $this->actingAs($this->admin)->postJson('/api/me/cuoc-hen/xac-nhan-ban-giao', ['cuocHenId' => $second['cuocHenId'], 'ma' => $second['ma']])->assertOk();
+        $this->assertSame('da_xac_minh', $this->yc->fresh()->trang_thai);
+        $this->assertSame('da_hoan_tat', $this->yc->tinDang->fresh()->trang_thai);
+    }
+
+    public function test_direct_lost_item_booking_cannot_reactivate_claim_after_two_cancellations(): void
+    {
+        $tin = TinDang::create(['nguoi_dung_id' => $this->admin->id, 'loai_tin' => 'bao_mat', 'tieu_de' => 'Ví báo mất', 'trang_thai' => 'dang_mo', 'trang_thai_kiem_duyet' => 'hien_thi']);
+        $url = '/api/tin-dang/'.$tin->id.'/lich-tra-do';
+        $body = $this->lichHen();
+        unset($body['yeuCauId']);
+        $first = $this->actingAs($this->user)->postJson($url, $body)->assertCreated()->json('data');
+        $yc = YeuCauNhanDo::findOrFail($first['yeuCauId']);
+        $yc->cuocHen()->first()->update(['trang_thai' => 'da_huy']);
+        $this->postJson($url, $body)->assertCreated();
+        $this->travel(10)->hours();
+        $body['thoiGianHen'] = $this->lichHen()['thoiGianHen'];
+        $this->postJson($url, $body)->assertConflict()->assertJsonPath('data.hetLuotHen', true);
+        $this->assertSame('da_huy', $yc->fresh()->trang_thai);
+        $this->assertSame('dang_mo', $tin->fresh()->trang_thai);
+        $this->assertSame(2, $yc->cuocHen()->count());
+    }
+
+    public function test_nguoi_tao_xem_lai_cung_ma_va_nguoi_con_lai_xac_nhan(): void
+    {
+        $this->travelTo(now()->startOfMinute());
+        $this->approve();
+        $lich = $this->actingAs($this->user)->postJson('/api/me/cuoc-hen', $this->lichHen())->assertCreated()->json('data');
+        $hen = $this->yc->cuocHen()->findOrFail($lich['cuocHenId']);
+        $hen->banGiao->update(['ma_ban_giao' => '004281']);
+        $urlChiTiet = '/api/me/yeu-cau/'.$this->yc->id;
+        $urlMa = $urlChiTiet.'/cuoc-hen/'.$hen->id.'/ma-ban-giao';
+
+        $this->getJson($urlChiTiet)->assertOk()
+            ->assertJsonPath('data.cuoc_hen.0.coTheXemMaBanGiao', true)
+            ->assertJsonMissingPath('data.cuoc_hen.0.ma');
+        $this->getJson($urlMa)->assertOk()->assertHeader('Cache-Control', 'no-store, private')
+            ->assertJsonPath('data.ma', '004281')->assertJsonPath('data.hetHanLuc', $lich['hetHanLuc']);
+        $this->getJson($urlMa)->assertOk()->assertJsonPath('data.ma', '004281');
+        $this->postJson($urlMa)->assertMethodNotAllowed();
+        $this->actingAs($this->admin)->getJson($urlMa)->assertNotFound();
+        $this->getJson($urlChiTiet)->assertOk()->assertJsonPath('data.cuoc_hen.0.coTheXemMaBanGiao', false);
+        $this->travelTo($hen->thoi_gian_hen_gap);
+        $urlXacNhan = '/api/me/cuoc-hen/xac-nhan-ban-giao';
+        $this->postJson($urlXacNhan, ['cuocHenId' => $hen->id, 'ma' => '428100'])->assertUnprocessable();
+        $this->postJson($urlXacNhan, ['cuocHenId' => $hen->id, 'ma' => '004281'])->assertOk();
+        $this->actingAs($this->user)->getJson($urlMa)->assertConflict()->assertJsonMissingPath('data.ma');
+        $this->assertDatabaseCount('cuoc_hen', 1);
+        $this->assertDatabaseCount('ban_giao', 1);
+    }
+
+    public function test_migration_chuyen_ma_bam_cu_sang_ma_sau_so(): void
+    {
+        Schema::table('ban_giao', function (Blueprint $t) {
+            $t->dropColumn('ma_ban_giao');
+            $t->char('ma_ban_giao_hash', 64)->nullable()->unique();
+        });
+        $id = DB::table('ban_giao')->insertGetId([
+            'cuoc_hen_id' => 1, 'ma_ban_giao_hash' => str_repeat('a', 64),
+            'thoi_gian_ban_giao' => '2026-11-18 10:00:00',
+        ]);
+        $idKhongMa = DB::table('ban_giao')->insertGetId(['cuoc_hen_id' => 2]);
+        (require database_path('migrations/2026_11_19_000001_store_plain_handover_code.php'))->up();
+
+        $this->assertFalse(Schema::hasColumn('ban_giao', 'ma_ban_giao_hash'));
+        $this->assertMatchesRegularExpression('/^[0-9]{6}$/', DB::table('ban_giao')->where('id', $id)->value('ma_ban_giao'));
+        $this->assertDatabaseHas('ban_giao', ['id' => $id, 'thoi_gian_ban_giao' => '2026-11-18 10:00:00']);
+        $this->assertNull(DB::table('ban_giao')->where('id', $idKhongMa)->value('ma_ban_giao'));
+    }
+
+    private function lichHen(int $sauGio = 1): array
+    {
+        return ['yeuCauId' => $this->yc->id, 'diaDiemId' => 1, 'thoiGianHen' => now()->addHours($sauGio)->setTimezone('Asia/Ho_Chi_Minh')->format('Y-m-d H:i')];
+    }
+
+    public function test_tao_lich_tra_do_truc_tiep_khong_can_tin_nhat_va_admin_duyet(): void
+    {
+        $this->travelTo(now()->startOfMinute());
+        $tin = TinDang::create(['nguoi_dung_id' => $this->admin->id, 'loai_tin' => 'bao_mat',
+            'tieu_de' => 'Ví báo mất', 'trang_thai' => 'dang_mo', 'trang_thai_kiem_duyet' => 'hien_thi',
+            'thong_tin_lien_he' => '0901234567']);
+        $url = '/api/tin-dang/'.$tin->id.'/lich-tra-do';
+        $body = $this->lichHen();
+        unset($body['yeuCauId']);
+        $this->postJson($url, $body)->assertUnauthorized();
+        $this->actingAs($this->admin)->postJson($url, $body)->assertForbidden();
+        $this->actingAs($this->user)->postJson($url, [...$body, 'diaDiemId' => 999])->assertUnprocessable();
+        $this->assertSame(0, $tin->yeuCauNhanDo()->count());
+        $ketQua = $this->postJson($url, $body)->assertCreated()->json('data');
+        $ycId = $ketQua['yeuCauId'];
+        $this->assertDatabaseHas('yeu_cau_nhan_do', ['id' => $ycId, 'tin_dang_id' => $tin->id,
+            'nguoi_yeu_cau_id' => $this->user->id, 'nguoi_xu_ly_id' => $this->user->id, 'trang_thai' => 'da_xac_minh']);
+        $this->assertDatabaseHas('cuoc_hen', ['id' => $ketQua['cuocHenId'], 'nguoi_giu_do_id' => $this->user->id]);
+        $this->postJson($url, $body)->assertConflict()->assertJsonPath('data.daCoLich', true)
+            ->assertJsonMissingPath('data.ma');
+        $this->assertSame(1, $tin->yeuCauNhanDo()->count());
+        $this->assertDatabaseCount('cuoc_hen', 1);
+        $this->getJson('/api/me/yeu-cau/'.$ycId)->assertOk()->assertJsonPath('data.laNguoiGiu', true)
+            ->assertJsonPath('data.lienHe.soDienThoai', '0901234567');
+        $this->actingAs($this->admin)->getJson('/api/me/yeu-cau/'.$ycId)->assertOk()
+            ->assertJsonPath('data.laNguoiGiu', false)->assertJsonPath('data.lienHe.hoTen', 'User');
+        $this->getJson('/api/thong-bao')->assertOk()->assertJsonPath('data.0.duongDan',
+            '/chi-tiet-yeu-cau?id='.$ycId.'&tab=lich-hen&cuocHen='.$ketQua['cuocHenId']);
+        $this->getJson('/api/admin/lich-hen')->assertOk()->assertJsonPath('data.data.0.nguoi_giu.ho_ten', 'User')
+            ->assertJsonPath('data.data.0.nguoi_nhan.ho_ten', 'Admin');
+        $this->getJson('/api/admin/yeu-cau?nhom=1&trangThaiNhom=cho_ban_giao')->assertOk()
+            ->assertJsonPath('data.total', 0)->assertJsonPath('thongKe.tong', 1)
+            ->assertJsonPath('thongKe.dangGiaoNhan', 0);
+        $this->getJson('/api/admin/yeu-cau?tinDangId='.$tin->id)->assertOk()->assertJsonPath('data.total', 0);
+        $this->getJson('/api/admin/yeu-cau?nhom=1')->assertOk()->assertJsonPath('data.total', 1)
+            ->assertJsonPath('data.data.0.tin_dang_id', (string) $this->yc->tin_dang_id);
+        $duLieuXacNhan = ['cuocHenId' => $ketQua['cuocHenId'], 'ma' => $ketQua['ma']];
+        $this->postJson('/api/me/cuoc-hen/xac-nhan-ban-giao', $duLieuXacNhan)->assertConflict();
+        $this->travel(1)->hours();
+        $this->postJson('/api/me/cuoc-hen/xac-nhan-ban-giao', $duLieuXacNhan)->assertOk();
+        $this->assertSame('da_hoan_tat', $tin->fresh()->trang_thai);
+    }
+
+    public function test_lich_tra_do_chan_tin_an_dong_va_nguoi_thu_ba_nhung_cho_dat_lai_khi_het_han(): void
+    {
+        $this->travelTo(now()->startOfMinute());
+        $tin = TinDang::create(['nguoi_dung_id' => $this->admin->id, 'loai_tin' => 'bao_mat',
+            'tieu_de' => 'Ví', 'trang_thai' => 'dang_mo', 'trang_thai_kiem_duyet' => 'hien_thi']);
+        $url = '/api/tin-dang/'.$tin->id.'/lich-tra-do';
+        $body = $this->lichHen();
+        $this->actingAs($this->user);
+        $tin->update(['trang_thai_kiem_duyet' => 'da_an']);
+        $this->postJson($url, $body)->assertNotFound();
+        $tin->update(['trang_thai_kiem_duyet' => 'hien_thi', 'trang_thai' => 'da_dong']);
+        $this->postJson($url, $body)->assertConflict();
+        $tin->update(['trang_thai' => 'dang_mo', 'loai_tin' => 'nhat_duoc']);
+        $this->postJson($url, $body)->assertConflict();
+        $tin->update(['loai_tin' => 'bao_mat']);
+        $this->postJson($url, $this->lichHen(-1))->assertUnprocessable();
+        $this->assertSame(0, $tin->yeuCauNhanDo()->count());
+        $cu = $this->postJson($url, $body)->assertCreated()->json('data');
+        $nguoiKhac = NguoiDung::create(['ho_ten' => 'Khách', 'email' => 'khac@test.vn', 'mat_khau' => 'password',
+            'vai_tro' => 'nguoi_dung', 'trang_thai' => 'hoat_dong']);
+        $this->actingAs($nguoiKhac)->postJson($url, $body)->assertConflict()->assertJsonMissingPath('data.ma');
+        $this->getJson('/api/me/yeu-cau/'.$cu['yeuCauId'])->assertNotFound();
+        $this->travel(9)->hours();
+        $moi = $this->postJson($url, $this->lichHen())->assertCreated()->json('data');
+        $this->assertNotSame($cu['yeuCauId'], $moi['yeuCauId']);
+        $this->assertDatabaseHas('yeu_cau_nhan_do', ['id' => $cu['yeuCauId'], 'trang_thai' => 'da_huy']);
+        $this->assertDatabaseHas('cuoc_hen', ['id' => $cu['cuocHenId'], 'trang_thai' => 'da_huy']);
+    }
+
+    public function test_categories_filter_groups_before_pagination(): void
+    {
+        DB::table('danh_muc_do_vat')->insert(['id' => 1, 'ten_danh_muc' => 'Ví']);
+        DB::table('danh_muc_do_vat')->insert(['id' => 2, 'ten_danh_muc' => 'Điện tử']);
+        $this->yc->tinDang->update(['danh_muc_id' => 1]);
+        $other = TinDang::create(['nguoi_dung_id' => $this->admin->id, 'danh_muc_id' => 2, 'tieu_de' => 'Phone', 'trang_thai' => 'dang_mo']);
+        YeuCauNhanDo::create(['tin_dang_id' => $other->id, 'nguoi_yeu_cau_id' => $this->user->id, 'trang_thai' => 'cho_kiem_tra']);
+        $this->actingAs($this->admin)->getJson('/api/admin/yeu-cau?nhom=1&danhMucId=1')->assertOk()->assertJsonPath('data.total', 1)->assertJsonPath('data.data.0.tin_dang.danh_muc.ten_danh_muc', 'Ví');
+        $this->getJson('/api/admin/yeu-cau?nhom=1&danhMucId=2')->assertOk()->assertJsonPath('data.total', 1)->assertJsonPath('data.data.0.tin_dang.tieu_de', 'Phone');
+        $this->getJson('/api/admin/yeu-cau?danhMucId=invalid')->assertUnprocessable();
+    }
+
+    public function test_other_claims_wait_then_reopen_or_close_with_the_item(): void
+    {
+        $other = YeuCauNhanDo::create(['tin_dang_id' => $this->yc->tin_dang_id, 'nguoi_yeu_cau_id' => $this->user->id, 'trang_thai' => 'cho_kiem_tra']);
+        $other->traLoi()->create(['ket_qua_doi_chieu' => 'khop']);
+        $this->approve();
+        $url = '/api/admin/yeu-cau/'.$other->id;
+        $this->getJson($url)->assertOk()->assertJsonPath('data.trang_thai_xu_ly', 'tam_cho_ban_giao');
+        $this->getJson('/api/admin/yeu-cau?trangThai=tam_cho_ban_giao')->assertOk()->assertJsonPath('data.total', 1);
+        $this->getJson('/api/admin/yeu-cau?trangThai=san_sang_duyet')->assertOk()->assertJsonPath('data.total', 0);
+        $this->getJson('/api/admin/yeu-cau?trangThai=nhom_da_duyet')->assertOk()->assertJsonPath('data.total', 1);
+        $this->patchJson($url, ['hanhDong' => 'da_xac_minh'])->assertConflict();
+        $this->action('tu_choi')->assertOk();
+        $this->getJson($url)->assertOk()->assertJsonPath('data.trang_thai_xu_ly', 'cho_kiem_tra');
+        $this->getJson('/api/admin/yeu-cau?trangThai=san_sang_duyet')->assertOk()->assertJsonPath('data.total', 1);
+        $this->patchJson($url, ['hanhDong' => 'da_xac_minh'])->assertOk();
+        $this->yc->refresh()->update(['trang_thai' => 'cho_kiem_tra']);
+        $this->yc->tinDang->update(['trang_thai' => 'da_hoan_tat']);
+        $this->getJson('/api/admin/yeu-cau/'.$this->yc->id)->assertOk()->assertJsonPath('data.trang_thai_xu_ly', 'da_dong');
+        $this->getJson('/api/admin/yeu-cau?trangThai=da_dong')->assertOk()->assertJsonPath('data.total', 1);
+        $this->action('da_xac_minh', ['doiChieu' => [$this->answer->id => 'khop']])->assertConflict();
+    }
+
+    public function test_one_confirmation_reviews_all_answers_for_this_claim_only(): void
+    {
+        $second = $this->yc->traLoi()->create(['ket_qua_doi_chieu' => 'khong_khop']);
+        $other = YeuCauNhanDo::create(['tin_dang_id' => $this->yc->tin_dang_id, 'nguoi_yeu_cau_id' => $this->user->id, 'trang_thai' => 'cho_kiem_tra']);
+        $otherAnswer = $other->traLoi()->create(['ket_qua_doi_chieu' => 'chua_danh_gia']);
+        $this->actingAs($this->admin);
+        $this->action('da_xac_minh', ['xacNhanDoiChieu' => false])->assertUnprocessable();
+        $this->action('da_xac_minh', ['xacNhanDoiChieu' => true])->assertOk();
+        $this->assertSame('khop', $this->answer->fresh()->ket_qua_doi_chieu);
+        $this->assertSame('khop', $second->fresh()->ket_qua_doi_chieu);
+        $this->assertSame('chua_danh_gia', $otherAnswer->fresh()->ket_qua_doi_chieu);
+        $this->patchJson('/api/admin/yeu-cau/'.$other->id, ['hanhDong' => 'da_xac_minh', 'xacNhanDoiChieu' => true])->assertConflict();
+        $this->assertSame('chua_danh_gia', $otherAnswer->fresh()->ket_qua_doi_chieu);
+    }
+
+    public function test_comparison_returns_public_item_photos_only(): void
+    {
+        DB::table('hinh_anh_tin_dang')->insert([
+            ['tin_dang_id' => $this->yc->tin_dang_id, 'duong_dan' => '/tin/tin-nhat/anhtin1.jpg', 'pham_vi' => 'cong_khai', 'thu_tu' => 1],
+            ['tin_dang_id' => $this->yc->tin_dang_id, 'duong_dan' => '/private-evidence.jpg', 'pham_vi' => 'rieng_tu', 'thu_tu' => 2],
+        ]);
+        $this->actingAs($this->admin)->getJson('/api/admin/yeu-cau/'.$this->yc->id)
+            ->assertOk()->assertJsonCount(1, 'data.anh_tin_dang')
+            ->assertJsonPath('data.anh_tin_dang.0.url', '/api/tin-dang/anh/anhtin1.jpg')
+            ->assertJsonMissingPath('data.tin_dang.hinh_anh');
+    }
+
+    public function test_group_filter_keeps_approved_item_and_recipient_visible(): void
+    {
+        $this->actingAs($this->admin)->getJson('/api/admin/yeu-cau?nhom=1&trangThaiNhom=cho_duyet')
+            ->assertOk()->assertJsonPath('data.total', 1);
+        $this->approve();
+        $this->actingAs($this->admin)->getJson('/api/admin/yeu-cau?nhom=1')
+            ->assertOk()->assertJsonPath('data.total', 1)
+            ->assertJsonPath('data.data.0.nguoi_nhan', 'User')
+            ->assertJsonPath('data.data.0.lich_hen', null);
+        $this->getJson('/api/admin/yeu-cau?nhom=1&trangThaiNhom=cho_duyet')->assertOk()->assertJsonPath('data.total', 0);
+        $this->getJson('/api/admin/yeu-cau?nhom=1&trangThaiNhom=cho_ban_giao')->assertOk()->assertJsonPath('data.total', 1);
+        $this->yc->cuocHen()->create(['nguoi_giu_do_id' => $this->admin->id, 'nguoi_de_xuat_id' => $this->user->id, 'dia_diem_id' => 1, 'thoi_gian_hen_gap' => now()->addDay(), 'trang_thai' => 'da_xac_nhan']);
+        $this->getJson('/api/admin/yeu-cau?nhom=1')->assertOk()->assertJsonPath('data.data.0.lich_hen.trang_thai', 'da_xac_nhan');
+        $this->yc->tinDang->update(['trang_thai' => 'da_hoan_tat']);
+        $this->getJson('/api/admin/yeu-cau?nhom=1&trangThaiNhom=hoan_tat')->assertOk()->assertJsonPath('data.total', 1);
+        $this->getJson('/api/admin/yeu-cau?nhom=1&trangThaiNhom=cho_ban_giao')->assertOk()->assertJsonPath('data.total', 0);
+        $this->getJson('/api/admin/yeu-cau?nhom=1&trangThaiNhom=tu_choi')->assertOk()->assertJsonPath('data.total', 0);
+    }
+
+    public function test_admin_appointment_list_access_filters_and_pagination(): void
+    {
+        $this->getJson('/api/admin/lich-hen')->assertUnauthorized();
+        $this->actingAs($this->user)->getJson('/api/admin/lich-hen')->assertForbidden();
+        for ($i = 0; $i < 6; $i++) {
+            $this->yc->cuocHen()->create(['nguoi_giu_do_id' => $this->admin->id, 'nguoi_de_xuat_id' => $this->user->id, 'dia_diem_id' => 1, 'thoi_gian_hen_gap' => '2026-11-12 03:00:00', 'trang_thai' => 'cho_xac_nhan']);
+        }
+        $this->actingAs($this->admin)->getJson('/api/admin/lich-hen')->assertOk()
+            ->assertJsonPath('data.total', 6)->assertJsonCount(5, 'data.data')
+            ->assertJsonPath('data.data.0.nguoi_giu.ho_ten', 'Admin')
+            ->assertJsonPath('data.data.0.nguoi_nhan.ho_ten', 'User');
+        $this->getJson('/api/admin/lich-hen?page=2')->assertOk()->assertJsonCount(1, 'data.data');
+        $this->getJson('/api/admin/lich-hen?tuKhoa=User&ngay=2026-11-12')->assertOk()->assertJsonPath('data.total', 6);
+        $this->getJson('/api/admin/lich-hen?ngay=2026-11-13')->assertOk()->assertJsonPath('data.total', 0);
+        $this->getJson('/api/admin/lich-hen?trangThai=da_huy')->assertOk()->assertJsonPath('data.total', 0);
+        $this->getJson('/api/admin/lich-hen?yeuCau='.$this->yc->id)->assertOk()->assertJsonPath('data.total', 6);
+        $this->getJson('/api/admin/lich-hen?trangThai=invalid')->assertUnprocessable();
+    }
+
+    public function test_appointment_tab_filters_before_pagination_and_keeps_participant_scope(): void
+    {
+        $this->approve();
+        $this->actingAs($this->user)->getJson('/api/me/yeu-cau?loai=lich_hen')->assertOk()->assertJsonPath('data.total', 0);
+        $this->yc->cuocHen()->create(['nguoi_giu_do_id' => $this->admin->id, 'nguoi_de_xuat_id' => $this->user->id, 'dia_diem_id' => 1, 'thoi_gian_hen_gap' => now()->addDay(), 'trang_thai' => 'cho_xac_nhan']);
+        for ($i = 0; $i < 21; $i++) {
+            YeuCauNhanDo::create(['tin_dang_id' => $this->yc->tin_dang_id, 'nguoi_yeu_cau_id' => $this->user->id, 'trang_thai' => 'cho_kiem_tra']);
+        }
+        $this->getJson('/api/me/yeu-cau?loai=lich_hen')->assertOk()->assertJsonPath('data.total', 1)->assertJsonCount(1, 'data.data.0.cuoc_hen');
+        $this->getJson('/api/me/yeu-cau')->assertOk()->assertJsonPath('data.total', 22);
+        $this->actingAs($this->admin)->getJson('/api/me/yeu-cau?loai=lich_hen')->assertOk()->assertJsonPath('data.total', 1);
+        $outsider = NguoiDung::create(['ho_ten' => 'Other', 'email' => 'other@test.vn', 'mat_khau' => 'password', 'vai_tro' => 'nguoi_dung', 'trang_thai' => 'hoat_dong']);
+        $this->actingAs($outsider)->getJson('/api/me/yeu-cau?loai=lich_hen')->assertOk()->assertJsonPath('data.total', 0);
+    }
+
+    public function test_participant_detail_contains_item_information_without_private_answers_or_photos(): void
+    {
+        $this->yc->tinDang->update(['loai_tin' => 'nhat_duoc', 'mo_ta' => 'Black wallet', 'dia_diem_id' => 1, 'dia_diem_chi_tiet' => 'Room A', 'thoi_gian_xay_ra' => '2026-11-05 10:00:00', 'co_gio_xay_ra' => true]);
+        $this->yc->update(['loi_nhan' => 'My claim message']);
+        DB::table('hinh_anh_tin_dang')->insert([
+            ['tin_dang_id' => $this->yc->tin_dang_id, 'duong_dan' => '/tin/tin-nhat/anhtin1.jpg', 'pham_vi' => 'cong_khai', 'thu_tu' => 1],
+            ['tin_dang_id' => $this->yc->tin_dang_id, 'duong_dan' => '/secret.jpg', 'pham_vi' => 'rieng_tu', 'thu_tu' => 2],
+        ]);
+        $this->actingAs($this->user)->getJson('/api/me/yeu-cau/'.$this->yc->id)->assertOk()
+            ->assertJsonPath('data.chi_tiet.moTa', 'Black wallet')->assertJsonPath('data.chi_tiet.viTriChiTiet', 'Room A')
+            ->assertJsonPath('data.chi_tiet.loiNhan', 'My claim message')->assertJsonCount(1, 'data.chi_tiet.anh')
+            ->assertJsonMissingPath('data.tra_loi')->assertJsonPath('data.lienHe', null);
+        $this->actingAs($this->admin)->getJson('/api/me/yeu-cau/'.$this->yc->id)->assertNotFound();
+    }
+
+    private function approve(): void
+    {
+        $this->actingAs($this->admin)->patchJson('/api/admin/yeu-cau/'.$this->yc->id, [
+            'hanhDong' => 'da_xac_minh', 'doiChieu' => [$this->answer->id => 'khop'],
+        ])->assertOk();
+    }
+}

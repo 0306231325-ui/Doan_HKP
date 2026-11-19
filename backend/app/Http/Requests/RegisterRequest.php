@@ -24,7 +24,7 @@ class RegisterRequest extends FormRequest
             'ho_ten' => ['bail', 'required', 'string', 'max:100', 'regex:/\A[\p{L}\p{M} ]*\p{L}[\p{L}\p{M} ]*\z/u'],
             'ma_so' => ['bail', 'required', 'string', 'min:6', 'max:20', 'regex:/\A[A-Za-z0-9]+\z/', 'unique:nguoi_dung,ma_so'],
             'so_dien_thoai' => ['bail', 'required', 'string', 'max:10', 'regex:/\A0[0-9]{0,9}\z/'],
-            'email' => ['bail', 'required', 'string', 'max:191', 'email', 'regex:/\A[a-z0-9]+@gmail\.com\z/', 'unique:nguoi_dung,email'],
+            'email' => ['bail', 'required', 'string', 'max:191', 'email', 'regex:/\A[a-z0-9]+@(?:[a-z0-9](?:[a-z0-9\x2d]*[a-z0-9])?\.)+edu\.vn\z/', 'unique:nguoi_dung,email'],
             'password' => ['required', 'string', 'min:8', 'max:72', 'confirmed'],
         ];
     }
@@ -33,7 +33,7 @@ class RegisterRequest extends FormRequest
     {
         return [
             'email.required' => 'Vui lòng nhập email.',
-            'email.regex' => 'Email phải có đuôi @gmail.com; phần tên chỉ gồm chữ cái không dấu và số, không chứa khoảng trắng hoặc ký tự đặc biệt.',
+            'email.regex' => 'Email phải có đuôi .edu.vn; phần tên chỉ gồm chữ cái không dấu và số, không chứa khoảng trắng hoặc ký tự đặc biệt.',
             'ma_so.required' => 'Vui lòng nhập MSSV / Mã giảng viên.',
             'ma_so.min' => 'MSSV / Mã giảng viên phải có ít nhất 6 ký tự.',
             'ma_so.max' => 'MSSV / Mã giảng viên không được vượt quá 20 ký tự.',

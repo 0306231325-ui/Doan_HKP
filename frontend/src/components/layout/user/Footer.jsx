@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom'
 import { LIEN_KET_DANG_TIN, LIEN_KET_MENU } from './dieuHuongNguoiDung'
 
 const EMAIL_HO_TRO = 'vul53290@gmail.com'
-const NAM_BAN_QUYEN = new Date().getFullYear()
 const LOP_LIEN_KET = 'rounded-sm text-sm text-gray-700 transition-colors hover:text-emerald-800 hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-700'
 const CAC_MANG_XA_HOI = [
   {
@@ -26,7 +25,7 @@ export default function Footer() {
             <img src="/logo/lacoi.png" alt="" className="size-10 shrink-0 rounded-xl object-contain" />
             <span>Lạc Ơi</span>
           </Link>
-          <p className="mt-2 text-xs leading-5 text-gray-600">© {NAM_BAN_QUYEN} Lạc Ơi. Hệ thống tìm đồ thất lạc trong trường.</p>
+          <p className="mt-2 text-xs leading-5 text-gray-600">Đồ án tốt nghiệp · Phú và Hiên</p>
         </div>
 
         <nav aria-label="Điều hướng cuối trang">

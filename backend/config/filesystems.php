@@ -49,8 +49,22 @@ return [
 
         'anh-dai-dien' => [
             'driver' => 'local',
-            'root' => base_path('../frontend/public/anh-dai-dien'),
+            'root' => public_path('anh-dai-dien'),
             'visibility' => 'public',
+            'throw' => false,
+            'report' => false,
+        ],
+
+        'anh-tin-dang' => [
+            'driver' => 'local',
+            'root' => public_path(),
+            'throw' => false,
+            'report' => false,
+        ],
+
+        'minh-chung-yeu-cau' => [
+            'driver' => 'local',
+            'root' => storage_path('app/private/minh-chung-yeu-cau'),
             'throw' => false,
             'report' => false,
         ],

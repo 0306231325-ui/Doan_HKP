@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useId, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import api, { prepareCsrf } from '../../../services/api'
 import { layQuyenThongBao, xinQuyenThongBao } from './xuLyQuyenThongBao.js'
 
@@ -8,48 +8,63 @@ export default function useThongBao() {
   const [quyen, datQuyen] = useState(layQuyenThongBao)
   const [dangXinQuyen, datDangXinQuyen] = useState(false)
   const [loi, datLoi] = useState('')
-  const [danhSach, datDanhSach] = useState([])
-  const [soChuaDoc, datSoChuaDoc] = useState(0)
+  const [{ danhSach, soChuaDoc }, datHopThu] = useState({ danhSach: [], soChuaDoc: 0 })
   const [dangTai, datDangTai] = useState(true)
   const [loiHopThu, datLoiHopThu] = useState('')
-  const [dangDanhDauTatCa, datDangDanhDauTatCa] = useState(false)
+  const [mucChoXoa, datMucChoXoa] = useState(null)
+  const [dangXoa, datDangXoa] = useState(false)
+  const [loiXoa, datLoiXoa] = useState('')
   const thamChieuKhung = useRef(null)
   const thamChieuChuong = useRef(null)
   const thamChieuBang = useRef(null)
   const dangXuLy = useRef(false)
-  const yeuCauTai = useRef(null)
   const phienHopThu = useRef(null)
+  const taiLaiHopThu = useRef(null)
   const maBang = useId()
   const maTieuDe = useId()
-
-  const taiThongBao = useCallback(function taiThongBao() {
-    yeuCauTai.current?.abort()
-    const yeuCau = new AbortController()
-    yeuCauTai.current = yeuCau
-    return api.get('/thong-bao', { signal: yeuCau.signal })
-      .then(({ data }) => {
-        if (yeuCau.signal.aborted) return
-        datDanhSach(data.data)
-        datSoChuaDoc(data.soChuaDoc)
-        datLoiHopThu('')
-      }).catch(() => {
-        if (!yeuCau.signal.aborted) datLoiHopThu('Chưa tải được thông báo. Vui lòng thử lại.')
-      }).finally(() => {
-        if (!yeuCau.signal.aborted) datDangTai(false)
-      })
-  }, [])
 
   useEffect(function khoiTaoHopThu() {
     const phien = new AbortController()
     phienHopThu.current = phien
+    let yeuCauTai
+
+    function taiThongBao() {
+      if (phien.signal.aborted) return
+      yeuCauTai?.abort()
+      yeuCauTai = new AbortController()
+      const { signal } = yeuCauTai
+      api.get('/thong-bao', { signal })
+        .then(({ data }) => {
+          if (signal.aborted) return
+          datHopThu({ danhSach: data.data, soChuaDoc: data.soChuaDoc })
+          datLoiHopThu('')
+        }).catch(() => {
+          if (!signal.aborted) datLoiHopThu('Chưa tải được thông báo. Bấm F5 để thử lại.')
+        }).finally(() => {
+          if (!signal.aborted) datDangTai(false)
+        })
+    }
+
+    function taiKhiDangXem() {
+      if (document.visibilityState === 'visible') taiThongBao()
+    }
+
+    taiLaiHopThu.current = taiThongBao
     taiThongBao()
-    window.addEventListener('focus', taiThongBao)
+    const lichTai = window.setInterval(taiKhiDangXem, 15_000)
+    window.addEventListener('thong-bao:cap-nhat', taiThongBao)
+    window.addEventListener('focus', taiKhiDangXem)
+    document.addEventListener('visibilitychange', taiKhiDangXem)
     return function huyHopThu() {
       phien.abort()
-      yeuCauTai.current?.abort()
-      window.removeEventListener('focus', taiThongBao)
+      yeuCauTai?.abort()
+      taiLaiHopThu.current = null
+      window.clearInterval(lichTai)
+      window.removeEventListener('thong-bao:cap-nhat', taiThongBao)
+      window.removeEventListener('focus', taiKhiDangXem)
+      document.removeEventListener('visibilitychange', taiKhiDangXem)
     }
-  }, [taiThongBao])
+  }, [])
 
   useEffect(function theoDoiQuyen() {
     function capNhatQuyen() {
@@ -64,8 +79,8 @@ export default function useThongBao() {
   }, [])
 
   useEffect(function theoDoiBang() {
-    if (!moBang) return
-    thamChieuBang.current?.focus()
+    if (!moBang || mucChoXoa) return
+    thamChieuBang.current?.focus({ preventScroll: true })
     function nhanNgoaiBang(suKien) {
       if (!thamChieuKhung.current?.contains(suKien.target)) datMoBang(false)
     }
@@ -81,26 +96,73 @@ export default function useThongBao() {
       document.removeEventListener('pointerdown', nhanNgoaiBang)
       document.removeEventListener('keydown', nhanPhimDong)
     }
-  }, [moBang])
+  }, [moBang, mucChoXoa])
 
   function doiMoBang() {
     datQuyen(layQuyenThongBao())
-    if (!moBang) taiThongBao()
-    datMoBang(!moBang)
+    if (!moBang) taiLaiHopThu.current?.()
+    datMoBang((dangMo) => !dangMo)
+  }
+
+  function capNhatMucHopThu(id, xoa) {
+    datHopThu((hopThu) => {
+      const muc = hopThu.danhSach.find((muc) => muc.id === id)
+      if (!muc) return hopThu
+      return {
+        danhSach: xoa ? hopThu.danhSach.filter((muc) => muc.id !== id)
+          : hopThu.danhSach.map((muc) => muc.id === id ? { ...muc, daDoc: true } : muc),
+        soChuaDoc: muc.daDoc ? hopThu.soChuaDoc : Math.max(0, hopThu.soChuaDoc - 1),
+      }
+    })
   }
 
   async function danhDauDaDoc(id) {
     const signal = phienHopThu.current?.signal
     if (!signal || signal.aborted) return
-    if (!id) datDangDanhDauTatCa(true)
     try {
       await prepareCsrf()
-      await api.patch(id ? `/thong-bao/${id}/da-doc` : '/thong-bao/da-doc', undefined, { signal })
-      if (!signal.aborted) await taiThongBao()
+      await api.patch(`/thong-bao/${id}/da-doc`, undefined, { signal })
+      if (!signal.aborted) {
+        capNhatMucHopThu(id, false)
+        datLoiHopThu('')
+        taiLaiHopThu.current?.()
+      }
     } catch {
       if (!signal.aborted) datLoiHopThu('Chưa đánh dấu được thông báo. Vui lòng thử lại.')
+    }
+  }
+
+  function moXacNhanXoa(muc = {}) {
+    datLoiXoa('')
+    datMucChoXoa(muc)
+  }
+
+  function dongXacNhanXoa() {
+    if (!dangXoa) datMucChoXoa(null)
+  }
+
+  async function xacNhanXoa() {
+    const signal = phienHopThu.current?.signal
+    if (!mucChoXoa || dangXoa || !signal || signal.aborted) return
+    const { id } = mucChoXoa
+    datDangXoa(true)
+    datLoiXoa('')
+    try {
+      await prepareCsrf()
+      await api.delete(id ? `/thong-bao/${id}` : '/thong-bao', {
+        signal,
+        validateStatus: (status) => status === 204 || (Boolean(id) && status === 404),
+      })
+      if (!signal.aborted) {
+        if (id) capNhatMucHopThu(id, true)
+        else datHopThu({ danhSach: [], soChuaDoc: 0 })
+        datMucChoXoa(null)
+        taiLaiHopThu.current?.()
+      }
+    } catch {
+      if (!signal.aborted) datLoiXoa('Chưa xóa được thông báo. Vui lòng thử lại.')
     } finally {
-      if (!id && !signal.aborted) datDangDanhDauTatCa(false)
+      if (!signal.aborted) datDangXoa(false)
     }
   }
 
@@ -110,7 +172,7 @@ export default function useThongBao() {
   }
 
   function roiKhung(suKien) {
-    if (!suKien.currentTarget.contains(suKien.relatedTarget)) datMoBang(false)
+    if (!mucChoXoa && !suKien.currentTarget.contains(suKien.relatedTarget)) datMoBang(false)
   }
 
   function moHopThoaiMoi() {
@@ -145,5 +207,6 @@ export default function useThongBao() {
 
   return { moBang, moLoiMoi, quyen, dangXinQuyen, loi, thamChieuKhung, thamChieuChuong, thamChieuBang, maBang, maTieuDe,
     doiMoBang, dongBang, roiKhung, moHopThoaiMoi, dongLoiMoi, batThongBao,
-    danhSach, soChuaDoc, dangTai, loiHopThu, dangDanhDauTatCa, taiThongBao, danhDauDaDoc }
+    danhSach, soChuaDoc, dangTai, loiHopThu, danhDauDaDoc,
+    mucChoXoa, dangXoa, loiXoa, moXacNhanXoa, dongXacNhanXoa, xacNhanXoa }
 }

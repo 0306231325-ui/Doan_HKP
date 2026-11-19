@@ -28,11 +28,7 @@ export default function AdminNavbar({ menuOpen, onToggleMenu }) {
             <ShieldCheck className="h-4 w-4 text-emerald-700" aria-hidden="true" />
             <span>Khu vực quản trị</span>
           </div>
-          <span className="h-7 w-px bg-gray-200" aria-hidden="true" />
-          <Link to="/" className="rounded-xl bg-[#86efac] px-3 py-2 text-xs font-bold text-emerald-950 shadow-sm transition-colors hover:bg-[#6ee7a0] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 sm:px-4 sm:text-sm">
-            <span className="sm:hidden">Trang người dùng</span>
-            <span className="hidden sm:inline">Xem trang người dùng</span>
-          </Link>
+          <span className="hidden h-7 w-px bg-gray-200 sm:block" aria-hidden="true" />
           <AccountDropdown showProfile={false} />
         </div>
       </div>

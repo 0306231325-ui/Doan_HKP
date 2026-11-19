@@ -31,8 +31,6 @@ class ThongTinCaNhanController extends Controller
             'email' => ['required', 'string', 'email', 'max:191', Rule::unique('nguoi_dung', 'email')->ignore($nguoiDung->id)],
             'ma_so' => ['nullable', 'string', 'max:50'],
             'so_dien_thoai' => ['nullable', 'string', 'max:20', 'regex:/^\+?[0-9 ]{9,20}$/'],
-            'khoa' => ['nullable', 'string', 'max:100'],
-            'lop' => ['nullable', 'string', 'max:50'],
             'current_password' => ['nullable', 'string', 'max:72'],
         ], [
             'required' => 'Vui lòng nhập :attribute.',

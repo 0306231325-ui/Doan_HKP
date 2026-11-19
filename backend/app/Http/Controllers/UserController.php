@@ -54,7 +54,7 @@ class UserController extends Controller
     private function duLieuQuanTri(NguoiDung $user, Request $request): array
     {
         return array_merge($user->only([
-            'id', 'ho_ten', 'email', 'ma_so', 'so_dien_thoai', 'khoa', 'lop', 'anh_dai_dien',
+            'id', 'ho_ten', 'email', 'ma_so', 'so_dien_thoai', 'anh_dai_dien',
             'vai_tro', 'trang_thai', 'ly_do_khoa', 'khoa_den_ngay', 'created_at', 'updated_at',
         ]), ['co_the_doi_trang_thai' => (string) $user->id !== (string) $request->user()->id]);
     }

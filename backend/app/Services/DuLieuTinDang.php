@@ -2,8 +2,10 @@
 
 namespace App\Services;
 
+use App\Models\HinhAnhTinDang;
 use App\Models\TinDang;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Str;
 
 class DuLieuTinDang
 {
@@ -36,28 +38,63 @@ class DuLieuTinDang
         ];
     }
 
+    public function locTuKhoa(Builder $truyVan, string $tuKhoa): void
+    {
+        if ($tuKhoa === '') {
+            return;
+        }
+        if (preg_match('/^(?:TIN-)?0*([1-9][0-9]*)$/i', $tuKhoa, $maTin)) {
+            $truyVan->whereKey($maTin[1]);
+
+            return;
+        }
+        $cacTu = preg_split('/[^a-z0-9]+/', strtolower(Str::ascii($tuKhoa)), -1, PREG_SPLIT_NO_EMPTY);
+        foreach ($cacTu as $tu) {
+            $giaTri = '% '.$tu.' %';
+            $truyVan->where(function (Builder $nhom) use ($giaTri) {
+                $nhom->whereRaw($this->cotTimKiem('tieu_de'), [$giaTri])
+                    ->orWhereRaw($this->cotTimKiem('mo_ta'), [$giaTri])
+                    ->orWhereRaw($this->cotTimKiem('dia_diem_chi_tiet'), [$giaTri])
+                    ->orWhereHas('danhMuc', fn (Builder $muc) => $muc->whereRaw($this->cotTimKiem('ten_danh_muc'), [$giaTri]))
+                    ->orWhereHas('diaDiem', fn (Builder $noi) => $noi->whereRaw($this->cotTimKiem('ten_dia_diem'), [$giaTri]));
+            });
+        }
+        if (! $cacTu) {
+            $truyVan->whereRaw('1 = 0');
+        }
+    }
+
+    private function cotTimKiem(string $cot): string
+    {
+        $bieuThuc = "REGEXP_REPLACE(LOWER(REPLACE(REPLACE(COALESCE({$cot}, ''), 'đ', 'd'), 'Đ', 'd')), '[^[:alnum:]]+', ' ')";
+        $noiChuoi = (new TinDang)->getConnection()->getDriverName() === 'sqlite'
+            ? "' ' || {$bieuThuc} || ' '"
+            : "CONCAT(' ', {$bieuThuc}, ' ')";
+
+        return "({$noiChuoi}) LIKE ?";
+    }
+
     public function congKhai(TinDang $tin, bool $chiTiet = false): array
     {
         $laNhatDuoc = $tin->loai_tin === 'nhat_duoc';
         $trangThai = ['dang_mo' => 'Đang mở', 'cho_ban_giao' => 'Chờ bàn giao', 'da_hoan_tat' => 'Đã hoàn tất', 'da_dong' => 'Đã đóng'];
         $duLieu = [
             'id' => $tin->id, 'title' => $tin->tieu_de, 'description' => $tin->mo_ta,
-            'referenceCode' => 'TIN-'.str_pad((string) $tin->id, 6, '0', STR_PAD_LEFT),
+            'referenceCode' => $tin->maTin(),
             'type' => $laNhatDuoc ? 'found' : 'lost', 'typeName' => $laNhatDuoc ? 'Nhặt được' : 'Báo mất',
             'categoryId' => (string) $tin->danh_muc_id, 'category' => $tin->danhMuc?->ten_danh_muc ?? 'Chưa phân loại',
             'locationId' => $tin->dia_diem_id ? (string) $tin->dia_diem_id : '',
             'location' => $tin->diaDiem?->ten_dia_diem ?? 'Chưa rõ địa điểm', 'locationDetail' => $tin->dia_diem_chi_tiet,
             'date' => ($tin->thoi_gian_xay_ra ?? $tin->created_at)?->format('Y-m-d'),
             'gioXayRa' => $tin->gioXayRa(),
-            'imageUrl' => $tin->hinhAnh->first()?->duong_dan ?? '/do-vat-trong.svg',
+            'imageUrl' => $tin->hinhAnh->first()?->duongDanHienThi() ?? HinhAnhTinDang::URL_ANH_MAC_DINH,
             'statusBadge' => $trangThai[$tin->trang_thai] ?? 'Đang mở', 'canClaim' => $laNhatDuoc && $tin->trang_thai === 'dang_mo',
+            'tamNgungNhanYeuCau' => $laNhatDuoc && $tin->trang_thai === 'cho_ban_giao',
             'statusType' => $tin->trang_thai === 'dang_mo' ? ($laNhatDuoc ? 'safe' : 'urgent') : 'secure',
             'contactPerson' => $tin->nguoiDung?->ho_ten ?? 'Người đăng',
-            'contactPhone' => $this->cheLienHe($tin->thong_tin_lien_he),
-            'contactEmail' => $this->cheLienHe($tin->email_lien_he, laEmail: true),
         ];
         if ($chiTiet) {
-            $duLieu['images'] = $tin->hinhAnh->pluck('duong_dan')->values();
+            $duLieu['images'] = $tin->hinhAnh->map->duongDanHienThi()->values();
         }
         if ($tin->trang_thai_kiem_duyet === 'da_an') {
             $duLieu['biAn'] = true;
@@ -65,20 +102,5 @@ class DuLieuTinDang
         }
 
         return $duLieu;
-    }
-
-    private function cheLienHe(?string $giaTri, bool $laEmail = false): string
-    {
-        $giaTri = trim($giaTri ?? '');
-        if ($giaTri === '') {
-            return '';
-        }
-        if ($laEmail) {
-            $ten = explode('@', $giaTri, 2)[0];
-
-            return mb_substr($ten, 0, max(0, min(2, mb_strlen($ten) - 1))).'****@****';
-        }
-
-        return mb_substr($giaTri, 0, intdiv(mb_strlen($giaTri), 2)).'****';
     }
 }

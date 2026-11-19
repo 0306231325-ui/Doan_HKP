@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Support\Facades\Hash;
 use Laravel\Sanctum\HasApiTokens;
 
 class NguoiDung extends Authenticatable
@@ -23,8 +24,6 @@ class NguoiDung extends Authenticatable
         'mat_khau',
         'so_dien_thoai',
         'ma_so',
-        'khoa',
-        'lop',
         'vai_tro',
         'trang_thai',
         'ly_do_khoa',
@@ -43,16 +42,21 @@ class NguoiDung extends Authenticatable
         ];
     }
 
+    public function setMatKhauAttribute(string $matKhau): void
+    {
+        $this->attributes['mat_khau'] = password_get_info($matKhau)['algoName'] === 'unknown'
+            ? Hash::make($matKhau)
+            : $matKhau;
+    }
+
     public function thongTinCaNhan(): array
     {
-        return $this->only(['id', 'ho_ten', 'email', 'ma_so', 'so_dien_thoai', 'khoa', 'lop', 'anh_dai_dien', 'vai_tro', 'trang_thai', 'created_at']);
+        return $this->only(['id', 'ho_ten', 'email', 'ma_so', 'so_dien_thoai', 'anh_dai_dien', 'vai_tro', 'trang_thai', 'created_at']);
     }
 
     public function kiemTraMatKhau(string $matKhau): bool
     {
-        return password_get_info($this->mat_khau)['algoName'] !== 'unknown'
-            ? password_verify($matKhau, $this->mat_khau)
-            : hash_equals($this->mat_khau, $matKhau);
+        return password_verify($matKhau, $this->mat_khau);
     }
 
     public function tinDang(): HasMany
@@ -83,11 +87,6 @@ class NguoiDung extends Authenticatable
     public function cuocHenXacNhan(): HasMany
     {
         return $this->hasMany(CuocHen::class, 'nguoi_xac_nhan_id');
-    }
-
-    public function banGiaoDaXacNhan(): HasMany
-    {
-        return $this->hasMany(BanGiao::class, 'nguoi_xac_nhan_ban_giao_id');
     }
 
     public function hinhAnhTinDang(): HasMany

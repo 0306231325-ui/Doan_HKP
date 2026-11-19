@@ -27,11 +27,6 @@ class DiaDiem extends Model
         return $this->hasMany(TinDang::class, 'dia_diem_id');
     }
 
-    public function yeuCauNhanDo(): HasMany
-    {
-        return $this->hasMany(YeuCauNhanDo::class, 'dia_diem_mat_id');
-    }
-
     public function cuocHen(): HasMany
     {
         return $this->hasMany(CuocHen::class, 'dia_diem_id');

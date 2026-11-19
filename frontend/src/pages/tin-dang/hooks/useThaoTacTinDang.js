@@ -4,10 +4,11 @@ import useThongBaoThaoTac from '../../../components/shared/hooks/useThongBaoThao
 import api, { prepareCsrf } from '../../../services/api'
 import { layLoiGui } from './xuLyDangTin.js'
 
-export default function useThaoTacTinDang(tin, taiLai) {
+export default function useThaoTacTinDang(tin, taiLai, quayLaiKhiXoa) {
   const { user } = useAuth()
   const laChuTin = Boolean(user && tin.laChuTin)
   const [thaoTac, datThaoTac] = useState('')
+  const [choXacNhan, datChoXacNhan] = useState('')
   const [banSua, datBanSua] = useState(null)
   const [loi, datLoi] = useState('')
   const [dangGui, datDangGui] = useState(false)
@@ -25,13 +26,12 @@ export default function useThaoTacTinDang(tin, taiLai) {
     ]).then(([tin, boLoc]) => {
       if (signal.aborted) return
       const { tenDiaDiem, ...duLieu } = tin.data.data
-      const diaDiem = boLoc.data.diaDiem
+      const banNhap = { duLieu, duLieuGoc: duLieu, diaDiem: boLoc.data.diaDiem }
       const noiCu = duLieu.diaDiemId
-      if (noiCu && !diaDiem.some((muc) => muc.id === noiCu)) {
-        datBanSua({ duLieu, diaDiem: [...diaDiem, { id: noiCu, name: tenDiaDiem || 'Khu vực hiện tại' }] })
-      } else {
-        datBanSua({ duLieu, diaDiem })
+      if (noiCu && !banNhap.diaDiem.some((muc) => muc.id === noiCu)) {
+        banNhap.diaDiem = [...banNhap.diaDiem, { id: noiCu, name: tenDiaDiem || 'Khu vực hiện tại' }]
       }
+      datBanSua(banNhap)
     }).catch((loiTai) => {
       if (!signal.aborted) datLoi(layLoiGui(loiTai))
     })
@@ -42,11 +42,21 @@ export default function useThaoTacTinDang(tin, taiLai) {
     if (!laChuTin || khoaGui.current) return
     datBanSua(null)
     datLoi('')
+    datChoXacNhan('')
     datThaoTac(loai)
   }
 
   function dongThaoTac() {
-    if (!khoaGui.current) datThaoTac('')
+    if (khoaGui.current) return
+    if (choXacNhan) {
+      datChoXacNhan('')
+      return
+    }
+    if (thaoTac === 'sua' && banSua && Object.entries(banSua.duLieu).some(([ten, giaTri]) => giaTri !== banSua.duLieuGoc[ten])) {
+      datChoXacNhan('huy')
+      return
+    }
+    datThaoTac('')
   }
 
   function doiTruong(suKien) {
@@ -55,9 +65,21 @@ export default function useThaoTacTinDang(tin, taiLai) {
     datLoi('')
   }
 
-  async function guiThaoTac(suKien) {
-    suKien?.preventDefault()
-    if (!laChuTin || khoaGui.current || (thaoTac === 'sua' && !banSua) || !thaoTac) return
+  function yeuCauLuu(suKien) {
+    suKien.preventDefault()
+    if (khoaGui.current || !banSua || choXacNhan) return
+    datLoi('')
+    datChoXacNhan('luu')
+  }
+
+  async function xacNhanThaoTac() {
+    if (!laChuTin || khoaGui.current || !thaoTac) return
+    if (choXacNhan === 'huy') {
+      datChoXacNhan('')
+      datThaoTac('')
+      return
+    }
+    if (thaoTac === 'sua' && (choXacNhan !== 'luu' || !banSua)) return
     khoaGui.current = true
     datDangGui(true)
     datLoi('')
@@ -65,9 +87,12 @@ export default function useThaoTacTinDang(tin, taiLai) {
       await prepareCsrf()
       const { data } = thaoTac === 'xoa' ? await api.delete(duongDan) : await api.patch(duongDan, banSua.duLieu)
       datThaoTac('')
-      hienThongBao(data.message)
-      taiLai?.()
+      datChoXacNhan('')
+      const noiDen = thaoTac === 'xoa' ? quayLaiKhiXoa : undefined
+      hienThongBao(data.message, 'success', noiDen)
+      if (!noiDen) taiLai?.()
     } catch (loiGui) {
+      if (thaoTac === 'sua' && loiGui.response?.status === 422) datChoXacNhan('')
       datLoi(layLoiGui(loiGui))
     } finally {
       khoaGui.current = false
@@ -75,5 +100,5 @@ export default function useThaoTacTinDang(tin, taiLai) {
     }
   }
 
-  return { laChuTin, thaoTac, banSua, loi, dangGui, moThaoTac, dongThaoTac, doiTruong, guiThaoTac }
+  return { laChuTin, thaoTac, choXacNhan, banSua, loi, dangGui, moThaoTac, dongThaoTac, doiTruong, yeuCauLuu, xacNhanThaoTac }
 }

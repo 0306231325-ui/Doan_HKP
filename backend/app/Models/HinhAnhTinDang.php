@@ -7,6 +7,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class HinhAnhTinDang extends Model
 {
+    public const TEN_ANH_MAU = 'hanghoa01.jpg';
+
+    public const URL_ANH_MAC_DINH = '/api/tin-dang/anh/'.self::TEN_ANH_MAU;
+
+    public const MAU_TEN_ANH = '(?:hanghoa01\.jpg|(?:[a-zA-Z0-9]{40}|anhtin[0-9]+(?:_[a-z])?|TIN-[0-9]{6,20}(?:-[a-z0-9-]{1,100})?)\.(jpg|jpeg|png|webp))';
+
     public const UPDATED_AT = null;
 
     protected $table = 'hinh_anh_tin_dang';
@@ -15,7 +21,6 @@ class HinhAnhTinDang extends Model
         'tin_dang_id',
         'nguoi_tai_len_id',
         'duong_dan',
-        'mo_ta',
         'pham_vi',
         'thu_tu',
     ];
@@ -25,6 +30,13 @@ class HinhAnhTinDang extends Model
         return [
             'thu_tu' => 'integer',
         ];
+    }
+
+    public function duongDanHienThi(): string
+    {
+        return preg_match('~\A/tin/tin-(?:mat|nhat)/('.self::MAU_TEN_ANH.')\z~', $this->duong_dan)
+            ? '/api/tin-dang/anh/'.basename($this->duong_dan)
+            : $this->duong_dan;
     }
 
     public function tinDang(): BelongsTo

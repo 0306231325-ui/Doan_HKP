@@ -4,18 +4,14 @@ import TrangThaiDanhSachRong from '../shared/TrangThaiDanhSachRong'
 export default function DanhSachDoThatLac({ danhSachDo = [], tongTin = danhSachDo.length, dangTai = false, loiTai = '', taiLai, loiNgay = '', coBoLoc = false, xoaBoLoc, tieuDe = 'Danh sách đồ thất lạc gần đây', tuyChon, moTa, hienTrangThai = false }) {
   return (
     <section className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
-        <div>
-          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">
-            {tieuDe}
-          </h2>
-          <p role="status" className="mt-1 text-xs leading-6 text-gray-500 sm:text-sm">
-            {dangTai ? 'Đang tải tin đăng…' : loiTai ? 'Chưa tải được danh sách tin đăng.' : moTa ?? <>Các tin báo mất và nhặt được trong khuôn viên trường hiện có{' '}
-            <strong className="font-bold text-emerald-900 underline decoration-emerald-700 underline-offset-4">{tongTin} tin phù hợp</strong>.</>}
-          </p>
-        </div>
-
-        {tuyChon}
+      <div>
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">
+          {tieuDe}
+        </h2>
+        <p role="status" className="mt-1 text-xs leading-6 text-gray-500 sm:text-sm">
+          {dangTai ? 'Đang tải tin đăng…' : loiTai ? 'Chưa tải được danh sách tin đăng.' : moTa ?? <>Các tin báo mất và nhặt được trong khuôn viên trường hiện có{' '}
+          <strong className="font-bold text-emerald-900 underline decoration-emerald-700 underline-offset-4">{tongTin} tin phù hợp</strong>.</>}
+        </p>
       </div>
 
       <div role="region" aria-label={tieuDe} className="min-h-64 rounded-2xl border border-[#d6e4db] bg-white">
@@ -25,6 +21,7 @@ export default function DanhSachDoThatLac({ danhSachDo = [], tongTin = danhSachD
           ))}
         </div> : <TrangThaiDanhSachRong loi={loiNgay} coBoLoc={coBoLoc} xoaBoLoc={xoaBoLoc} />}
       </div>
+      {tuyChon && <div className="flex justify-end">{tuyChon}</div>}
     </section>
   )
 }

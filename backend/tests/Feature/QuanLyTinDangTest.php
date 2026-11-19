@@ -32,6 +32,15 @@ class QuanLyTinDangTest extends TestCase
             $t->timestamps(); $t->softDeletes();
         });
         Schema::create('hinh_anh_tin_dang', function (Blueprint $t) { $t->id(); $t->unsignedBigInteger('tin_dang_id'); $t->string('duong_dan'); $t->string('pham_vi'); $t->integer('thu_tu'); });
+        Schema::create('yeu_cau_nhan_do', function (Blueprint $t) {
+            $t->id();
+            $t->unsignedBigInteger('tin_dang_id');
+        });
+        Schema::create('cuoc_hen', function (Blueprint $t) {
+            $t->id();
+            $t->unsignedBigInteger('yeu_cau_id');
+            $t->string('trang_thai');
+        });
         Schema::create('bao_cao_tin_dang', function (Blueprint $t) {
             $t->id(); foreach (['tin_dang_id', 'nguoi_bao_cao_id', 'nguoi_xu_ly_id'] as $c) $t->unsignedBigInteger($c)->nullable();
             foreach (['ly_do', 'mo_ta', 'trang_thai', 'ghi_chu_admin'] as $c) $t->string($c)->nullable();
@@ -57,6 +66,29 @@ class QuanLyTinDangTest extends TestCase
         $this->actingAs($admin)->getJson('/api/admin/tin-dang')->assertForbidden();
     }
 
+    public function test_thong_ke_dem_tin_theo_ngay_viet_nam_va_bo_tin_xoa_mem(): void
+    {
+        config(['app.timezone' => 'UTC']);
+        $admin = $this->taiKhoan();
+        foreach ([
+            ['2026-11-09 16:59:59', 'nhat_duoc', 'da_hoan_tat', null],
+            ['2026-11-09 17:00:00', 'bao_mat', 'dang_mo', null],
+            ['2026-11-10 16:59:59', 'nhat_duoc', 'da_hoan_tat', null],
+            ['2026-11-10 17:00:00', 'nhat_duoc', 'dang_mo', null],
+            ['2026-11-10 12:00:00', 'nhat_duoc', 'da_hoan_tat', '2026-11-10 13:00:00'],
+        ] as [$ngay, $loai, $trangThai, $daXoa]) {
+            DB::table('tin_dang')->insert([
+                'nguoi_dung_id' => $admin->id, 'created_at' => $ngay, 'loai_tin' => $loai,
+                'trang_thai' => $trangThai, 'deleted_at' => $daXoa,
+            ]);
+        }
+
+        $url = '/api/admin/tin-dang/thong-ke?tuNgay=2026-11-10&denNgay=2026-11-10';
+        $this->actingAs($this->taiKhoan('nguoi_dung'))->getJson($url)->assertForbidden();
+        $this->actingAs($admin)->getJson($url)->assertOk()
+            ->assertExactJson(['data' => ['tongTin' => 2, 'soBaoMat' => 1, 'soNhatDuoc' => 1, 'soDaTra' => 1]]);
+    }
+
     public function test_an_khoi_phuc_va_bao_cao_luu_dung_lich_su(): void
     {
         $admin = $this->taiKhoan();
@@ -79,5 +111,64 @@ class QuanLyTinDangTest extends TestCase
         $this->patchJson($url, ['hanh_dong' => 'tu_choi_bao_cao', 'bao_cao_id' => $bc->id, 'ly_do' => 'Xử lý lần hai'])->assertConflict();
         $this->patchJson($url, ['hanh_dong' => 'an_tin', 'ly_do' => '   '])->assertUnprocessable();
         $this->getJson($url)->assertOk()->assertJsonCount(3, 'data.lichSu');
+    }
+
+    public function test_nguoi_dung_gui_bao_cao_va_khong_the_gia_mao_nguoi_gui(): void
+    {
+        $chuTin = $this->taiKhoan('nguoi_dung');
+        $nguoiGui = $this->taiKhoan('nguoi_dung');
+        $tin = TinDang::create(['nguoi_dung_id' => $chuTin->id, 'tieu_de' => 'Ví đen', 'slug' => 'vi-den', 'trang_thai_kiem_duyet' => 'hien_thi']);
+        $url = '/api/tin-dang/'.$tin->id.'/bao-cao';
+        $this->getJson('/api/admin/tin-dang')->assertUnauthorized();
+        $this->postJson($url, ['ly_do' => 'Nghi lừa đảo'])->assertUnauthorized();
+        $this->actingAs($nguoiGui)->postJson($url, [
+            'ly_do' => 'Nghi lừa đảo', 'mo_ta' => '  Nội dung cần đối chiếu  ',
+            'nguoi_bao_cao_id' => $chuTin->id, 'trang_thai' => 'chap_nhan', 'nguoi_xu_ly_id' => $chuTin->id,
+        ])->assertCreated()->assertJsonPath('data.trang_thai', 'cho_xu_ly')->assertJsonMissingPath('data.nguoi_bao_cao_id');
+        $this->assertDatabaseHas('bao_cao_tin_dang', [
+            'tin_dang_id' => $tin->id, 'nguoi_bao_cao_id' => $nguoiGui->id,
+            'trang_thai' => 'cho_xu_ly', 'nguoi_xu_ly_id' => null, 'mo_ta' => 'Nội dung cần đối chiếu',
+        ]);
+        $this->assertSame('hien_thi', $tin->fresh()->trang_thai_kiem_duyet);
+        $this->postJson($url, ['ly_do' => 'Spam / trùng lặp'])->assertConflict();
+        $this->assertDatabaseCount('bao_cao_tin_dang', 1);
+        $this->actingAs($chuTin)->postJson($url, ['ly_do' => 'Nghi lừa đảo'])->assertForbidden();
+        $this->actingAs($this->taiKhoan())->getJson('/api/admin/tin-dang/'.$tin->id)
+            ->assertOk()->assertJsonCount(1, 'data.baoCao')->assertJsonPath('data.baoCao.0.lyDo', 'Nghi lừa đảo');
+    }
+
+    public function test_bao_cao_kiem_tra_du_lieu_va_tin_khong_con_hien_thi(): void
+    {
+        $this->withoutMiddleware(\Illuminate\Routing\Middleware\ThrottleRequests::class);
+        $chuTin = $this->taiKhoan('nguoi_dung');
+        $tin = TinDang::create(['nguoi_dung_id' => $chuTin->id, 'trang_thai_kiem_duyet' => 'hien_thi']);
+        $url = '/api/tin-dang/'.$tin->id.'/bao-cao';
+        $this->actingAs($this->taiKhoan('nguoi_dung'));
+        foreach ([[], ['ly_do' => 'khong-hop-le']] as $data) {
+            $this->postJson($url, $data)->assertUnprocessable()->assertJsonValidationErrors('ly_do');
+        }
+        foreach ([null, '   ', 'ngắn', str_repeat('a', 2001), ['sai']] as $moTa) {
+            $this->postJson($url, ['ly_do' => 'Khác', 'mo_ta' => $moTa])->assertUnprocessable()->assertJsonValidationErrors('mo_ta');
+        }
+        $this->assertDatabaseCount('bao_cao_tin_dang', 0);
+        $tin->update(['trang_thai_kiem_duyet' => 'da_an']);
+        $this->postJson($url, ['ly_do' => 'Nghi lừa đảo'])->assertNotFound();
+        $tin->delete();
+        $this->postJson($url, ['ly_do' => 'Nghi lừa đảo'])->assertNotFound();
+        $this->postJson('/api/tin-dang/999999/bao-cao', ['ly_do' => 'Nghi lừa đảo'])->assertNotFound();
+    }
+
+    public function test_bao_cao_chan_tai_khoan_khoa_va_gioi_han_tan_suat(): void
+    {
+        $nguoiGui = $this->taiKhoan('nguoi_dung');
+        $tin = TinDang::create(['nguoi_dung_id' => $this->taiKhoan()->id, 'trang_thai_kiem_duyet' => 'hien_thi']);
+        $url = '/api/tin-dang/'.$tin->id.'/bao-cao';
+        $nguoiGui->update(['trang_thai' => 'bi_khoa']);
+        $this->actingAs($nguoiGui)->postJson($url, ['ly_do' => 'Nghi lừa đảo'])->assertForbidden();
+        $this->actingAs($this->taiKhoan('nguoi_dung'));
+        for ($i = 0; $i < 5; $i++) {
+            $this->postJson($url, [])->assertUnprocessable();
+        }
+        $this->postJson($url, [])->assertStatus(429);
     }
 }

@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class CauHoi extends Model
 {
+    public const GIOI_HAN_MOI_DANH_MUC = 5;
+
     protected $table = 'cau_hoi';
 
     protected $fillable = [

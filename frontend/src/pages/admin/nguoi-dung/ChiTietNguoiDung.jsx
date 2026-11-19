@@ -1,35 +1,23 @@
-import { useState } from 'react'
 import { CalendarDays, ChevronDown, ContactRound, LockKeyhole, ShieldCheck, UnlockKeyhole } from 'lucide-react'
 import HopThoai from '../../../components/shared/HopThoai'
-import NhanTaiKhoan from './NhanTaiKhoan'
 import { dinhDangThoiGian } from './hooks/xuLyNguoiDung.js'
 
 export default function ChiTietNguoiDung({ nguoiDungChon, dongChiTiet, moDoiTrangThai }) {
   const nguoiDung = nguoiDungChon
-  const [anhLoi, datAnhLoi] = useState(null)
-  const coAnh = nguoiDung.anh_dai_dien && nguoiDung.anh_dai_dien !== anhLoi
   const biKhoa = nguoiDung.trang_thai === 'bi_khoa'
   const cacThongTin = [
     ['Họ và tên', nguoiDung.ho_ten],
     ['Mã số sinh viên / cán bộ', nguoiDung.ma_so],
     ['Email', nguoiDung.email],
     ['Số điện thoại', nguoiDung.so_dien_thoai],
-    ['Khoa / Đơn vị', nguoiDung.khoa],
-    ['Lớp', nguoiDung.lop],
   ]
 
   return (
     <HopThoai tieuDe="Thông tin tài khoản" moTa="Xem hồ sơ và trạng thái tài khoản người dùng." khiDong={dongChiTiet} rong>
       <div className="space-y-6 p-5 sm:p-6">
-        <div className="flex items-start gap-4 sm:items-center sm:gap-5">
-          <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[#d6e4db] bg-[#f8fbf9] sm:h-24 sm:w-24">
-            {coAnh ? <img src={nguoiDung.anh_dai_dien} alt={`Ảnh đại diện của ${nguoiDung.ho_ten || 'người dùng'}`} onError={() => datAnhLoi(nguoiDung.anh_dai_dien)} className="h-full w-full object-cover" /> : <span className="px-2 text-center text-xs leading-5 text-[#718276]">Chưa có ảnh</span>}
-          </div>
-          <div className="min-w-0 flex-1">
-            <h3 className="break-words text-xl font-bold text-emerald-950">{nguoiDung.ho_ten || 'Chưa có họ tên'}</h3>
-            <p className="mt-1 break-all text-sm text-[#607568]">{nguoiDung.email || 'Chưa có email'}</p>
-            <div className="mt-3 flex flex-wrap gap-2"><NhanTaiKhoan nguoiDung={nguoiDung} loai="vai_tro" /><NhanTaiKhoan nguoiDung={nguoiDung} /></div>
-          </div>
+        <div>
+          <h3 className="break-words text-xl font-bold text-emerald-950">{nguoiDung.ho_ten || 'Chưa có họ tên'}</h3>
+          <p className="mt-1 break-all text-sm text-[#607568]">{nguoiDung.email || 'Chưa có email'}</p>
         </div>
 
         <section aria-labelledby="thong-tin-ca-nhan-nguoi-dung">

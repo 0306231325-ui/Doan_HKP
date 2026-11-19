@@ -348,7 +348,7 @@
                                         "maxLength": 255
                                     },
                                     "soDienThoai": {
-                                        "description": "Điện thoại hoặc email phải có ít nhất một. Liên hệ bị che trên API công khai.",
+                                        "description": "Điện thoại hoặc email phải có ít nhất một. Chỉ chủ tin và người có yêu cầu đã duyệt được xem liên hệ.",
                                         "type": "string",
                                         "maxLength": 20
                                     },
@@ -363,7 +363,7 @@
                                         "example": "[{\"id\":1,\"phienBanId\":1,\"giaTri\":\"Đen\"}]"
                                     },
                                     "anh[]": {
-                                        "description": "Tối đa 3 ảnh JPG/PNG/WebP, 5 MB/ảnh, kích thước tối đa 8192 mỗi chiều",
+                                        "description": "Tối đa 3 ảnh JPG/PNG/WebP, 5 MB/ảnh, kích thước tối đa 8192 mỗi chiều. Tên lưu ghép mã tin và tên ảnh đã chuẩn hóa, thêm số khi trùng.",
                                         "type": "array",
                                         "items": {
                                             "type": "string",
@@ -592,7 +592,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "data gồm DTO thẻ, images, gioXayRa (null nếu không có giờ), laChuTin và hasClaim theo phiên hiện tại. Liên hệ trong DTO đã che. Không có câu trả lời nhận diện."
+                        "description": "data gồm DTO thẻ, images, gioXayRa (null nếu không có giờ), laChuTin, hasClaim và coTheLienHe theo phiên hiện tại. Chỉ trả contactPhone và contactEmail cho tài khoản đang hoạt động là chủ tin hoặc có yêu cầu đã được duyệt. Không có câu trả lời nhận diện. Phản hồi private, no-store."
                     },
                     "404": {
                         "description": "Tin không tồn tại, đã xóa mềm hoặc đã ẩn và người xem không phải chủ tin đang hoạt động"
@@ -611,15 +611,17 @@
                     {
                         "name": "tenAnh",
                         "in": "path",
+                        "description": "Tên ảnh theo mã tin hoặc tên ảnh đã lưu trước đây",
                         "required": true,
                         "schema": {
-                            "type": "string"
+                            "type": "string",
+                            "example": "TIN-000001-vi-da.jpg"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Nội dung ảnh ở ổ public theo nhóm tin mất/nhặt hoặc ảnh cũ ở ổ local. no-store/nosniff."
+                        "description": "Nội dung ảnh ở backend/public/tin hoặc ổ cũ. API kiểm tra quyền xem tin và trả no-store/nosniff."
                     },
                     "404": {
                         "description": "Ảnh không có, ảnh riêng tư, tin đã xóa hoặc tin ẩn của người khác"
@@ -647,7 +649,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "tin, daGui và data câu hỏi riêng từ snapshot gốc, id là ID lời khai gốc; không trả đáp án người đăng. Không lấy câu mới hoặc kiểu mới từ cấu hình danh mục hiện tại."
+                        "description": "tin, daGui, yeuCauId (ID yêu cầu đang xử lý của tài khoản hiện tại hoặc null) và data câu hỏi từ snapshot gốc. ID trong data là ID lời khai gốc."
                     },
                     "401": {
                         "description": "Chưa đăng nhập"
@@ -691,6 +693,39 @@
                 "requestBody": {
                     "required": true,
                     "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "xacNhan",
+                                    "cauTraLoi"
+                                ],
+                                "properties": {
+                                    "xacNhan": {
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "loiNhan": {
+                                        "type": "string",
+                                        "maxLength": 2000
+                                    },
+                                    "cauTraLoi": {
+                                        "description": "Chuỗi JSON chứa đủ ID lời khai và giá trị từ biểu mẫu nhận lại",
+                                        "type": "string",
+                                        "example": "[{\"id\":1,\"giaTri\":\"Đen\"}]"
+                                    },
+                                    "anh[]": {
+                                        "description": "Tùy chọn, tối đa 3 ảnh JPG/PNG/WebP, 5 MB/ảnh, tối đa 8192 pixel mỗi chiều",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "format": "binary"
+                                        },
+                                        "maxItems": 3
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        },
                         "application/json": {
                             "schema": {
                                 "required": [
@@ -733,10 +768,10 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "Lưu yêu cầu cho_kiem_tra, đáp án riêng và lịch sử. Chỉ quản trị viên duyệt; gửi không tự xác minh hoặc bàn giao."
+                        "description": "Lưu yêu cầu cho_kiem_tra, đáp án, lịch sử, ảnh xác minh nếu có và thông báo cho người gửi. Ảnh lưu trong backend/public/minh-chung-yeu-cau. Trả message, daGui và yeuCauId."
                     },
                     "200": {
-                        "description": "Đã có yêu cầu đang xử lý của tài khoản này, không gửi trùng"
+                        "description": "Trả message, daGui và yeuCauId của yêu cầu đang xử lý, không tạo yêu cầu hoặc thông báo trùng."
                     },
                     "401": {
                         "description": "Chưa đăng nhập"
@@ -750,8 +785,11 @@
                     "409": {
                         "description": "Tin không còn nhận yêu cầu"
                     },
+                    "413": {
+                        "description": "Tổng dữ liệu vượt giới hạn máy chủ"
+                    },
                     "422": {
-                        "description": "Thiếu câu hỏi gốc, đáp án sai kiểu hoặc chưa xác nhận"
+                        "description": "Thiếu câu hỏi gốc, đáp án sai kiểu, chưa xác nhận hoặc ảnh không hợp lệ"
                     }
                 }
             }
@@ -761,7 +799,7 @@
                 "tags": [
                     "Đăng tin"
                 ],
-                "summary": "Chủ tin xem điện thoại và email đã đăng",
+                "summary": "Xem liên hệ của tin theo quyền của tài khoản",
                 "operationId": "953625ee982b7fcc38a13b558acb2a2d",
                 "parameters": [
                     {
@@ -776,13 +814,13 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "data.soDienThoai/email/laChuTin/daGui, private no-store. Chỉ chủ tin đang hoạt động được xem liên hệ đầy đủ."
+                        "description": "data.soDienThoai/email/laChuTin/daGui, private no-store. Dành cho tài khoản đang hoạt động là chủ tin hoặc có yêu cầu đã được duyệt."
                     },
                     "401": {
                         "description": "Chưa đăng nhập"
                     },
                     "403": {
-                        "description": "Không phải chủ tin hoặc tài khoản bị khóa"
+                        "description": "Tài khoản bị khóa hoặc không có quyền xem liên hệ"
                     },
                     "404": {
                         "description": "Tin không tồn tại, đã xóa mềm hoặc là tin ẩn của người khác"
@@ -806,6 +844,49 @@
                     },
                     "403": {
                         "description": "Không phải quản trị hoạt động"
+                    }
+                }
+            }
+        },
+        "/api/admin/tin-dang/thong-ke": {
+            "get": {
+                "tags": [
+                    "Kiểm duyệt"
+                ],
+                "summary": "Thống kê tin đăng cho quản trị",
+                "operationId": "c31d2e17ea5f535ff18f9de44978a4b5",
+                "parameters": [
+                    {
+                        "name": "tuNgay",
+                        "in": "query",
+                        "description": "Ngày bắt đầu theo giờ Việt Nam",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "denNgay",
+                        "in": "query",
+                        "description": "Ngày kết thúc theo giờ Việt Nam",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "data gồm tongTin, soBaoMat, soNhatDuoc và soDaTra tính từ tin chưa xóa mềm"
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Chỉ quản trị viên đang hoạt động được xem"
+                    },
+                    "422": {
+                        "description": "Khoảng ngày không hợp lệ"
                     }
                 }
             }
@@ -1576,7 +1657,7 @@
                 "operationId": "aacbcfc38e46c39c0c9807f03b7ca5d9",
                 "responses": {
                     "200": {
-                        "description": "user gồm id, ho_ten, email, ma_so, so_dien_thoai, khoa, lop, anh_dai_dien, vai_tro, trang_thai, created_at; không có mật khẩu"
+                        "description": "user gồm id, ho_ten, email, ma_so, so_dien_thoai, anh_dai_dien, vai_tro, trang_thai, created_at; không có mật khẩu"
                     },
                     "401": {
                         "description": "Chưa đăng nhập"
@@ -1631,16 +1712,6 @@
                                         "nullable": true,
                                         "maxLength": 20
                                     },
-                                    "khoa": {
-                                        "type": "string",
-                                        "nullable": true,
-                                        "maxLength": 100
-                                    },
-                                    "lop": {
-                                        "type": "string",
-                                        "nullable": true,
-                                        "maxLength": 50
-                                    },
                                     "current_password": {
                                         "description": "Bắt buộc đúng mật khẩu hiện tại khi đổi email",
                                         "type": "string",
@@ -1685,6 +1756,15 @@
                             "maximum": 1000000,
                             "minimum": 1
                         }
+                    },
+                    {
+                        "name": "tuKhoa",
+                        "in": "query",
+                        "description": "Tìm theo tên, mô tả, địa điểm, danh mục hoặc mã tin trước khi phân trang",
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 200
+                        }
                     }
                 ],
                 "responses": {
@@ -1698,7 +1778,7 @@
                         "description": "Tài khoản bị khóa"
                     },
                     "422": {
-                        "description": "Số trang không hợp lệ"
+                        "description": "Số trang hoặc từ khóa không hợp lệ"
                     },
                     "429": {
                         "description": "Tối đa 120 lần/phút"
@@ -1805,7 +1885,7 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Lưu vào frontend/public/anh-dai-dien. Tên tệp lấy phần email trước dấu @, kèm mã riêng cho từng ảnh. Dọn ảnh cũ do hệ thống quản lý và trả hồ sơ đã cập nhật."
+                        "description": "Lưu vào backend/public/anh-dai-dien. Tên tệp lấy phần email trước dấu @, kèm mã riêng cho từng ảnh. Dọn ảnh cũ do hệ thống quản lý và trả hồ sơ đã cập nhật."
                     },
                     "422": {
                         "description": "Ảnh không hợp lệ"
@@ -1863,7 +1943,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Luồng nội dung ảnh từ frontend/public/anh-dai-dien hoặc thư mục lưu cũ, có cache và nosniff"
+                        "description": "Luồng nội dung ảnh từ backend/public/anh-dai-dien hoặc thư mục lưu cũ, có cache và nosniff"
                     },
                     "404": {
                         "description": "Không tìm thấy ảnh"
@@ -1982,7 +2062,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "data gồm thông tin công khai cho thẻ và cờ laChuTin theo phiên hiện tại. meta gồm trangHienTai, tongTrang, tongTin, tuViTri, denViTri. Tin ẩn và xóa mềm được loại khỏi kết quả. Điện thoại hiện nửa đầu. Email hiện tối đa hai ký tự đầu và che toàn bộ tên miền. Ngày lọc ưu tiên ngày xảy ra. Trang vượt biên về trang cuối."
+                        "description": "data gồm thông tin công khai cho thẻ và cờ laChuTin theo phiên hiện tại. meta gồm trangHienTai, tongTrang, tongTin, tuViTri, denViTri. Chỉ liệt kê tin công khai đang mở hoặc chờ bàn giao. Ngày lọc ưu tiên ngày xảy ra. Trang vượt biên về trang cuối."
                     },
                     "422": {
                         "description": "Bộ lọc hoặc khoảng ngày không hợp lệ"
@@ -2108,7 +2188,7 @@
                 "operationId": "86b63a667e5915ee162637568ff430cb",
                 "responses": {
                     "200": {
-                        "description": "Tối đa 20 thông báo mới nhất và tổng số chưa đọc. Chỉ có đường dẫn khi tài khoản xem được tin.",
+                        "description": "Tối đa 20 thông báo mới nhất và tổng số chưa đọc. Thông báo tạo lịch mở chi tiết yêu cầu ở mục Lịch hẹn và chọn đúng cuộc hẹn. Đường dẫn đến tin chỉ xuất hiện khi tài khoản có quyền xem tin.",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -2157,6 +2237,37 @@
                     },
                     "403": {
                         "description": "Tài khoản đã bị khóa"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Thông báo"
+                ],
+                "summary": "Xóa tất cả thông báo của tài khoản đang đăng nhập",
+                "operationId": "6023d88f9fdc4b3ddf827a00b42263f3",
+                "parameters": [
+                    {
+                        "name": "X-XSRF-TOKEN",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Đã xóa toàn bộ hộp thư, gồm các mục ngoài 20 thông báo mới nhất"
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Tài khoản đã bị khóa"
+                    },
+                    "429": {
+                        "description": "Đã vượt giới hạn thao tác"
                     }
                 }
             }
@@ -2229,6 +2340,571 @@
                     },
                     "403": {
                         "description": "Tài khoản đã bị khóa"
+                    }
+                }
+            }
+        },
+        "/api/thong-bao/{id}": {
+            "delete": {
+                "tags": [
+                    "Thông báo"
+                ],
+                "summary": "Xóa một thông báo của tài khoản đang đăng nhập",
+                "operationId": "4ff0e14bf064685489b4c1287f997e58",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "X-XSRF-TOKEN",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Đã xóa thông báo"
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Tài khoản đã bị khóa"
+                    },
+                    "404": {
+                        "description": "Thông báo không tồn tại trong hộp thư của phiên hiện tại"
+                    },
+                    "429": {
+                        "description": "Đã vượt giới hạn thao tác"
+                    }
+                }
+            }
+        },
+        "/api/tin-dang/{tin}/giu-do": {
+            "get": {
+                "tags": [
+                    "Đăng tin"
+                ],
+                "summary": "Lấy danh sách tin nhặt được để báo cho người mất",
+                "operationId": "4b675146a83f2fd66a69da052dd8fc11",
+                "parameters": [
+                    {
+                        "name": "tin",
+                        "in": "path",
+                        "description": "ID tin báo mất",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "trang",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 1000000,
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "data và meta phân trang, tối đa 6 tin mỗi trang. Chỉ gồm tin nhặt được đang mở, công khai, có câu hỏi nhận diện và thuộc tài khoản hiện tại."
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Tài khoản bị khóa hoặc tự thao tác trên tin của mình"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy tin báo mất hiển thị"
+                    },
+                    "409": {
+                        "description": "Tin không còn mở để báo tìm thấy đồ"
+                    },
+                    "422": {
+                        "description": "Số trang không hợp lệ"
+                    },
+                    "429": {
+                        "description": "Đã vượt giới hạn thao tác"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Đăng tin"
+                ],
+                "summary": "Gửi thông báo kèm liên kết tin nhặt được cho chủ tin báo mất",
+                "operationId": "bc31b960d5da32c57c5bb5f57fc99a21",
+                "parameters": [
+                    {
+                        "name": "tin",
+                        "in": "path",
+                        "description": "ID tin báo mất",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "X-XSRF-TOKEN",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "tinNhatId"
+                                ],
+                                "properties": {
+                                    "tinNhatId": {
+                                        "type": "integer",
+                                        "minimum": 1
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Đã tạo thông báo cho chủ tin báo mất và lưu cặp tin để đối chiếu khi bàn giao"
+                    },
+                    "200": {
+                        "description": "Hộp thư người nhận đã có thông báo về tin nhặt được này"
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Tài khoản bị khóa hoặc tự thao tác trên tin của mình"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy tin báo mất hiển thị"
+                    },
+                    "409": {
+                        "description": "Tin không còn mở để báo tìm thấy đồ"
+                    },
+                    "422": {
+                        "description": "Tin nhặt được không hợp lệ hoặc không thuộc tài khoản hiện tại"
+                    },
+                    "429": {
+                        "description": "Đã vượt giới hạn thao tác"
+                    }
+                }
+            }
+        },
+        "/api/admin/yeu-cau": {
+            "get": {
+                "tags": [
+                    "Yêu cầu nhận đồ"
+                ],
+                "summary": "Danh sách hồ sơ hoặc nhóm theo tin",
+                "operationId": "e626acd7753c36ef23af7a2957a6ad94",
+                "parameters": [
+                    {
+                        "name": "nhom",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "enum": [
+                                0,
+                                1
+                            ]
+                        }
+                    },
+                    {
+                        "name": "trangThaiNhom",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "cho_duyet",
+                                "cho_ban_giao",
+                                "hoan_tat",
+                                "tu_choi"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "trangThai",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "danhMucId",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "tinDangId",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "tuKhoa",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 200
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Danh sách phân trang và thống kê. Nhóm theo tin kèm người đã duyệt và lịch hẹn nếu có."
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Chỉ quản trị viên đang hoạt động được xem"
+                    },
+                    "422": {
+                        "description": "Bộ lọc không hợp lệ"
+                    }
+                }
+            }
+        },
+        "/api/admin/lich-hen": {
+            "get": {
+                "tags": [
+                    "Cuộc hẹn"
+                ],
+                "summary": "Lịch hẹn giao nhận cho quản trị",
+                "operationId": "06302a83756e11838a845b66d00a19a4",
+                "parameters": [
+                    {
+                        "name": "tuKhoa",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 150
+                        }
+                    },
+                    {
+                        "name": "ngay",
+                        "in": "query",
+                        "description": "Ngày hẹn theo giờ Việt Nam",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "trangThai",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "cho_xac_nhan",
+                                "da_xac_nhan",
+                                "da_hoan_tat",
+                                "da_huy"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "yeuCau",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lịch phân trang, có đồ vật, hai bên, địa điểm và mốc bàn giao. Không trả mã."
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Chỉ quản trị viên đang hoạt động được xem"
+                    },
+                    "422": {
+                        "description": "Bộ lọc không hợp lệ"
+                    }
+                }
+            }
+        },
+        "/api/me/yeu-cau": {
+            "get": {
+                "tags": [
+                    "Cuộc hẹn"
+                ],
+                "summary": "Danh sách yêu cầu nhận đồ của tài khoản",
+                "operationId": "8a907f5daa0c7afc6fed3f656f5c390d",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "loai",
+                        "in": "query",
+                        "description": "lich_hen chỉ lấy yêu cầu đã duyệt và có lịch hẹn",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "lich_hen"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Danh sách phân trang, gồm coTheDatLich và trạng thái các cuộc hẹn. Lịch hết hạn được chuyển sang đã hủy khi kiểm tra."
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Tài khoản đã bị khóa"
+                    }
+                }
+            }
+        },
+        "/api/me/yeu-cau/{id}": {
+            "get": {
+                "tags": [
+                    "Cuộc hẹn"
+                ],
+                "summary": "Chi tiết yêu cầu và cuộc hẹn",
+                "operationId": "ff70df9baa675b70782d0cd6f2c6e9c4",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Dữ liệu yêu cầu, lịch và chi_tiet của tin cùng ảnh công khai. Bàn giao có thời điểm hoàn tất nếu đã xác nhận. Liên hệ mở cho hai bên sau khi duyệt."
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Tài khoản đã bị khóa"
+                    },
+                    "404": {
+                        "description": "Yêu cầu không tồn tại hoặc tài khoản không có quyền xem"
+                    }
+                }
+            }
+        },
+        "/api/me/cuoc-hen": {
+            "post": {
+                "tags": [
+                    "Cuộc hẹn"
+                ],
+                "summary": "Tạo cuộc hẹn và nhận mã bàn giao",
+                "operationId": "31a8547e9d4e8c222157ad2955710a1e",
+                "parameters": [
+                    {
+                        "name": "X-XSRF-TOKEN",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "yeuCauId",
+                                    "diaDiemId",
+                                    "thoiGianHen"
+                                ],
+                                "properties": {
+                                    "yeuCauId": {
+                                        "type": "integer",
+                                        "minimum": 1
+                                    },
+                                    "diaDiemId": {
+                                        "type": "integer",
+                                        "minimum": 1
+                                    },
+                                    "thoiGianHen": {
+                                        "description": "Giờ Việt Nam theo định dạng YYYY-MM-DD HH:mm",
+                                        "type": "string",
+                                        "example": "2026-11-10 14:30"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "data gồm ma (chuỗi 6 số), yeuCauId, cuocHenId, gioHen, hetHanLuc và diaDiem. hetHanLuc là hạn xác nhận cuộc hẹn, tính bằng giờ hẹn cộng 8 giờ. Máy chủ lưu mã 6 số trực tiếp. Người tạo lịch có thể xem lại mã khi cuộc hẹn còn hiệu lực."
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Tài khoản đã bị khóa"
+                    },
+                    "404": {
+                        "description": "Yêu cầu không tồn tại hoặc tài khoản không tham gia"
+                    },
+                    "409": {
+                        "description": "Yêu cầu chưa duyệt, đã kết thúc hoặc có lịch đang hiệu lực. Khi đã có lịch, phản hồi gồm daCoLich=true, yeuCauId và cuocHenId để mở lịch hiện có."
+                    },
+                    "422": {
+                        "description": "Ngày giờ, địa điểm hoặc dữ liệu không hợp lệ"
+                    },
+                    "429": {
+                        "description": "Đã vượt giới hạn thao tác"
+                    }
+                }
+            }
+        },
+        "/api/me/cuoc-hen/cho-nhap-ma": {
+            "get": {
+                "tags": [
+                    "Cuộc hẹn"
+                ],
+                "summary": "Danh sách cuộc hẹn chờ tài khoản hiện tại nhập mã",
+                "responses": {
+                    "200": {
+                        "description": "Trả danh sách lịch còn hạn, gồm id, tieuDe, gioHen và diaDiem"
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Tài khoản đã bị khóa"
+                    },
+                    "429": {
+                        "description": "Đã vượt giới hạn thao tác"
+                    }
+                }
+            }
+        },
+        "/api/me/cuoc-hen/xac-nhan-ban-giao": {
+            "post": {
+                "tags": [
+                    "Cuộc hẹn"
+                ],
+                "summary": "Xác nhận bàn giao cho cuộc hẹn đã chọn bằng mã 6 số",
+                "operationId": "2896d2bffd2e8a5b608c4eb23578579e",
+                "parameters": [
+                    {
+                        "name": "X-XSRF-TOKEN",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "cuocHenId",
+                                    "ma"
+                                ],
+                                "properties": {
+                                    "cuocHenId": {
+                                        "type": "integer",
+                                        "minimum": 1
+                                    },
+                                    "ma": {
+                                        "type": "string",
+                                        "pattern": "^[0-9]{6}$",
+                                        "example": "042731"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Đã xác nhận bàn giao và hoàn tất tin gắn với cuộc hẹn. Tin báo mất được liên kết trực tiếp với tin nhặt được cũng hoàn tất nếu còn mở và thuộc người nhận. Trả message, yeuCauId và cuocHenId. Gửi lại cùng mã chỉ trả kết quả cũ."
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Tài khoản đã bị khóa"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy cuộc hẹn"
+                    },
+                    "409": {
+                        "description": "Chưa đến giờ hẹn, hết hạn hoặc lịch không còn hiệu lực"
+                    },
+                    "422": {
+                        "description": "Thiếu cuộc hẹn, mã không khớp với lịch đã chọn, sai định dạng hoặc lịch không dành cho tài khoản hiện tại"
+                    },
+                    "429": {
+                        "description": "Đã vượt giới hạn nhập mã"
                     }
                 }
             }
@@ -2319,6 +2995,14 @@
         {
             "name": "Thông báo",
             "description": "Thông báo"
+        },
+        {
+            "name": "Yêu cầu nhận đồ",
+            "description": "Yêu cầu nhận đồ"
+        },
+        {
+            "name": "Cuộc hẹn",
+            "description": "Cuộc hẹn"
         }
     ]
 }

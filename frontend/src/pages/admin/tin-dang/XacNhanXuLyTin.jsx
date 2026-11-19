@@ -1,6 +1,6 @@
 import HopThoai from '../../../components/shared/HopThoai'
 
-export default function XacNhanXuLyTin({ thaoTac, khiDong, khiXacNhan, dangLuu = false, loi = '' }) {
+export default function XacNhanXuLyTin({ thaoTac, khiDong, khiXacNhan, dangLuu = false, loi = '', coLichDangHoatDong = false }) {
   const laBaoCao = thaoTac.maBaoCao != null
   const laKhoiPhuc = !laBaoCao && thaoTac.trangThai === 'hien_thi'
   if (laKhoiPhuc) return <HopThoai tieuDe="Khôi phục tin" moTa="Bạn có chắc muốn khôi phục tin? Tin sẽ hiển thị lại trên trang chủ." khiDong={khiDong}>
@@ -25,6 +25,7 @@ export default function XacNhanXuLyTin({ thaoTac, khiDong, khiXacNhan, dangLuu =
     <form className="space-y-5 p-5 sm:p-6" onSubmit={(e) => { e.preventDefault(); const duLieu = new FormData(e.currentTarget); const ghiChu = duLieu.get('ghiChu').trim(); if (ghiChu.length < 5) { e.currentTarget.elements.ghiChu.setCustomValidity('Nhập ít nhất 5 ký tự có nội dung.'); e.currentTarget.reportValidity(); return } khiXacNhan(`${duLieu.get('lyDo')} — ${ghiChu}`) }}>
       {loi && <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-800">{loi}</p>}
       <label className="block text-sm font-semibold">Lý do *<select name="lyDo" required disabled={dangLuu} defaultValue="" className="mt-2 w-full rounded-xl border border-[#ceded3] px-3 py-3 font-normal"><option value="" disabled>Chọn lý do</option>{cacLyDo.map((ten) => <option key={ten}>{ten}</option>)}</select></label>
+      {!laBaoCao && coLichDangHoatDong && <p role="alert" className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900">Tin này có lịch bàn giao đang hoạt động. Ẩn tin không hủy lịch hoặc thu hồi duyệt hồ sơ. Nếu cần dừng giao nhận, hãy hủy lịch hẹn hoặc thu hồi duyệt tại mục Yêu cầu nhận lại.</p>}
       <label className="block text-sm font-semibold">Ghi chú *<textarea name="ghiChu" required disabled={dangLuu} minLength={5} maxLength={1000} rows={3} onChange={(e) => e.target.setCustomValidity('')} className="mt-2 w-full rounded-xl border border-[#ceded3] p-3 font-normal" placeholder={goiYGhiChu} /></label>
       <div className="flex justify-end gap-3"><button type="button" disabled={dangLuu} onClick={khiDong} className="rounded-xl px-4 py-2.5 text-sm text-[#687d70]">Hủy</button><button type="submit" disabled={dangLuu} className="rounded-xl bg-emerald-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-800 disabled:opacity-50">{dangLuu ? 'Đang lưu…' : 'Xác nhận'}</button></div>
     </form>

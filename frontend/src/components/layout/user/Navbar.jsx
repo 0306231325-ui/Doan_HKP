@@ -21,7 +21,7 @@ export default function Navbar({ adminView = false }) {
   return (
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-gray-100 shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-20">
+        <div className="flex h-20 items-center justify-between sm:h-24">
           <div className="flex items-center gap-3.5">
             <Link to="/" className="flex items-center gap-3 text-left group shrink-0">
               <img

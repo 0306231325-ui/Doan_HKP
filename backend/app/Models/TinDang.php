@@ -28,7 +28,6 @@ class TinDang extends Model
         'dia_diem_chi_tiet',
         'thong_tin_lien_he',
         'email_lien_he',
-        'ma_gui',
         'trang_thai',
         'trang_thai_kiem_duyet',
         'ly_do_an',
@@ -50,6 +49,11 @@ class TinDang extends Model
         }
 
         return $this->co_gio_xay_ra || $thoiGian->format('H:i:s') !== '00:00:00' ? $thoiGian->format('H:i') : null;
+    }
+
+    public function maTin(): string
+    {
+        return 'TIN-'.str_pad((string) $this->id, 6, '0', STR_PAD_LEFT);
     }
 
     public function thuMucAnh(): string
@@ -102,10 +106,16 @@ class TinDang extends Model
         return $this->hasMany(YeuCauNhanDo::class, 'tin_dang_id');
     }
 
-    public function daGuiYeuCau(int|string $nguoiDungId): bool
+    public function daDuyetYeuCau(int|string $nguoiDungId): bool
     {
         return $this->yeuCauNhanDo()->where('nguoi_yeu_cau_id', $nguoiDungId)
-            ->whereIn('trang_thai', ['cho_kiem_tra', 'can_bo_sung', 'da_xac_minh'])->exists();
+            ->where('trang_thai', 'da_xac_minh')->exists();
+    }
+
+    public function yeuCauDangXuLyId(int|string $nguoiDungId): int|string|null
+    {
+        return $this->yeuCauNhanDo()->where('nguoi_yeu_cau_id', $nguoiDungId)
+            ->whereIn('trang_thai', ['cho_kiem_tra', 'can_bo_sung', 'da_xac_minh'])->value('id');
     }
 
     public function traLoiYeuCau(): HasMany

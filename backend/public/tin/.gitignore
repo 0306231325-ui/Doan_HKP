@@ -1,0 +1,5 @@
+/anh-cu/
+/tin-mat/*
+/tin-nhat/*
+!/tin-mat/anhtin*
+!/tin-nhat/anhtin*

@@ -3,12 +3,12 @@ import { useLocation, useSearchParams } from 'react-router-dom'
 import api from '../../../services/api'
 import { useAuth } from '../../../auth/useAuth'
 
-export default function useChiTietTinDang() {
+export default function useChiTietTinDang(tinId) {
   const { user } = useAuth()
   const nguoiXem = user?.id || ''
   const [thamSo] = useSearchParams()
   const viTri = useLocation()
-  const id = thamSo.get('id') || ''
+  const id = tinId ?? thamSo.get('id') ?? ''
   const hopLe = /^[1-9]\d{0,18}$/.test(id)
   const [lanTai, datLanTai] = useState(0)
   const khoa = `${id}#${lanTai}#${nguoiXem}`
@@ -17,7 +17,7 @@ export default function useChiTietTinDang() {
   const tin = hopLe && !dangTai ? ketQua.tin : null
   const loi = hopLe && !dangTai ? ketQua.loi : ''
   const noiQuayLai = viTri.state?.quayLai
-  const quayLai = typeof noiQuayLai === 'string' && /^\/(?:\?|$|(?:danh-sach-do|trang-ca-nhan)(?:\?|$))/.test(noiQuayLai) ? noiQuayLai : '/danh-sach-do'
+  const quayLai = typeof noiQuayLai === 'string' && /^\/(?:\?|$|(?:danh-sach-do|trang-ca-nhan|tin-da-dang)(?:\?|$))/.test(noiQuayLai) ? noiQuayLai : '/danh-sach-do'
 
   useEffect(function napChiTiet() {
     window.scrollTo(0, 0)

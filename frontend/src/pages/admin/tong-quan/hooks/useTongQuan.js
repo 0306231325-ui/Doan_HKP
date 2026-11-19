@@ -1,20 +1,29 @@
-import { useMemo, useState } from 'react'
-import { chuyenNgaySangISO, dinhDangNgay, kiemTraKhoangNgay, layNgayVietNam, taoThongKe } from './xuLyThongKe'
+import { useEffect, useState } from 'react'
+import api from '../../../../services/api'
+import { chuyenNgaySangISO, dinhDangNgay, kiemTraKhoangNgay, layNgayVietNam } from './xuLyThongKe'
 
-const danhSachMacDinh = []
 const tatCaThoiGian = { tuNgay: '', denNgay: '' }
 
-export default function useTongQuan(danhSachTinDang = danhSachMacDinh) {
+export default function useTongQuan() {
   const [khoangDangXem, datKhoangDangXem] = useState(tatCaThoiGian)
   const [tuNgay, datTuNgay] = useState('')
   const [denNgay, datDenNgay] = useState('')
   const [loiKhoangNgay, datLoiKhoangNgay] = useState('')
-  const homNay = layNgayVietNam(new Date())
+  const [ketQua, datKetQua] = useState(null)
+  const [homNay] = useState(() => layNgayVietNam(new Date()))
+  const dangTai = ketQua?.khoang !== khoangDangXem
 
-  const thongKe = useMemo(
-    () => taoThongKe(danhSachTinDang, khoangDangXem),
-    [danhSachTinDang, khoangDangXem],
-  )
+  useEffect(() => {
+    const abort = new AbortController()
+    api.get('/admin/tin-dang/thong-ke', {
+      params: khoangDangXem.tuNgay ? khoangDangXem : undefined, signal: abort.signal,
+    }).then(({ data }) => {
+      if (!abort.signal.aborted) datKetQua({ khoang: khoangDangXem, thongKe: data.data })
+    }).catch(() => {
+      if (!abort.signal.aborted) datKetQua({ khoang: khoangDangXem, loi: 'Không tải được thống kê tin đăng.' })
+    })
+    return () => abort.abort()
+  }, [khoangDangXem])
 
   function doiTuNgay(giaTri) {
     datTuNgay(giaTri)
@@ -51,7 +60,7 @@ export default function useTongQuan(danhSachTinDang = danhSachMacDinh) {
     : 'Tất cả thời gian'
 
   return {
-    ...thongKe,
+    thongKe: ketQua?.thongKe, dangTai, loi: ketQua?.loi,
     tuNgay, denNgay, homNay, loiKhoangNgay,
     nhanKhoangThoiGian, doiTuNgay, doiDenNgay,
     apDungKhoangNgay, xoaKhoangNgay,

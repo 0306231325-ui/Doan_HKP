@@ -7,20 +7,28 @@ import DuyetTinDang from './pages/admin/tin-dang/DuyetTinDang'
 import DanhSachTinDang from './pages/admin/tin-dang/DanhSachTinDang'
 import ChiTietKiemDuyet from './pages/admin/tin-dang/ChiTietKiemDuyet'
 import YeuCauNhanLai from './pages/admin/yeu-cau-nhan-lai/YeuCauNhanLai'
+import QuanLyLichHen from './pages/admin/lich-hen/QuanLyLichHen'
 import QuanLyDanhMuc from './pages/admin/danh-muc/QuanLyDanhMuc'
 import QuanLyDiaDiem from './pages/admin/dia-diem/QuanLyDiaDiem'
 import QuanLyCauHoi from './pages/admin/cau-hoi/QuanLyCauHoi'
 import DanhSachDo from './pages/danh-sach-do/DanhSachDo'
 import AuthPage from './pages/auth/AuthPage'
 import YeuCauNhanDo from './pages/yeu-cau-nhan-do/YeuCauNhanDo'
+import KiemTraThongTinNhanDo from './pages/yeu-cau-nhan-do/KiemTraThongTinNhanDo'
+import TraLoiCauHoiNhanDo from './pages/yeu-cau-nhan-do/TraLoiCauHoiNhanDo'
+import FormYeuCauNhanDo from './components/danh-sach-do/FormYeuCauNhanDo'
 import TheoDoiYeuCau from './pages/yeu-cau-nhan-do/TheoDoiYeuCau'
 import DangTin from './pages/tin-dang/DangTin'
 import ChiTietTinDang from './pages/tin-dang/ChiTietTinDang'
 import TrangCaNhan from './pages/trang-ca-nhan/TrangCaNhan'
+import TinDaDang from './pages/trang-ca-nhan/TinDaDang'
 import { AuthProvider, RequireAuth } from './auth/AuthContext'
 import AuthNotice from './auth/AuthNotice'
 import QuanLyNguoiDung from './pages/admin/nguoi-dung/QuanLyNguoiDung'
-import GioiThieu from './pages/gioi-thieu/GioiThieu'
+import TaoCuocHen from './pages/cuoc-hen/TaoCuocHen'
+import TrangCuocHen from './pages/cuoc-hen/TrangCuocHen'
+import LapLichHen, { ChonYeuCauHen, LapLichTraDo, NhapThongTinLichHen } from './pages/cuoc-hen/LapLichHen'
+import NhapMaBanGiao, { ChonCuocHenNhapMa, NhapMaChoCuocHen } from './pages/cuoc-hen/NhapMaBanGiao'
 
 export default function App() {
   return (
@@ -34,12 +42,31 @@ export default function App() {
             <Route index element={<Home />} />
             <Route path="danh-sach-do" element={<DanhSachDo />} />
             <Route path="chi-tiet-tin-dang" element={<ChiTietTinDang />} />
-            <Route path="gioi-thieu" element={<GioiThieu />} />
+            <Route path="gioi-thieu" element={<Navigate to="/" replace />} />
             <Route element={<RequireAuth />}>
-              <Route path="yeu-cau-nhan-do" element={<YeuCauNhanDo />} />
+              <Route path="chi-tiet-yeu-cau" element={<TaoCuocHen />} />
+              <Route path="tao-cuoc-hen" element={<TaoCuocHen />} />
+              <Route path="cuoc-hen">
+                <Route index element={<TrangCuocHen />} />
+                <Route path="tao" element={<LapLichHen />}>
+                  <Route index element={<ChonYeuCauHen />} />
+                  <Route path="thong-tin" element={<NhapThongTinLichHen />} />
+                </Route>
+                <Route path="tao/tra-do/:tinId" element={<LapLichTraDo />} />
+                <Route path="nhap-ma" element={<NhapMaBanGiao />}>
+                  <Route index element={<ChonCuocHenNhapMa />} />
+                  <Route path="ma" element={<NhapMaChoCuocHen />} />
+                </Route>
+              </Route>
+              <Route path="yeu-cau-nhan-do" element={<YeuCauNhanDo />}>
+                <Route index element={<KiemTraThongTinNhanDo />} />
+                <Route path="cau-hoi" element={<TraLoiCauHoiNhanDo />} />
+                <Route path="anh-va-loi-nhan" element={<FormYeuCauNhanDo />} />
+              </Route>
               <Route path="theo-doi-yeu-cau" element={<TheoDoiYeuCau />} />
               <Route path="dang-tin/noi-dung?" element={<DangTin />} />
               <Route path="trang-ca-nhan" element={<TrangCaNhan />} />
+              <Route path="tin-da-dang" element={<TinDaDang />} />
             </Route>
           </Route>
           <Route element={<RequireAuth admin />}>
@@ -50,6 +77,7 @@ export default function App() {
                 <Route path=":id" element={<ChiTietKiemDuyet />} />
               </Route>
               <Route path="yeu-cau" element={<YeuCauNhanLai />} />
+              <Route path="lich-hen" element={<QuanLyLichHen />} />
               <Route path="nguoi-dung" element={<QuanLyNguoiDung />} />
               <Route path="danh-muc" element={<QuanLyDanhMuc />} />
               <Route path="dia-diem" element={<QuanLyDiaDiem />} />

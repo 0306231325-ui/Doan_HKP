@@ -1,27 +1,26 @@
-import { ArrowLeft, CalendarDays, ChevronRight, ClipboardList, Flag, HandHeart, ImageOff, Images, Info, MapPin, MessageSquare, Share2, UserRound, ZoomIn } from 'lucide-react'
+import { ArrowLeft, CalendarDays, ChevronRight, ClipboardList, HandHeart, Images, Info, MapPin, UserRound, ZoomIn } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import Button from '../../components/shared/Button'
 import HopThoai from '../../components/shared/HopThoai'
 import KhungThongTin from '../../components/shared/KhungThongTin'
 import ThongBaoTrong from '../../components/shared/ThongBaoTrong'
+import BaoCaoTinDang from './BaoCaoTinDang'
 import LienHeTinDang from './LienHeTinDang'
+import ThaoTacTinDang from './ThaoTacTinDang'
 import useChiTietTinDang from './hooks/useChiTietTinDang'
 import { dinhDangNgay } from '../danh-sach-do/hooks/xuLyDanhSachDo'
-
-const cacThaoTacSapCo = [
-  { nhan: 'Tôi đang giữ đồ này', bieuTuong: MessageSquare, chiDanhChoNguoiKhac: true, loaiTin: 'lost' },
-  { nhan: 'Chia sẻ tin', bieuTuong: Share2 },
-  { nhan: 'Báo cáo tin đăng', bieuTuong: Flag, chiDanhChoNguoiKhac: true },
-]
 
 export default function ChiTietTinDang() {
   const { tin, dangTai, loi, taiLai, quayLai } = useChiTietTinDang()
   const [anhDangXem, datAnhDangXem] = useState(null)
-  const anh = tin?.images?.length ? tin.images : [tin?.imageUrl].filter((url) => url && url !== '/do-vat-trong.svg')
+  const anh = tin?.images ?? []
   const cotAnh = anh.length >= 3 ? 'sm:grid-cols-2 lg:grid-cols-3' : anh.length === 2 ? 'sm:grid-cols-2' : ''
   const thoiGian = tin ? [dinhDangNgay(tin.date), tin.gioXayRa].filter(Boolean).join(' · ') : ''
   const lopTieuDeMuc = 'mb-4 flex items-center gap-2.5 text-base font-bold text-[#243c30]'
+  const khongNhanYeuCau = tin?.type === 'found' && !tin.canClaim
+  const lopNut = 'inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl px-4 py-3 text-center text-sm font-bold sm:w-auto'
+  const lopNutNhanDo = `${lopNut} bg-emerald-900 text-white hover:bg-emerald-800`
 
   function dungAnhThayThe(suKien) {
     const img = suKien.currentTarget
@@ -58,17 +57,14 @@ export default function ChiTietTinDang() {
             {anh.length ? (
               <div className={`grid gap-3 ${cotAnh}`}>
                 {anh.map((url, i) => (
-                  <button key={url} type="button" aria-label={`Phóng to ảnh ${i + 1}`} aria-haspopup="dialog" onClick={() => datAnhDangXem({ url, viTri: i + 1, tinId: tin.id })} className="relative cursor-zoom-in overflow-hidden rounded-2xl bg-[#f5faf7] hover:ring-2 hover:ring-emerald-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700">
+                  <button key={`${url}-${i}`} type="button" aria-label={`Phóng to ảnh ${i + 1}`} aria-haspopup="dialog" onClick={() => datAnhDangXem({ url, viTri: i + 1, tinId: tin.id })} className="relative cursor-zoom-in overflow-hidden rounded-2xl bg-[#f5faf7] hover:ring-2 hover:ring-emerald-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700">
                     <img src={url} alt={`${tin.title} · Ảnh ${i + 1}`} className="aspect-[4/3] max-h-96 w-full object-contain" onError={dungAnhThayThe} />
                     <span className="absolute bottom-3 right-3 rounded-full bg-white/90 p-2 text-emerald-900 shadow-sm"><ZoomIn className="h-4 w-4" aria-hidden="true" /></span>
                   </button>
                 ))}
               </div>
             ) : (
-              <div className="flex min-h-40 flex-col items-center justify-center gap-4 rounded-2xl border border-dashed border-[#cbded1] bg-[#f5faf7] px-5 text-center">
-                <ImageOff className="h-9 w-9 text-[#9bb3a2]" strokeWidth={1.5} aria-hidden="true" />
-                <p className="text-sm font-semibold text-[#526c5b]">Chưa có hình ảnh</p>
-              </div>
+              <img src={tin.imageUrl} alt="Ảnh minh họa thùng giấy" className="aspect-[4/3] max-h-96 w-full rounded-2xl bg-[#f5faf7] object-contain" onError={dungAnhThayThe} />
             )}
           </section>
           <section aria-label="Thông tin cơ bản" className="py-6">
@@ -99,21 +95,48 @@ export default function ChiTietTinDang() {
               <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#edf5ef] text-[#9bb3a2]"><UserRound className="h-6 w-6" aria-hidden="true" /></span>
               <p className="text-sm font-medium leading-6 text-[#718276]">{tin.contactPerson}</p>
             </div>
-            <LienHeTinDang key={tin.id} tin={tin} />
+            <LienHeTinDang tin={tin} />
           </section>
         </div>
 
         <section className="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-5 sm:px-5">
           <h2 className={lopTieuDeMuc}><HandHeart className="h-5 w-5 text-emerald-700" aria-hidden="true" />Thao tác với tin đăng</h2>
+          {!tin.laChuTin && !tin.coTheLienHe && tin.tamNgungNhanYeuCau && <div className="mb-4 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900"><Info className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" /><div><p className="font-semibold">Tạm ngừng nhận yêu cầu nhận lại đồ</p><p className="mt-1 leading-6">Đồ vật đã có người được duyệt và đang chờ bàn giao. Bạn có thể gửi yêu cầu khi đồ vật được mở lại.</p></div></div>}
           <div className="flex flex-wrap gap-3">
-            {tin.canClaim && !tin.laChuTin && <Link to={`/yeu-cau-nhan-do?id=${tin.id}`} className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-emerald-900 px-4 py-3 text-center text-sm font-bold text-white hover:bg-emerald-800 sm:w-auto"><HandHeart className="h-4 w-4" aria-hidden="true" />{tin.hasClaim ? 'Xem yêu cầu đã gửi' : 'Yêu cầu nhận lại đồ'}</Link>}
-            {cacThaoTacSapCo
-              .filter(({ chiDanhChoNguoiKhac, loaiTin }) =>
-                (!tin.laChuTin || !chiDanhChoNguoiKhac) && (!loaiTin || tin.type === loaiTin),
-              )
-              .map(({ nhan, bieuTuong: BieuTuong }) => (
-                <button key={nhan} type="button" disabled title="Chức năng này chưa được kết nối" className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl border border-[#ceded3] bg-white px-4 py-3 text-sm font-semibold text-[#526c5b] disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"><BieuTuong className="h-4 w-4" aria-hidden="true" />{nhan}</button>
-              ))}
+            {tin.laChuTin ? (
+              <>
+                {tin.canClaim && (
+                  <p className="w-full text-sm leading-6 text-[#315a43]">
+                    Bạn là người đăng tin. Người mất đồ có thể mở tin bằng tài khoản của họ để gửi yêu cầu nhận lại.
+                  </p>
+                )}
+                <ThaoTacTinDang key={tin.id} tin={tin} taiLai={taiLai} hienNutTrucTiep quayLaiKhiXoa={quayLai} />
+              </>
+            ) : (
+              <>
+                {khongNhanYeuCau && (
+                  <p id="trang-thai-nhan-do" className="w-full rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
+                    Trạng thái: <strong>{tin.statusBadge}</strong>. Tin này không nhận yêu cầu mới.
+                  </p>
+                )}
+                {khongNhanYeuCau && (
+                  <button type="button" disabled aria-describedby="trang-thai-nhan-do" className={`${lopNut} cursor-not-allowed bg-slate-200 text-slate-600`}>
+                    <HandHeart className="h-4 w-4" aria-hidden="true" />Yêu cầu nhận lại đồ
+                  </button>
+                )}
+                {tin.yeuCauId ? (
+                  <Link to={`/chi-tiet-yeu-cau?id=${tin.yeuCauId}`} className={lopNutNhanDo}><ClipboardList className="h-4 w-4" aria-hidden="true" />Xem yêu cầu đã gửi</Link>
+                ) : tin.canClaim && (
+                  <Link to={`/yeu-cau-nhan-do?id=${tin.id}`} className={lopNutNhanDo}><HandHeart className="h-4 w-4" aria-hidden="true" />Yêu cầu nhận lại đồ</Link>
+                )}
+                {tin.coTheTaoLichTraDo && (
+                  <Link to={`/cuoc-hen/tao/tra-do/${tin.id}`} className="form-button inline-flex items-center gap-2">
+                    <CalendarDays size={18} aria-hidden="true" />Tạo lịch hẹn trả đồ
+                  </Link>
+                )}
+                <BaoCaoTinDang key={tin.id} tin={tin} />
+              </>
+            )}
           </div>
         </section>
       </KhungThongTin>}

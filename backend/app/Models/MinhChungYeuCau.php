@@ -14,7 +14,6 @@ class MinhChungYeuCau extends Model
     protected $fillable = [
         'yeu_cau_id',
         'duong_dan',
-        'mo_ta',
         'thu_tu',
     ];
 

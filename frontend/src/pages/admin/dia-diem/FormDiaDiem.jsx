@@ -15,13 +15,13 @@ export default function FormDiaDiem({ bieuMau, loiBieuMau, loiLuu, dangLuu, dong
             <textarea id="mo-ta-dia-diem" name="moTa" value={bieuMau.moTa} onChange={thayDoiBieuMau} maxLength={500} rows={3} aria-invalid={Boolean(loiBieuMau.moTa)} aria-describedby={loiBieuMau.moTa ? 'loi-mo-ta-dia-diem' : 'goi-y-mo-ta-dia-diem'} placeholder="Ghi rõ tòa nhà, tầng hoặc khu vực để dễ nhận biết…" className="w-full resize-y rounded-xl border border-[#ceded3] bg-white px-3.5 py-3 text-sm leading-6 text-[#243c30] outline-none placeholder:text-[#9aaa9f] focus-visible:ring-2 focus-visible:ring-emerald-700" />
             {loiBieuMau.moTa ? <p id="loi-mo-ta-dia-diem" role="alert" className="mt-1 text-xs text-red-700">{loiBieuMau.moTa}</p> : <p id="goi-y-mo-ta-dia-diem" className="mt-1 text-right text-xs text-[#7b8e80]">{bieuMau.moTa.length}/500 ký tự</p>}
           </div>
-          <div>
+          {bieuMau.id && <div>
             <label htmlFor="trang-thai-dia-diem" className="mb-2 block text-sm font-semibold text-[#243c30]">Trạng thái</label>
             <select id="trang-thai-dia-diem" name="dangHoatDong" value={bieuMau.dangHoatDong ? '1' : '0'} onChange={thayDoiBieuMau} className="w-full rounded-xl border border-[#ceded3] bg-white px-3.5 py-3 text-sm text-[#243c30] outline-none focus-visible:ring-2 focus-visible:ring-emerald-700">
               <option value="1">Đang hoạt động</option>
               <option value="0">Ngừng sử dụng</option>
             </select>
-          </div>
+          </div>}
           {loiLuu && <p role="alert" className="rounded-xl bg-red-50 px-3 py-2 text-sm leading-6 text-red-700">{loiLuu}</p>}
         </fieldset>
         <div className="flex justify-end gap-3 border-t border-[#e1eae4] bg-[#f9fbfa] px-5 py-4 sm:px-6">
