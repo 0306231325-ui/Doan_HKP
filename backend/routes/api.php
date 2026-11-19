@@ -32,8 +32,8 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
     Route::get('/me/yeu-cau', [CuocHenController::class, 'danhSach']);
     Route::get('/me/yeu-cau/{id}', [CuocHenController::class, 'chiTiet'])->whereNumber('id');
     Route::post('/me/yeu-cau/{id}/huy', [YeuCauNhanDoController::class, 'huy'])->whereNumber('id')->middleware('throttle:30,1');
-    Route::post('/me/yeu-cau/{id}/cuoc-hen/{hen}/ma-ban-giao', [CuocHenController::class, 'capLaiMaBanGiao'])
-        ->whereNumber(['id', 'hen'])->middleware('throttle:10,1,cap-lai-ma-ban-giao');
+    Route::get('/me/yeu-cau/{id}/cuoc-hen/{hen}/ma-ban-giao', [CuocHenController::class, 'xemMaBanGiao'])
+        ->whereNumber(['id', 'hen'])->middleware('throttle:30,1');
     Route::post('/me/cuoc-hen', [CuocHenController::class, 'taoLich'])->middleware('throttle:12,1,lap-lich-hen');
     Route::post('/tin-dang/{tin}/lich-tra-do', [CuocHenController::class, 'taoLichTraDo'])->whereNumber('tin')->middleware('throttle:12,1,lap-lich-hen');
     Route::get('/me/cuoc-hen/cho-nhap-ma', [CuocHenController::class, 'lichChoNhapMa'])->middleware('throttle:60,1,lich-cho-nhap-ma');

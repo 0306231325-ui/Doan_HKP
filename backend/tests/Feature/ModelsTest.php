@@ -48,8 +48,8 @@ class ModelsTest extends TestCase
 
         $nguoiDung->mat_khau = $matKhauDaBam;
         $this->assertSame($matKhauDaBam, $nguoiDung->getAuthPassword());
-        $this->assertArrayNotHasKey('ma_ban_giao_hash', (new BanGiao([
-            'ma_ban_giao_hash' => 'hash-thu',
+        $this->assertArrayNotHasKey('ma_ban_giao', (new BanGiao([
+            'ma_ban_giao' => '004281',
         ]))->toArray());
     }
 

@@ -9,7 +9,6 @@ use App\Models\TinDang;
 use App\Models\YeuCauNhanDo;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
-use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 
 class XuLyCuocHen
@@ -52,104 +51,57 @@ class XuLyCuocHen
             ->setTimezone(config('app.timezone'));
         $yeuCauGoc = YeuCauNhanDo::findOrFail($duLieu['yeuCauId']);
 
-        for ($lan = 0; $lan < 5; $lan++) {
-            try {
-                return DB::transaction(function () use ($yeuCauGoc, $nguoiTaoId, $duLieu, $gioHen) {
-                    $tin = TinDang::lockForUpdate()->findOrFail($yeuCauGoc->tin_dang_id);
-                    $yeuCau = YeuCauNhanDo::lockForUpdate()->findOrFail($yeuCauGoc->id);
-                    $yeuCau->setRelation('tinDang', $tin);
-                    $nguoiGiuId = $yeuCau->nguoiGiuId();
-                    $nguoiNhanId = $yeuCau->nguoiNhanId();
-                    abort_unless(in_array($nguoiTaoId, [$nguoiGiuId, $nguoiNhanId], true), 404);
-                    abort_unless($yeuCau->trang_thai === 'da_xac_minh' && in_array($tin->trang_thai, self::TIN_DUOC_DAT_LICH, true), 409, 'Yêu cầu hiện không thể đặt lịch.');
-                    if ($tin->loai_tin === 'bao_mat') {
-                        abort_unless($tin->trang_thai_kiem_duyet === 'hien_thi', 409, 'Tin này hiện không thể đặt lịch.');
-                        $this->capNhatLichHetHan($tin->yeuCauNhanDo()->whereKeyNot($yeuCau->id)->pluck('id')->all());
-                        abort_if($tin->yeuCauNhanDo()->whereKeyNot($yeuCau->id)
-                            ->whereHas('cuocHen', fn ($q) => $q->whereIn('trang_thai', self::LICH_DANG_HIEU_LUC))->exists(), 409, 'Tin báo mất đã có lịch trả đồ đang hiệu lực.');
-                    }
-                    $nguoiNhapId = $nguoiTaoId === $nguoiGiuId ? $nguoiNhanId : $nguoiGiuId;
-                    abort_if($nguoiNhapId === $nguoiTaoId || ! NguoiDung::whereKey($nguoiNhapId)->exists(), 409, 'Không xác định được tài khoản của người còn lại.');
-
-                    $bayGio = now();
-                    $lichCu = $yeuCau->cuocHen()->whereIn('trang_thai', self::LICH_DANG_HIEU_LUC)->lockForUpdate()->first();
-                    if ($lichCu && ! $this->huyLichHetHan($lichCu, $bayGio)) {
-                        return [
-                            'message' => 'Yêu cầu đã có cuộc hẹn.',
-                            'daCoLich' => true,
-                            'yeuCauId' => $yeuCau->id,
-                            'cuocHenId' => $lichCu->id,
-                        ];
-                    }
-
-                    abort_if($gioHen->lt($bayGio->copy()->startOfMinute()), 422, 'Vui lòng chọn giờ hẹn từ thời điểm hiện tại trở đi.');
-                    $diaDiem = DiaDiem::where('trang_thai', true)->sharedLock()->find($duLieu['diaDiemId']);
-                    abort_unless($diaDiem, 422, 'Vui lòng chọn địa điểm đang hoạt động.');
-
-                    $ma = sprintf('%06d', random_int(0, 999999));
-                    $hen = $yeuCau->cuocHen()->create([
-                        'nguoi_giu_do_id' => $nguoiGiuId,
-                        'nguoi_de_xuat_id' => $nguoiTaoId,
-                        'thoi_gian_hen_gap' => $gioHen,
-                        'dia_diem_id' => $diaDiem->id,
-                        'trang_thai' => 'cho_xac_nhan',
-                    ]);
-                    $hen->banGiao()->create([
-                        'ma_ban_giao_hash' => $this->bamMa($nguoiNhapId, $ma),
-                    ]);
-                    if ($tin->trang_thai === 'dang_mo') {
-                        $tin->update(['trang_thai' => 'cho_ban_giao']);
-                    }
-                    $noiDung = 'Cuộc hẹn đã được đặt. Xem giờ và địa điểm gặp trong chi tiết yêu cầu.';
-                    $this->ghiNhan($yeuCau, $hen, $nguoiTaoId, 'tao_cuoc_hen', null, $noiDung, [$nguoiNhapId], 'Có cuộc hẹn bàn giao');
-
-                    return ['ma' => $ma, 'yeuCauId' => $yeuCau->id, 'cuocHenId' => $hen->id, 'gioHen' => $gioHen->toISOString(), 'hetHanLuc' => $hen->hanXacNhan()->toISOString(), 'diaDiem' => $diaDiem->ten_dia_diem];
-                }, 3);
-            } catch (UniqueConstraintViolationException $exception) {
-                if (! str_contains($exception->errorInfo[2] ?? '', 'ma_ban_giao_hash')) {
-                    throw $exception;
-                }
+        return DB::transaction(function () use ($yeuCauGoc, $nguoiTaoId, $duLieu, $gioHen) {
+            $tin = TinDang::lockForUpdate()->findOrFail($yeuCauGoc->tin_dang_id);
+            $yeuCau = YeuCauNhanDo::lockForUpdate()->findOrFail($yeuCauGoc->id);
+            $yeuCau->setRelation('tinDang', $tin);
+            $nguoiGiuId = $yeuCau->nguoiGiuId();
+            $nguoiNhanId = $yeuCau->nguoiNhanId();
+            abort_unless(in_array($nguoiTaoId, [$nguoiGiuId, $nguoiNhanId], true), 404);
+            abort_unless($yeuCau->trang_thai === 'da_xac_minh' && in_array($tin->trang_thai, self::TIN_DUOC_DAT_LICH, true), 409, 'Yêu cầu hiện không thể đặt lịch.');
+            if ($tin->loai_tin === 'bao_mat') {
+                abort_unless($tin->trang_thai_kiem_duyet === 'hien_thi', 409, 'Tin này hiện không thể đặt lịch.');
+                $this->capNhatLichHetHan($tin->yeuCauNhanDo()->whereKeyNot($yeuCau->id)->pluck('id')->all());
+                abort_if($tin->yeuCauNhanDo()->whereKeyNot($yeuCau->id)
+                    ->whereHas('cuocHen', fn ($q) => $q->whereIn('trang_thai', self::LICH_DANG_HIEU_LUC))->exists(), 409, 'Tin báo mất đã có lịch trả đồ đang hiệu lực.');
             }
-        }
+            $nguoiNhapId = $nguoiTaoId === $nguoiGiuId ? $nguoiNhanId : $nguoiGiuId;
+            abort_if($nguoiNhapId === $nguoiTaoId || ! NguoiDung::whereKey($nguoiNhapId)->exists(), 409, 'Không xác định được tài khoản của người còn lại.');
 
-        abort(503, 'Chưa thể tạo mã bàn giao. Vui lòng thử lại.');
-    }
-
-    public function capLaiMaBanGiao(YeuCauNhanDo $yeuCauGoc, string $henId, int $nguoiTaoId): array
-    {
-        for ($lan = 0; $lan < 5; $lan++) {
-            try {
-                return DB::transaction(function () use ($yeuCauGoc, $henId, $nguoiTaoId) {
-                    $tin = TinDang::lockForUpdate()->findOrFail($yeuCauGoc->tin_dang_id);
-                    $yeuCau = YeuCauNhanDo::lockForUpdate()->findOrFail($yeuCauGoc->id);
-                    $hen = $yeuCau->cuocHen()->where('nguoi_de_xuat_id', $nguoiTaoId)->lockForUpdate()->findOrFail($henId);
-                    $haiBen = [(int) $tin->nguoi_dung_id, (int) $yeuCau->nguoi_yeu_cau_id];
-                    abort_unless(in_array($nguoiTaoId, $haiBen, true), 404);
-
-                    $banGiao = $hen->banGiao()->lockForUpdate()->first();
-                    $hanXacNhan = $hen->hanXacNhan();
-                    abort_unless($yeuCau->trang_thai === 'da_xac_minh' && $tin->trang_thai === 'cho_ban_giao'
-                        && $hen->trang_thai === 'cho_xac_nhan' && $banGiao?->ma_ban_giao_hash !== null
-                        && $hanXacNhan?->isFuture(), 409, 'Cuộc hẹn không còn hiệu lực để cấp lại mã.');
-
-                    $nguoiNhapId = $haiBen[0] === $nguoiTaoId ? $haiBen[1] : $haiBen[0];
-                    abort_if($nguoiNhapId === $nguoiTaoId, 409, 'Không xác định được tài khoản của người còn lại.');
-                    do {
-                        $ma = sprintf('%06d', random_int(0, 999999));
-                        $maHash = $this->bamMa($nguoiNhapId, $ma);
-                    } while (hash_equals($banGiao->ma_ban_giao_hash, $maHash));
-                    $banGiao->update(['ma_ban_giao_hash' => $maHash]);
-
-                    return ['ma' => $ma, 'hetHanLuc' => $hanXacNhan->toISOString()];
-                }, 3);
-            } catch (UniqueConstraintViolationException $exception) {
-                if (! str_contains($exception->errorInfo[2] ?? '', 'ma_ban_giao_hash')) {
-                    throw $exception;
-                }
+            $bayGio = now();
+            $lichCu = $yeuCau->cuocHen()->whereIn('trang_thai', self::LICH_DANG_HIEU_LUC)->lockForUpdate()->first();
+            if ($lichCu && ! $this->huyLichHetHan($lichCu, $bayGio)) {
+                return [
+                    'message' => 'Yêu cầu đã có cuộc hẹn.',
+                    'daCoLich' => true,
+                    'yeuCauId' => $yeuCau->id,
+                    'cuocHenId' => $lichCu->id,
+                ];
             }
-        }
 
-        abort(503, 'Chưa thể cấp lại mã bàn giao. Vui lòng thử lại.');
+            abort_if($gioHen->lt($bayGio->copy()->startOfMinute()), 422, 'Vui lòng chọn giờ hẹn từ thời điểm hiện tại trở đi.');
+            $diaDiem = DiaDiem::where('trang_thai', true)->sharedLock()->find($duLieu['diaDiemId']);
+            abort_unless($diaDiem, 422, 'Vui lòng chọn địa điểm đang hoạt động.');
+
+            $ma = sprintf('%06d', random_int(0, 999999));
+            $hen = $yeuCau->cuocHen()->create([
+                'nguoi_giu_do_id' => $nguoiGiuId,
+                'nguoi_de_xuat_id' => $nguoiTaoId,
+                'thoi_gian_hen_gap' => $gioHen,
+                'dia_diem_id' => $diaDiem->id,
+                'trang_thai' => 'cho_xac_nhan',
+            ]);
+            $hen->banGiao()->create([
+                'ma_ban_giao' => $ma,
+            ]);
+            if ($tin->trang_thai === 'dang_mo') {
+                $tin->update(['trang_thai' => 'cho_ban_giao']);
+            }
+            $noiDung = 'Cuộc hẹn đã được đặt. Xem giờ và địa điểm gặp trong chi tiết yêu cầu.';
+            $this->ghiNhan($yeuCau, $hen, $nguoiTaoId, 'tao_cuoc_hen', null, $noiDung, [$nguoiNhapId], 'Có cuộc hẹn bàn giao');
+
+            return ['ma' => $ma, 'yeuCauId' => $yeuCau->id, 'cuocHenId' => $hen->id, 'gioHen' => $gioHen->toISOString(), 'hetHanLuc' => $hen->hanXacNhan()->toISOString(), 'diaDiem' => $diaDiem->ten_dia_diem];
+        }, 3);
     }
 
     public function xacNhan(int $cuocHenId, string $ma, int $nguoiNhapId): array
@@ -161,12 +113,13 @@ class XuLyCuocHen
             $tin = TinDang::lockForUpdate()->findOrFail($yeuCauGoc->tin_dang_id);
             $yeuCau = YeuCauNhanDo::lockForUpdate()->findOrFail($yeuCauGoc->id);
             $hen = $yeuCau->cuocHen()->lockForUpdate()->findOrFail($cuocHenId);
+
             $haiBen = [(int) $tin->nguoi_dung_id, (int) $yeuCau->nguoi_yeu_cau_id];
             abort_unless(in_array($nguoiNhapId, $haiBen, true) && in_array((int) $hen->nguoi_de_xuat_id, $haiBen, true)
                 && $nguoiNhapId !== (int) $hen->nguoi_de_xuat_id, 422, 'Mã bàn giao không hợp lệ.');
+                
             $banGiao = $hen->banGiao()->lockForUpdate()->first();
-            $maHash = $this->bamMa($nguoiNhapId, $ma);
-            abort_unless($banGiao && hash_equals((string) $banGiao->ma_ban_giao_hash, $maHash), 422, 'Mã bàn giao không khớp với cuộc hẹn đã chọn.');
+            abort_unless($banGiao && (string) $banGiao->ma_ban_giao === $ma, 422, 'Mã bàn giao không khớp với cuộc hẹn đã chọn.');
 
             $ketQua = ['message' => 'Hai bên đã xác nhận bàn giao thành công.', 'yeuCauId' => $yeuCau->id, 'cuocHenId' => $hen->id];
             if ($hen->trang_thai === 'da_hoan_tat' && (int) $hen->nguoi_xac_nhan_id === $nguoiNhapId) {
@@ -180,7 +133,7 @@ class XuLyCuocHen
             abort_unless($yeuCau->trang_thai === 'da_xac_minh' && $tin->trang_thai === 'cho_ban_giao'
                 && $hen->trang_thai === 'cho_xac_nhan' && $hen->thoi_gian_hen_gap, 409, 'Cuộc hẹn không còn hiệu lực.');
             $kiemTraGioHen = ! app()->isLocal();
-            // $kiemTraGioHen = true; // kiểm tra giờ hẹn trên local.
+            // $kiemTraGioHen = true; // kiểm tra giờ hẹn .
             abort_if($kiemTraGioHen && $bayGio->lt($hen->thoi_gian_hen_gap), 409, 'Chưa đến giờ hẹn. Vui lòng nhập mã sau khi giao nhận đồ.');
 
             $hen->update([
@@ -237,11 +190,6 @@ class XuLyCuocHen
         $hen->update(['trang_thai' => 'da_huy', 'ly_do_huy' => self::HET_HAN]);
 
         return true;
-    }
-
-    private function bamMa(int $nguoiNhapId, string $ma): string
-    {
-        return hash_hmac('sha256', "ban-giao:{$nguoiNhapId}:{$ma}", config('app.key'));
     }
 
     private function ghiNhan(YeuCauNhanDo $yeuCau, CuocHen $hen, int $nguoiThucHien, string $hanhDong, ?string $trangThaiCu, string $noiDung, array $nguoiNhan, string $tieuDe): void

@@ -2797,7 +2797,7 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "data gồm ma (chuỗi 6 số), yeuCauId, cuocHenId, gioHen, hetHanLuc và diaDiem. hetHanLuc là hạn xác nhận cuộc hẹn, tính bằng giờ hẹn cộng 8 giờ. Mã chỉ trả cho người tạo trong lần này. Máy chủ lưu một giá trị HMAC gắn với tài khoản nhập mã."
+                        "description": "data gồm ma (chuỗi 6 số), yeuCauId, cuocHenId, gioHen, hetHanLuc và diaDiem. hetHanLuc là hạn xác nhận cuộc hẹn, tính bằng giờ hẹn cộng 8 giờ. Máy chủ lưu mã 6 số trực tiếp. Người tạo lịch có thể xem lại mã khi cuộc hẹn còn hiệu lực."
                     },
                     "401": {
                         "description": "Chưa đăng nhập"

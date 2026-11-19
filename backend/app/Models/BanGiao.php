@@ -13,13 +13,12 @@ class BanGiao extends Model
 
     protected $fillable = [
         'cuoc_hen_id',
-        'ma_ban_giao_hash',
+        'ma_ban_giao',
         'thoi_gian_ban_giao',
     ];
 
     protected $hidden = [
-        'ma_ban_giao_hash',
-        'ma_ban_giao_ma_hoa', // Ẩn dữ liệu cũ cho đến khi chạy migration xóa cột.
+        'ma_ban_giao',
     ];
 
     protected function casts(): array

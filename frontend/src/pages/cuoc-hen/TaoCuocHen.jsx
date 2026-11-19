@@ -1,9 +1,9 @@
-import { useRef, useState } from 'react'
+import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { ArrowLeft, CalendarDays, Clock3, Mail, MapPin, Phone, RefreshCw, UserRound } from 'lucide-react'
 import Button from '../../components/shared/Button'
 import HopThoai from '../../components/shared/HopThoai'
-import api, { prepareCsrf } from '../../services/api'
+import api from '../../services/api'
 import MaBanGiao from './MaBanGiao'
 import ThongTinYeuCau from './ThongTinYeuCau'
 import TienDoYeuCau from './TienDoYeuCau'
@@ -61,8 +61,8 @@ export default function TaoCuocHen() {
               {hen.laNguoiDeXuat ? (
                 <>
                   <p>Đưa mã cho người còn lại sau khi giao nhận đồ.</p>
-                  {hen.coTheCapLaiMaBanGiao && (
-                    <CapLaiMaBanGiao key={hen.id} yeuCauId={yc.id} henId={hen.id} />
+                  {hen.coTheXemMaBanGiao && (
+                    <XemMaBanGiao key={hen.id} yeuCauId={yc.id} henId={hen.id} />
                   )}
                 </>
               ) : (
@@ -82,67 +82,51 @@ export default function TaoCuocHen() {
   </div>
 }
 
-function CapLaiMaBanGiao({ yeuCauId, henId }) {
+function XemMaBanGiao({ yeuCauId, henId }) {
   const [moHopThoai, datMoHopThoai] = useState(false)
   const [ketQua, datKetQua] = useState(null)
   const [dangTai, datDangTai] = useState(false)
   const [loi, datLoi] = useState('')
-  const khoaGui = useRef(false)
 
-  async function capLaiMa() {
-    if (khoaGui.current || ketQua) return
-    khoaGui.current = true
+  async function xemMa() {
+    if (dangTai) return
+    datMoHopThoai(true)
+    datKetQua(null)
     datDangTai(true)
     datLoi('')
     try {
-      await prepareCsrf()
-      const { data } = await api.post(`/me/yeu-cau/${yeuCauId}/cuoc-hen/${henId}/ma-ban-giao`)
+      const { data } = await api.get(`/me/yeu-cau/${yeuCauId}/cuoc-hen/${henId}/ma-ban-giao`)
       datKetQua(data.data)
     } catch (loiTai) {
-      datLoi(loiTai.response?.data?.message || 'Chưa cấp được mã bàn giao. Vui lòng thử lại.')
+      datLoi(loiTai.response?.data?.message || 'Chưa xem được mã bàn giao. Vui lòng thử lại.')
     } finally {
-      khoaGui.current = false
       datDangTai(false)
     }
   }
 
   function dongHopThoai() {
-    if (khoaGui.current) return
+    if (dangTai) return
     datMoHopThoai(false)
     datKetQua(null)
-    datLoi('')
   }
 
   return (
-    <div className="space-y-2">
-      <p>Nếu chưa lưu mã, bạn có thể cấp mã mới cho cuộc hẹn này.</p>
-      <button type="button" className={nut} onClick={() => datMoHopThoai(true)} aria-haspopup="dialog">
-        Cấp lại mã bàn giao
-      </button>
+    <>
+      <button type="button" className={nut} onClick={xemMa} disabled={dangTai} aria-haspopup="dialog">Xem mã bàn giao</button>
       {moHopThoai && (
-        <HopThoai
-          tieuDe={ketQua ? 'Mã bàn giao mới' : 'Cấp lại mã bàn giao?'}
-          moTa={ketQua ? 'Sao chép mã trước khi đóng hộp thoại.' : 'Mã cũ sẽ hết hiệu lực ngay khi bạn xác nhận cấp mã mới.'}
-          khiDong={dongHopThoai}
-        >
+        <HopThoai tieuDe="Mã bàn giao" khiDong={dongHopThoai}>
           <div className="space-y-4 p-5 sm:p-6">
+            {dangTai && <p role="status">Đang tải mã…</p>}
             {loi && <p role="alert" className="text-rose-700">{loi}</p>}
-            {ketQua ? (
-              <>
-                <MaBanGiao ma={ketQua.ma} />
-                <p>Hạn xác nhận cuộc hẹn lúc {dinhDangGioHen(ketQua.hetHanLuc)}.</p>
-                <div className="flex justify-end"><Button onClick={dongHopThoai}>Đóng</Button></div>
-              </>
-            ) : (
-              <div className="flex flex-wrap justify-end gap-3">
-                <button type="button" className={nut} onClick={dongHopThoai} disabled={dangTai}>Hủy</button>
-                <Button onClick={capLaiMa} disabled={dangTai}>{dangTai ? 'Đang cấp mã…' : 'Xác nhận cấp lại'}</Button>
-              </div>
-            )}
+            {ketQua && <>
+              <MaBanGiao ma={ketQua.ma} />
+              <p>Hạn xác nhận cuộc hẹn lúc {dinhDangGioHen(ketQua.hetHanLuc)}.</p>
+            </>}
+            <div className="flex justify-end"><Button onClick={dongHopThoai} disabled={dangTai}>Đóng</Button></div>
           </div>
         </HopThoai>
       )}
-    </div>
+    </>
   )
 }
 
