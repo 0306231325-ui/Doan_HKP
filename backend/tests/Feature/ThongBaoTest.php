@@ -96,7 +96,7 @@ class ThongBaoTest extends TestCase
         $this->assertNull($mucKhac->fresh()->thoi_gian_doc);
     }
 
-    public function test_dem_va_danh_dau_tat_ca_gom_ca_thong_bao_ngoai_20_muc_moi(): void
+    public function test_dem_chua_doc_gom_ca_thong_bao_ngoai_20_muc_moi(): void
     {
         for ($i = 0; $i < 21; $i++) {
             $this->taoThongBao($this->chu);
@@ -105,8 +105,6 @@ class ThongBaoTest extends TestCase
 
         $this->actingAs($this->chu)->getJson('/api/thong-bao')->assertOk()
             ->assertJsonCount(20, 'data')->assertJsonPath('soChuaDoc', 21);
-        $this->patchJson('/api/thong-bao/da-doc')->assertNoContent();
-        $this->getJson('/api/thong-bao')->assertOk()->assertJsonPath('soChuaDoc', 0)->assertJsonPath('data.0.daDoc', true);
         $this->assertNull($mucKhac->fresh()->thoi_gian_doc);
     }
 

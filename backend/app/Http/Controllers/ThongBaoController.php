@@ -36,13 +36,6 @@ class ThongBaoController extends Controller
         return response()->noContent();
     }
 
-    public function danhDauTatCaDaDoc(Request $request): Response
-    {
-        $request->user()->thongBao()->whereNull('thoi_gian_doc')->update(['thoi_gian_doc' => now()]);
-
-        return response()->noContent();
-    }
-
     public function xoa(Request $request, string $id): Response
     {
         $soDaXoa = $request->user()->thongBao()->whereKey($id)->delete();
