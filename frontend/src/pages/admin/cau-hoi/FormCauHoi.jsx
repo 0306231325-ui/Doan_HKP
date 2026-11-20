@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import HopThoai from '../../../components/shared/HopThoai'
 
-export default function FormCauHoi({ bieuMau, danhMuc, loi, loiLuu, dongBieuMau, doiBieuMau, luuCauHoi }) {
+export default function FormCauHoi({ bieuMau, loi, loiLuu, dongBieuMau, doiBieuMau, luuCauHoi }) {
   const lopNhap = 'w-full rounded-xl border border-[#ceded3] bg-white px-3.5 py-2.5 text-sm text-[#243c30] outline-none focus-visible:ring-2 focus-visible:ring-emerald-700'
   const oNoiDung = useRef(null)
 
@@ -10,13 +10,13 @@ export default function FormCauHoi({ bieuMau, danhMuc, loi, loiLuu, dongBieuMau,
   }, [])
 
   return (
-    <HopThoai tieuDe={bieuMau.id ? 'Chỉnh sửa câu hỏi' : 'Thêm câu hỏi'} moTa={`Câu hỏi riêng cho danh mục ${danhMuc.find((muc) => muc.id === bieuMau.danhMucId)?.tenDanhMuc || 'đang chọn'}. Câu trả lời được giữ kín và bắt buộc khi đăng tin, xin nhận lại.`} khiDong={dongBieuMau}>
+    <HopThoai tieuDe={bieuMau.id ? 'Chỉnh sửa câu hỏi' : 'Thêm câu hỏi'} khiDong={dongBieuMau}>
       <form onSubmit={luuCauHoi} noValidate>
         <div className="space-y-5 px-5 py-5 sm:px-6">
           {loi.danhMucId && <p role="alert" className="text-sm text-rose-700">{loi.danhMucId}</p>}
           <div>
             <label htmlFor="nhan-dang-tin" className="mb-2 block text-sm font-semibold text-[#243c30]">Câu hỏi khi đăng tin <span className="text-red-600">*</span></label>
-            <input ref={oNoiDung} id="nhan-dang-tin" name="nhanDangTin" value={bieuMau.nhanDangTin} onChange={doiBieuMau} maxLength={250} required aria-invalid={Boolean(loi.nhanDangTin)} aria-describedby={loi.nhanDangTin ? 'loi-nhan-dang-tin' : undefined} placeholder="Ví dụ: Thiết bị thuộc hãng nào?" className={lopNhap} />
+            <input ref={oNoiDung} id="nhan-dang-tin" name="nhanDangTin" value={bieuMau.nhanDangTin} onChange={doiBieuMau} maxLength={250} required aria-invalid={Boolean(loi.nhanDangTin)} aria-describedby={loi.nhanDangTin ? 'loi-nhan-dang-tin' : undefined} placeholder="Nhập câu hỏi tại đây" className={lopNhap} />
             {loi.nhanDangTin && <p id="loi-nhan-dang-tin" role="alert" className="mt-1 text-xs text-red-700">{loi.nhanDangTin}</p>}
           </div>
           {loi.thuTu && <p role="alert" className="text-xs text-red-700">{loi.thuTu}</p>}

@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\DanhMucDoVat;
 use App\Models\DiaDiem;
 use App\Models\HinhAnhTinDang;
+use App\Models\LoiKhaiTinDang;
 use App\Models\NguoiDung;
 use App\Models\TinDang;
 use Database\Seeders\CauHoiTinMauSeeder;
@@ -258,7 +259,7 @@ class TraCuuTest extends TestCase
         $this->assertDatabaseCount('lich_su_tin_dang', 5);
         $this->assertDatabaseCount('cau_hoi', 15);
         $this->assertDatabaseCount('lich_su_cau_hoi', 15);
-        $this->assertDatabaseCount('loi_khai_tin_dang', 6);
+        $this->assertDatabaseCount('loi_khai_tin_dang', 13);
         $this->assertDatabaseCount('danh_muc_do_vat', 7);
         $this->assertDatabaseHas('danh_muc_do_vat', [
             'ten_danh_muc' => 'Khác',
@@ -318,6 +319,31 @@ class TraCuuTest extends TestCase
         $this->assertDatabaseCount('cau_hoi', 6);
         $this->assertDatabaseCount('lich_su_cau_hoi', 8);
         $this->assertDatabaseCount('loi_khai_tin_dang', 4);
+    }
+
+    public function test_seed_bo_sung_du_cau_tra_loi_cho_hai_tin_bao_mat_va_khong_tao_trung(): void
+    {
+        $dienTu = DanhMucDoVat::create(['ten_danh_muc' => 'Đồ điện tử', 'trang_thai' => true]);
+        $veXe = DanhMucDoVat::create(['ten_danh_muc' => 'Chìa khóa và vé xe', 'trang_thai' => true]);
+        $laptop = $this->taoTin(['slug' => 'mau-tra-cuu-laptop-asus', 'loai_tin' => 'bao_mat', 'danh_muc_id' => $dienTu->id]);
+        $the = $this->taoTin(['slug' => 'mau-tra-cuu-the-ve-xe', 'loai_tin' => 'bao_mat', 'danh_muc_id' => $veXe->id]);
+        $tinThuong = $this->taoTin(['slug' => 'tin-nguoi-dung-tu-dang', 'loai_tin' => 'bao_mat', 'danh_muc_id' => $dienTu->id]);
+
+        $this->seed(CauHoiTinMauSeeder::class);
+        foreach ([[$laptop, 5], [$the, 2]] as [$tin, $soCau]) {
+            $cacLoi = $tin->loiKhai()->with('phienBanCauHoi')->get();
+            $this->assertCount($soCau, $cacLoi);
+            $this->assertEqualsCanonicalizing($tin->danhMuc->cauHoi()->pluck('id')->all(), $cacLoi->pluck('cau_hoi_id')->all());
+            foreach ($cacLoi as $loi) {
+                $this->assertNotSame('', trim($loi->gia_tri_text));
+                $this->assertSame((int) $loi->cau_hoi_id, (int) $loi->phienBanCauHoi->cau_hoi_id);
+            }
+        }
+        $this->assertFalse($tinThuong->loiKhai()->exists());
+        $ids = LoiKhaiTinDang::orderBy('id')->pluck('id')->all();
+        $this->seed(CauHoiTinMauSeeder::class);
+        $this->assertSame($ids, LoiKhaiTinDang::orderBy('id')->pluck('id')->all());
+        $this->assertDatabaseCount('lich_su_cau_hoi', 7);
     }
 
     public function test_seed_thay_cau_mau_cu_tai_cho_khi_danh_muc_da_du_nam_cau(): void

@@ -23,8 +23,9 @@ export default function QuanLyCauHoi() {
           tieuDe="Hướng dẫn thiết lập câu hỏi nhận diện"
           cacBuoc={[
             ['Kiểm tra số câu hỏi.', `Mỗi danh mục có tối đa ${cauHoi.gioiHanMoiDanhMuc} câu, tính cả câu đã ẩn. Khi đủ, bạn vẫn có thể sửa câu đã có.`],
-            ['Hỏi chi tiết có thể đối chiếu.', 'Ví dụ “Vết trầy nằm ở vị trí nào và có hình dạng gì?” Người dùng nhập câu trả lời bằng văn bản và có thể ghi kèm con số nếu cần.'],
+            ['Nhập câu hỏi.', 'Bấm Thêm câu hỏi, nhập nội dung rồi xác nhận lưu. Tất cả câu trả lời đều là văn bản, có thể chứa chữ và số; không cần chọn kiểu trả lời.'],
             ['Xem thử form.', 'Kiểm tra nội dung câu hỏi và ô trả lời mà người dùng sẽ thấy.'],
+            ['Sửa hoặc ẩn câu hỏi.', 'Sửa tạo phiên bản mới; tin đã đăng vẫn giữ bộ câu hỏi lúc đăng. Câu đã sửa hoặc đã được sử dụng chỉ có thể ẩn, không thể xóa.'],
           ]}
         />
       )}

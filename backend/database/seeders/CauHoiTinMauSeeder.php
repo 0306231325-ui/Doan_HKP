@@ -63,8 +63,19 @@ class CauHoiTinMauSeeder extends Seeder
             ],
         ];
         $loiKhaiMau = [
+            'Đồ điện tử' => ['mau-tra-cuu-laptop-asus', [
+                'ASUS VivoBook.',
+                '4 ký tự cuối của số sê-ri là 8K2M.',
+                'Thân và viền màn hình màu đen, bàn phím màu đen.',
+                'Có một vết trầy nhỏ ở góc trái của nắp máy.',
+                'Đựng trong bao vải màu xám, có sạc ASUS đi kèm.',
+            ]],
             'Đồ dùng học tập' => ['mau-tra-cuu-may-tinh-flexio', ['Có một vết xước chéo ở góc dưới của nắp.', 'Tem tròn màu trắng ở góc trên bên phải mặt lưng.']],
             'Giấy tờ' => ['mau-tra-cuu-the-can-cuoc', ['Bao nhựa trong có viền xanh.', 'Góc trên bên phải của bao bị gập.']],
+            'Chìa khóa và vé xe' => ['mau-tra-cuu-the-ve-xe', [
+                'Thẻ vé xe bằng nhựa màu xanh, hình chữ nhật, có chữ vé xe sinh viên.',
+                'Góc dưới bên phải bị trầy, mặt sau có một chấm mực đen.',
+            ]],
             'Ví và túi xách' => ['mau-tra-cuu-vi-da-den', ['Lớp lót màu nâu.', 'Một biên lai gấp đôi nằm trong ngăn có khóa kéo.']],
         ];
 
@@ -95,7 +106,7 @@ class CauHoiTinMauSeeder extends Seeder
                     continue;
                 }
                 [$slug, $dapAn] = $loiKhaiMau[$ten];
-                $tin = $muc->tinDang()->where('slug', $slug)->where('loai_tin', 'nhat_duoc')->lockForUpdate()->first();
+                $tin = $muc->tinDang()->where('slug', $slug)->lockForUpdate()->first();
                 if (! $tin || $tin->yeuCauNhanDo()->exists()) {
                     continue;
                 }

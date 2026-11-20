@@ -20,23 +20,24 @@ import dinhDangGioHen from './dinhDangGioHen'
 import { daXacNhanBanGiao } from './xuLyTienDoYeuCau'
 
 const CAC_BUOC_DIEN_LICH = [
-  ['Điền thông tin lịch gặp.', 'Ở Bước 2 / 2, chọn ngày, giờ Việt Nam và địa điểm đã thống nhất. Bấm Xem lại cuộc hẹn để kiểm tra thông tin, rồi bấm Xác nhận tạo lịch.'],
-  ['Sao chép mã bàn giao.', 'Sao chép mã 6 số ngay khi tạo lịch để đưa cho người còn lại sau khi giao nhận đồ. Bạn có thể xem lại mã trong Theo dõi yêu cầu → Lịch hẹn.'],
+  ['Điền thông tin lịch gặp.', 'Chọn ngày, giờ Việt Nam từ thời điểm hiện tại trở đi và địa điểm đã thống nhất. Bấm Xem lại cuộc hẹn rồi Xác nhận tạo lịch.'],
+  ['Lưu mã bàn giao.', 'Người tạo lịch giữ mã 6 số và đưa cho người còn lại sau khi giao nhận đồ. Có thể xem lại mã trong Theo dõi yêu cầu → Lịch hẹn → Xem cuộc hẹn khi lịch còn hiệu lực.'],
 ]
 
 const HUONG_DAN_TAO_LICH = {
   goiY: 'Bạn có thể đọc hướng dẫn trước khi tạo cuộc hẹn.',
   tieuDe: 'Hướng dẫn tạo cuộc hẹn',
   cacBuoc: [
-    ['Chọn yêu cầu đã duyệt.', 'Tại Đặt hẹn → Tạo cuộc hẹn, chọn yêu cầu rồi bấm Xác nhận và tiếp tục. Cả người giữ đồ và người nhận đều có thể tạo lịch.'],
+    ['Chọn yêu cầu đã duyệt.', 'Liên hệ người còn lại để thống nhất lịch. Vào Đặt hẹn → Tạo cuộc hẹn, chọn yêu cầu rồi bấm Xác nhận và tiếp tục. Cả hai bên đều có thể tạo lịch.'],
     ...CAC_BUOC_DIEN_LICH,
   ],
+  ghiChu: 'Mỗi yêu cầu được tạo tối đa 2 cuộc hẹn. Cuộc hẹn hết hạn xác nhận sau 8 giờ tính từ giờ hẹn; khi đó mã bàn giao cũng không còn hiệu lực.',
 }
 
 const HUONG_DAN_TRA_DO = {
   ...HUONG_DAN_TAO_LICH,
   cacBuoc: [
-    ['Mở lịch từ tin báo mất.', 'Nếu đang giữ món đồ, hãy liên hệ chủ tin để thống nhất giờ và địa điểm. Bấm Tạo lịch hẹn trả đồ để vào thẳng Bước 2 / 2. Chủ tin là người nhận đồ.'],
+    ['Mở lịch từ tin báo mất.', 'Nếu đang giữ món đồ, liên hệ chủ tin rồi bấm Tạo lịch hẹn trả đồ. Không cần chọn bài nhặt được hay chờ admin duyệt. Chủ tin là người nhận đồ.'],
     ...CAC_BUOC_DIEN_LICH,
   ],
 }

@@ -11,12 +11,13 @@ const HUONG_DAN_NHAP_MA = {
   goiY: 'Bạn có thể đọc hướng dẫn trước khi nhập mã.',
   tieuDe: 'Hướng dẫn nhập mã bàn giao',
   cacBuoc: [
-    ['Nhận mã sau khi giao nhận đồ.', 'Người tạo cuộc hẹn đưa mã bàn giao 6 số cho người còn lại.'],
+    ['Nhận mã sau khi giao nhận đồ.', 'Người tạo cuộc hẹn đưa mã 6 số cho người còn lại nhập. Nếu quên mã, người tạo lịch có thể xem lại trong chi tiết cuộc hẹn khi lịch còn hiệu lực.'],
     ['Chọn cuộc hẹn.', 'Ở bước 1, chọn lịch vừa giao nhận rồi bấm Xác nhận và tiếp tục.'],
     ['Nhập mã.', 'Ở bước 2, nhập đủ 6 số, kể cả số 0 ở đầu.'],
     ['Xác nhận bàn giao.', 'Bấm Tiếp tục, kiểm tra mã rồi bấm Xác nhận bàn giao để ghi nhận hoàn tất cho cả hai bên.'],
+    ['Cập nhật bài liên quan nếu có.', 'Sau khi thành công, người gửi yêu cầu hoặc người tạo lịch trả đồ từ tin báo mất vào Chi tiết yêu cầu → Cập nhật bài đăng liên quan để chọn bài của mình và đánh dấu hoàn tất.'],
   ],
-  ghiChu: 'Hạn xác nhận là 8 giờ sau giờ hẹn. Mỗi yêu cầu được tạo tối đa 2 cuộc hẹn; nếu cả hai đều bị hủy, yêu cầu sẽ bị hủy và tin được mở lại.',
+  ghiChu: 'Hạn xác nhận là 8 giờ sau giờ hẹn. Lịch hết hạn thì không thể dùng mã để xác nhận. Mỗi yêu cầu tối đa 2 cuộc hẹn; nếu cả hai đều bị hủy, yêu cầu bị hủy và tin được mở lại khi không còn lịch khác đang hiệu lực.',
 }
 
 const kieuNutPhu = 'rounded-xl border border-[#ceded3] px-4 py-2.5 text-sm font-semibold text-[#526c5b] hover:bg-emerald-50 focus-visible:outline-2 focus-visible:outline-emerald-700 disabled:opacity-50'
