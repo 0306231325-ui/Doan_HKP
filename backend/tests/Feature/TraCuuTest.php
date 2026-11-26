@@ -16,6 +16,22 @@ use Tests\TestCase;
 
 class TraCuuTest extends TestCase
 {
+    public function test_listing_has_an_independent_rate_limit_and_tests_use_memory_cache(): void
+    {
+        $this->assertSame('array', config('cache.default'));
+        $this->actingAs($this->nguoiDung);
+        $oldKey = sha1((string) $this->nguoiDung->id);
+        for ($i = 0; $i < 120; $i++) {
+            \Illuminate\Support\Facades\RateLimiter::hit($oldKey, 60);
+        }
+        $this->getJson('/api/tra-cuu')->assertOk();
+        $key = 'tra-cuu'.$oldKey;
+        for ($i = 0; $i < 119; $i++) {
+            \Illuminate\Support\Facades\RateLimiter::hit($key, 60);
+        }
+        $this->getJson('/api/tra-cuu')->assertTooManyRequests();
+    }
+
     public function test_tin_bao_mat_hien_lien_he_ngay_ca_khi_chua_dang_nhap(): void
     {
         $tin = $this->taoTin(['loai_tin' => 'bao_mat', 'thong_tin_lien_he' => '0901234567', 'email_lien_he' => 'mat@example.com']);

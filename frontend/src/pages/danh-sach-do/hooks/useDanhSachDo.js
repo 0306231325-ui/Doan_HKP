@@ -47,7 +47,18 @@ export default function useDanhSachDo() {
   useEffect(function napTinDang() {
     if (!tuyChon || dangTaiBoLoc || loiBoLoc || loiNgay) return
     const yeuCau = new AbortController()
-    api.get(`/tra-cuu?${chuoiTruyVan}`, { signal: yeuCau.signal }).then(({ data }) => {
+    async function taiTin() {
+      for (let lan = 0; lan < 2; lan++) {
+        try {
+          return await api.get(`/tra-cuu?${chuoiTruyVan}`, { signal: yeuCau.signal })
+        } catch (loi) {
+          if (yeuCau.signal.aborted || lan === 1 || (loi.response && loi.response.status < 500)) throw loi
+          await new Promise((resolve) => window.setTimeout(resolve, 500))
+          if (yeuCau.signal.aborted) throw loi
+        }
+      }
+    }
+    taiTin().then(({ data }) => {
       if (!yeuCau.signal.aborted) datKetQua({ ...data, khoa: khoaYeuCau, loi: '' })
     }).catch((loi) => {
       if (yeuCau.signal.aborted) return
@@ -56,6 +67,17 @@ export default function useDanhSachDo() {
     })
     return () => yeuCau.abort()
   }, [tuyChon, dangTaiBoLoc, loiBoLoc, loiNgay, chuoiTruyVan, khoaYeuCau])
+
+  useEffect(function phucHoiKetNoi() {
+    if (!loiTai) return
+    const taiLaiKhiKetNoi = () => datLanTai((lan) => lan + 1)
+    window.addEventListener('online', taiLaiKhiKetNoi)
+    window.addEventListener('focus', taiLaiKhiKetNoi)
+    return () => {
+      window.removeEventListener('online', taiLaiKhiKetNoi)
+      window.removeEventListener('focus', taiLaiKhiKetNoi)
+    }
+  }, [loiTai])
 
   function taiLai() {
     datLanTai((hienTai) => hienTai + 1)

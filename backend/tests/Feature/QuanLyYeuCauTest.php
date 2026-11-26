@@ -458,11 +458,77 @@ class QuanLyYeuCauTest extends TestCase
         $this->getJson('/api/me/yeu-cau/'.$this->yc->id)->assertOk()->assertJsonPath('data.coTheDatLich', true);
         $lichMoi = $this->postJson('/api/me/cuoc-hen', $this->lichHen())->assertCreated()->json('data');
         $this->travel(9)->hours();
-        $this->getJson('/api/me/yeu-cau')->assertOk()->assertJsonPath('data.data.0.coTheDatLich', true);
+        $this->getJson('/api/me/yeu-cau')->assertOk()->assertJsonPath('data.data.0.coTheDatLich', false)
+            ->assertJsonPath('data.data.0.trang_thai', 'da_huy')->assertJsonPath('data.data.0.tin_dang.trang_thai', 'dang_mo');
         $this->assertDatabaseHas('cuoc_hen', ['id' => $lichMoi['cuocHenId'], 'trang_thai' => 'da_huy']);
         $this->actingAs($this->admin)->postJson($url, ['cuocHenId' => $lichMoi['cuocHenId'], 'ma' => $lichMoi['ma']])
             ->assertConflict()->assertJsonPath('hetHan', true);
-        $this->assertSame('cho_ban_giao', $this->yc->tinDang->fresh()->trang_thai);
+        $this->assertSame('dang_mo', $this->yc->tinDang->fresh()->trang_thai);
+    }
+
+    public function test_two_cancelled_appointments_cancel_only_their_claim_and_block_third_booking(): void
+    {
+        $this->approve();
+        $other = YeuCauNhanDo::create(['tin_dang_id' => $this->yc->tin_dang_id, 'nguoi_yeu_cau_id' => $this->admin->id, 'trang_thai' => 'cho_kiem_tra']);
+        $first = $this->actingAs($this->user)->postJson('/api/me/cuoc-hen', $this->lichHen())->assertCreated()->json('data');
+        $this->yc->cuocHen()->findOrFail($first['cuocHenId'])->update(['trang_thai' => 'da_huy']);
+        $this->assertSame('da_xac_minh', $this->yc->fresh()->trang_thai);
+        $second = $this->actingAs($this->admin)->postJson('/api/me/cuoc-hen', $this->lichHen())->assertCreated()->json('data');
+        $hen = $this->yc->cuocHen()->findOrFail($second['cuocHenId']);
+        $hen->update(['trang_thai' => 'da_huy']);
+        $this->assertSame('da_huy', $this->yc->fresh()->trang_thai);
+        $this->assertSame('dang_mo', $this->yc->tinDang->fresh()->trang_thai);
+        $this->assertSame('cho_kiem_tra', $other->fresh()->trang_thai);
+        $this->actingAs($this->user)->postJson('/api/me/cuoc-hen', $this->lichHen())->assertConflict();
+        $this->assertSame(2, $this->yc->cuocHen()->count());
+        $this->getJson('/api/me/yeu-cau/'.$this->yc->id)->assertOk()->assertJsonPath('data.coTheDatLich', false)
+            ->assertJsonPath('data.ghi_chu_admin', \App\Services\XuLyCuocHen::HET_LUOT_HEN);
+        $this->getJson('/api/me/yeu-cau')->assertOk();
+        $this->assertSame(1, $this->yc->lichSu()->where('hanh_dong', 'huy_yeu_cau_het_luot_hen')->count());
+        $this->assertSame(2, $this->yc->thongBao()->where('loai_thong_bao', 'huy_yeu_cau_het_luot_hen')->count());
+    }
+
+    public function test_third_booking_attempt_commits_second_expiry_and_cancellation(): void
+    {
+        $this->approve();
+        $this->actingAs($this->user)->postJson('/api/me/cuoc-hen', $this->lichHen())->assertCreated();
+        $this->yc->cuocHen()->first()->update(['trang_thai' => 'da_huy']);
+        $this->postJson('/api/me/cuoc-hen', $this->lichHen())->assertCreated();
+        $this->travel(10)->hours();
+        $this->postJson('/api/me/cuoc-hen', $this->lichHen())->assertConflict()->assertJsonPath('hetLuotHen', true);
+        $this->assertSame('da_huy', $this->yc->fresh()->trang_thai);
+        $this->assertSame('dang_mo', $this->yc->tinDang->fresh()->trang_thai);
+        $this->assertSame(2, $this->yc->cuocHen()->where('trang_thai', 'da_huy')->count());
+    }
+
+    public function test_second_appointment_can_complete_without_cancelling_claim(): void
+    {
+        $this->approve();
+        $this->actingAs($this->user)->postJson('/api/me/cuoc-hen', $this->lichHen())->assertCreated();
+        $this->yc->cuocHen()->first()->update(['trang_thai' => 'da_huy']);
+        $second = $this->postJson('/api/me/cuoc-hen', $this->lichHen())->assertCreated()->json('data');
+        $this->travel(2)->hours();
+        $this->actingAs($this->admin)->postJson('/api/me/cuoc-hen/xac-nhan-ban-giao', ['cuocHenId' => $second['cuocHenId'], 'ma' => $second['ma']])->assertOk();
+        $this->assertSame('da_xac_minh', $this->yc->fresh()->trang_thai);
+        $this->assertSame('da_hoan_tat', $this->yc->tinDang->fresh()->trang_thai);
+    }
+
+    public function test_direct_lost_item_booking_cannot_reactivate_claim_after_two_cancellations(): void
+    {
+        $tin = TinDang::create(['nguoi_dung_id' => $this->admin->id, 'loai_tin' => 'bao_mat', 'tieu_de' => 'Ví báo mất', 'trang_thai' => 'dang_mo', 'trang_thai_kiem_duyet' => 'hien_thi']);
+        $url = '/api/tin-dang/'.$tin->id.'/lich-tra-do';
+        $body = $this->lichHen();
+        unset($body['yeuCauId']);
+        $first = $this->actingAs($this->user)->postJson($url, $body)->assertCreated()->json('data');
+        $yc = YeuCauNhanDo::findOrFail($first['yeuCauId']);
+        $yc->cuocHen()->first()->update(['trang_thai' => 'da_huy']);
+        $this->postJson($url, $body)->assertCreated();
+        $this->travel(10)->hours();
+        $body['thoiGianHen'] = $this->lichHen()['thoiGianHen'];
+        $this->postJson($url, $body)->assertConflict()->assertJsonPath('data.hetLuotHen', true);
+        $this->assertSame('da_huy', $yc->fresh()->trang_thai);
+        $this->assertSame('dang_mo', $tin->fresh()->trang_thai);
+        $this->assertSame(2, $yc->cuocHen()->count());
     }
 
     public function test_nguoi_tao_co_the_cap_lai_ma_cu_ma_khong_phai_dat_lich_moi(): void

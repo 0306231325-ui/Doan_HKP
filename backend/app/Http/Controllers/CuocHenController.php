@@ -21,7 +21,7 @@ class CuocHenController extends Controller
         ]);
         $ketQua = $xuLy->taoLichTraDo($tin, $duLieu, (int) $request->user()->id);
 
-        return response()->json(['message' => $ketQua['message'] ?? 'Đã tạo lịch hẹn trả đồ.', 'data' => $ketQua], ($ketQua['daCoLich'] ?? false) ? 409 : 201)
+        return response()->json(['message' => $ketQua['message'] ?? 'Đã tạo lịch hẹn trả đồ.', 'data' => $ketQua], (($ketQua['daCoLich'] ?? false) || ($ketQua['hetLuotHen'] ?? false)) ? 409 : 201)
             ->header('Cache-Control', 'private, no-store');
     }
 
@@ -83,6 +83,7 @@ class CuocHenController extends Controller
         })->when($request->input('loai') === 'lich_hen', fn ($q) => $q->where('trang_thai', 'da_xac_minh')->whereHas('cuocHen'))
             ->with(['tinDang.nguoiDung', 'nguoiYeuCau'])->latest('id')->paginate(5);
         $xuLy->capNhatLichHetHan($rows->getCollection()->modelKeys());
+        $rows->getCollection()->each(fn ($yc) => $yc->refresh());
         $rows->getCollection()->load(['cuocHen' => fn ($q) => $q->latest('id'), 'cuocHen.diaDiem', 'cuocHen.banGiao']);
         $rows->through(fn ($yc) => $this->duLieu($yc, $userId));
 
@@ -93,6 +94,7 @@ class CuocHenController extends Controller
     {
         $yeuCau = $this->thamGia($request, $id);
         $xuLy->capNhatLichHetHan([$yeuCau->id]);
+        $yeuCau->refresh();
         $duLieu = $this->duLieu($yeuCau, $request->user()->id);
         $tin = $yeuCau->tinDang;
         $chiTiet = null;
@@ -125,7 +127,7 @@ class CuocHenController extends Controller
         ], ['thoiGianHen.date_format' => 'Ngày giờ hẹn không hợp lệ.']);
 
         $ketQua = $xuLy->taoLich($duLieu, (int) $request->user()->id);
-        if ($ketQua['daCoLich'] ?? false) {
+        if (($ketQua['daCoLich'] ?? false) || ($ketQua['hetLuotHen'] ?? false)) {
             return response()->json($ketQua, 409)->header('Cache-Control', 'private, no-store');
         }
 
@@ -209,6 +211,7 @@ class CuocHenController extends Controller
             'lienHe' => $approved ? ['hoTen' => $contact?->ho_ten, 'soDienThoai' => $laChuTin ? $contact?->so_dien_thoai : ($yc->tinDang?->thong_tin_lien_he ?: $contact?->so_dien_thoai), 'email' => $laChuTin ? $contact?->email : ($yc->tinDang?->email_lien_he ?: $contact?->email)] : null,
             'coTheHuyYeuCau' => $yc->coTheHuy($userId),
             'coTheDatLich' => $approved && in_array($yc->tinDang?->trang_thai, XuLyCuocHen::TIN_DUOC_DAT_LICH, true)
+                && $yc->cuocHen->count() < XuLyCuocHen::SO_LAN_HEN_TOI_DA
                 && ! $yc->cuocHen->contains(fn ($h) => in_array($h->trang_thai, XuLyCuocHen::LICH_DANG_HIEU_LUC, true)),
             'cuoc_hen' => $approved ? $yc->cuocHen->sortByDesc('id')->map(function ($h) use ($yc, $userId) {
                 $laNguoiTao = (string) $h->nguoi_de_xuat_id === (string) $userId;
